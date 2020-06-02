@@ -5,6 +5,7 @@ import random
 
 import vector
 import bullet
+import pointer
 
 
 class EnemyHandler:
@@ -42,7 +43,6 @@ class EnemyHandler:
         """
         for enemy in self.enemy_sprites:
             enemy.draw()
-            enemy.draw_hit_box(color= arcade.color.LIME_GREEN)
 
     def on_update(self, delta_time: float = 1 / 60):
         """
@@ -135,7 +135,11 @@ class Enemy(arcade.Sprite):
                                                         (self.handler.player.center_x, self.handler.player.center_y))
             if self.target_distance > 300:
                 close = False
-        print(self.center_x, self.center_y)
+
+        point = pointer.Pointer()
+        point.holder = self.handler.player
+        point.target = self
+        self.handler.player.enemy_pointers.append(point)
 
     def calc_turn(self):
         """
@@ -235,6 +239,10 @@ class Enemy(arcade.Sprite):
         hits = arcade.check_for_collision_with_list(self, self.handler.player.bullets)
         if len(hits) > 0:
             self.handler.player.score += 1
+            for pointer in self.handler.player.enemy_pointers:
+                if pointer.target == self:
+                    pointer.remove_from_sprite_lists()
+                    del pointer
             self.remove_from_sprite_lists()
             for hit in hits:
                 hit.remove_from_sprite_lists()

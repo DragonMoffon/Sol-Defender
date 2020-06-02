@@ -3,6 +3,7 @@ import math
 import time
 
 import bullet
+import pointer
 
 
 class Player(arcade.Sprite):
@@ -41,6 +42,10 @@ class Player(arcade.Sprite):
         self.bullets = arcade.SpriteList()
         self.last_shot = 0
 
+        # Enemy Pointer Variables
+        self.enemy_handler = None
+        self.enemy_pointers = arcade.SpriteList()
+
     def apply_correction(self):
         if not self.turn_key:
             if self.angle_velocity < -0.3:
@@ -55,7 +60,7 @@ class Player(arcade.Sprite):
         self.turning_force = self.thruster_force*self.thrusters_output[0]
         self.forward_force = self.thrusters_output[1] * self.thruster_force * 4
 
-    def calculate_acceleration(self, delta_time):
+    def calculate_acceleration(self):
         turning_torque = self.distance_to_turning * self.turning_force
         if turning_torque != 0:
             self.turning_acceleration = math.degrees(turning_torque / self.angular_inertia)
@@ -83,7 +88,7 @@ class Player(arcade.Sprite):
 
     def on_update(self, delta_time: float = 1/60):
         self.calculate_thruster_force()
-        self.calculate_acceleration(delta_time)
+        self.calculate_acceleration()
         self.apply_acceleration()
         self.move(delta_time)
         self.apply_correction()
@@ -93,11 +98,14 @@ class Player(arcade.Sprite):
             self.shoot()
             self.last_shot = time.time()
 
+        self.enemy_pointers.on_update(delta_time)
+
     def shoot(self):
         shot = bullet.Bullet([self.center_x,self.center_y], self.angle, self.velocity)
         self.bullets.append(shot)
 
     def draw(self):
+        self.enemy_pointers.draw()
         self.bullets.draw()
         super().draw()
 

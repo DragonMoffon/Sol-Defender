@@ -87,26 +87,21 @@ class GameWindow(arcade.Window):
             changed = True
 
         if changed:
-            """
             arcade.set_viewport(self.left_view,
                                 SCREEN_WIDTH + self.left_view,
                                 self.bottom_view,
                                 SCREEN_HEIGHT + self.bottom_view)
-            """
 
     def on_draw(self):
         """
         Runs all of the draw functions for all Sprites and SpriteLists
         """
-        print("Player Score:", self.player.score, ":", "Player Deaths:", self.player.deaths)
         arcade.start_render()
         self.asteroid.draw()
         self.player.draw()
         self.enemy_handler.draw()
         if self.show_text:
             self.text_sprite.draw()
-
-        self.player.draw_hit_box(color=arcade.color.LIME_GREEN)
 
     def on_key_press(self, key, modifiers):
         """
@@ -154,6 +149,9 @@ class GameWindow(arcade.Window):
         # enemies
         self.enemy_handler.player = self.player
         self.enemy_handler.setup()
+
+        # player pointer
+        self.player.enemy_handler = self.enemy_handler
 
     def on_key_release(self, key, modifier):
         """
