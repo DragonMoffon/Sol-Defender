@@ -1,9 +1,9 @@
-import arcade
 import math
 import time
 
+import arcade
+
 import bullet
-import pointer
 
 
 class Player(arcade.Sprite):
@@ -11,17 +11,19 @@ class Player(arcade.Sprite):
     def __init__(self):
 
         super().__init__()
+
         self.hit = False
-        self.score = 0
-        self.deaths = 0
+        self.health = 100
+        self.dead = False
+        self.show_hitbox = False
 
         # Variables for movement
         self.thruster_force = 330000
-        self.thrusters_output = [0.0,0.0]
+        self.thrusters_output = [0.0, 0.0]
         self.weight = 549054
         self.forward_force = 0
-        self.acceleration = [0.0,0.0]
-        self.velocity = [0.0,0.0]
+        self.acceleration = [0.0, 0.0]
+        self.velocity = [0.0, 0.0]
 
         # Variables for turning
         self.turn_key = False
@@ -29,11 +31,11 @@ class Player(arcade.Sprite):
         self.turning_acceleration = 0
         self.angle_velocity = 0
         self.distance_to_turning = 30
-        self.angular_inertia = (1/12)*self.weight*(64.5**2)
+        self.angular_inertia = (1 / 12) * self.weight * (64.5 ** 2)
         self.correction = 0.33
 
         # Parent Variables
-        self.texture = arcade.load_texture("Saber Solo.png")
+        self.texture = arcade.load_texture("Sprites/Saber Solo.png")
         self.scale = 0.1
 
         # shooting variables
@@ -57,7 +59,7 @@ class Player(arcade.Sprite):
                 self.thrusters_output[0] = 0.0
 
     def calculate_thruster_force(self):
-        self.turning_force = self.thruster_force*self.thrusters_output[0]
+        self.turning_force = self.thruster_force * self.thrusters_output[0]
         self.forward_force = self.thrusters_output[1] * self.thruster_force * 4
 
     def calculate_acceleration(self):
@@ -70,7 +72,7 @@ class Player(arcade.Sprite):
         acceleration = self.forward_force / self.weight
         dx = round(math.cos(angle_rad) * acceleration, 2)
         dy = round(math.sin(angle_rad) * acceleration, 2)
-        self.acceleration = [dx,dy]
+        self.acceleration = [dx, dy]
 
     def apply_acceleration(self):
         self.angle_velocity += self.turning_acceleration
@@ -86,7 +88,7 @@ class Player(arcade.Sprite):
         self.center_x += self.velocity[0] * delta_time
         self.center_y += self.velocity[1] * delta_time
 
-    def on_update(self, delta_time: float = 1/60):
+    def on_update(self, delta_time: float = 1 / 60):
         self.calculate_thruster_force()
         self.calculate_acceleration()
         self.apply_acceleration()
@@ -101,15 +103,17 @@ class Player(arcade.Sprite):
         self.enemy_pointers.on_update(delta_time)
 
     def shoot(self):
-        shot = bullet.Bullet([self.center_x,self.center_y], self.angle, self.velocity)
+        shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity)
         self.bullets.append(shot)
 
     def draw(self):
         self.enemy_pointers.draw()
         self.bullets.draw()
+        if self.show_hitbox:
+            self.draw_hit_box(color=arcade.color.LIME_GREEN)
         super().draw()
 
-    def key_down(self,key):
+    def key_down(self, key):
         if key == arcade.key.W:
             self.thrusters_output[1] = 1.0
         elif key == arcade.key.A:
@@ -120,6 +124,10 @@ class Player(arcade.Sprite):
             self.turn_key = True
         elif key == arcade.key.SPACE:
             self.shooting = True
+        elif key == arcade.key.TAB and not self.show_hitbox:
+            self.show_hitbox = True
+        elif key == arcade.key.TAB and self.show_hitbox:
+            self.show_hitbox = False
 
     def key_up(self, key):
         if key == arcade.key.W:

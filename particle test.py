@@ -1,3 +1,3 @@
 import arcade
 
-e = arcade.Emitter([100,100])
+e = arcade.Emitter([100, 100])

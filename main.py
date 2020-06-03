@@ -1,8 +1,9 @@
-import arcade
 import time
+import arcade
 
-import player
 import enemy_handler
+import player
+
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
 TITLE = "MVP Sol Defender"
 
@@ -11,7 +12,10 @@ class GameWindow(arcade.Window):
 
     def __init__(self, screen_width=1000, screen_height=750, title="Title"):
 
-        super().__init__(screen_width,screen_height,title, )
+        super().__init__(screen_width, screen_height, title)
+        arcade.set_background_color(arcade.color.BLACK)
+
+        self.process = True
 
         # x and y Coordinates for Reset Position
         self.center_x = SCREEN_WIDTH // 2
@@ -32,44 +36,47 @@ class GameWindow(arcade.Window):
         # Enemy Handler Variables
         self.enemy_handler = enemy_handler.EnemyHandler()
 
-        # Text
+        # Text Sprite
         self.text_sprite = arcade.Sprite()
         self.show_text = False
         self.spawn_time = 0
         self.life_time = 0.6
-        self.text_sprite.center_x,self.text_sprite.center_y = SCREEN_WIDTH//2, SCREEN_WIDTH//2
+        self.text_sprite.center_x, self.text_sprite.center_y = SCREEN_WIDTH // 2, SCREEN_WIDTH // 2
 
         # setup
         self.center_window()
 
-    def on_update(self, delta_time: float = 1/60):
+    def on_update(self, delta_time: float = 1 / 60):
+
         """
         This method calls 60 times per second roughly and is what is used to update things such as positions, view ports,
         and scores
         """
         # FPS for debugging
         # print("FPS:",1/delta_time)
+        if self.process:
+            # Players Update
+            self.player.on_update(delta_time)
 
-        # Players Update
-        self.player.on_update(delta_time)
-        if self.player.hit:
-            self.text_sprite.texture = arcade.load_texture("dead.png")
-            self.show_text = True
-            self.spawn_time = time.time()
-            self.reset()
+            # Move Viewport
+            self.view_port(delta_time)
 
-        if self.spawn_time + self.life_time < time.time():
+            # Check The Asteroids Position
+            self.asteroid.check_wall(self.left_view, self.bottom_view)
+
+            # Enemy update
+            self.enemy_handler.on_update(delta_time)
+
+            if self.player.dead:
+                self.text_sprite.center_x, self.text_sprite.center_y = self.left_view + SCREEN_WIDTH // 2, self.bottom_view + SCREEN_WIDTH // 2
+                self.text_sprite.texture = arcade.load_texture("Sprites/dead.png")
+                self.show_text = True
+                self.spawn_time = time.time()
+                self.process = False
+
+        if self.spawn_time + self.life_time < time.time() and self.show_text:
             self.show_text = False
-
-        # Move Viewport
-        self.view_port(delta_time)
-
-        # Check The Asteroids Position
-        self.asteroid.check_wall(self.left_view, self.bottom_view)
-
-        # Enemy update
-        self.enemy_handler.player = self.player
-        self.enemy_handler.on_update(delta_time)
+            self.reset()
 
     def view_port(self, delta_time):
         """
@@ -97,29 +104,24 @@ class GameWindow(arcade.Window):
         Runs all of the draw functions for all Sprites and SpriteLists
         """
         arcade.start_render()
+
+        text = "Player Health: " + str(self.player.health)
+        arcade.draw_text(text, self.left_view + SCREEN_WIDTH // 2, self.bottom_view + SCREEN_HEIGHT - 50,
+                         arcade.color.WHITE, font_size=15, anchor_x="center")
+
         self.asteroid.draw()
         self.player.draw()
         self.enemy_handler.draw()
         if self.show_text:
             self.text_sprite.draw()
 
-    def on_key_press(self, key, modifiers):
-        """
-        Method runs each time the user presses a key.
-        Each object that requires a key press has its own key down method for neatness
-        """
-        self.player.key_down(key)
-        if key == arcade.key.R:
-            self.reset()
-
-        if key == arcade.key.ESCAPE:
-            self.close()
-
     def reset(self):
         """
         Resets the game world.
         Needs to be neatened with setups.
         """
+        self.process = True
+
         # view
         self.left_view = 0
         self.bottom_view = 0
@@ -129,36 +131,43 @@ class GameWindow(arcade.Window):
                             SCREEN_HEIGHT + self.bottom_view)
 
         # player
-        if self.player is not None:
-            deaths = self.player.deaths
-            score = self.player.score
-            self.player = player.Player()
-            self.player.center_x = self.center_x
-            self.player.center_y = self.center_y
-            self.player.score = score
-            self.player.deaths = deaths
-        else:
-            self.player = player.Player()
-            self.player.center_x = self.center_x
-            self.player.center_y = self.center_y
+        self.player = player.Player()
+        self.player.center_x = self.center_x
+        self.player.center_y = self.center_y
 
         # asteroid
         self.asteroid.center_x = self.center_x
         self.asteroid.center_y = self.center_y
 
         # enemies
+        self.enemy_handler = enemy_handler.EnemyHandler()
         self.enemy_handler.player = self.player
         self.enemy_handler.setup()
 
         # player pointer
         self.player.enemy_handler = self.enemy_handler
 
+    def on_key_press(self, key, modifiers):
+        """
+        Method runs each time the user presses a key.
+        Each object that requires a key press has its own key down method for neatness
+        """
+        if self.process:
+            self.player.key_down(key)
+
+        if key == arcade.key.R:
+            self.reset()
+
+        if key == arcade.key.ESCAPE:
+            self.close()
+
     def on_key_release(self, key, modifier):
         """
         Similar to on_key_press this method calls when a user releases a key.
         All objects that need a key release have their own method for neatness
         """
-        self.player.key_up(key)
+        if self.process:
+            self.player.key_up(key)
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         """
@@ -179,7 +188,7 @@ class Asteroid(arcade.Sprite):
 
     def __init__(self):
         super().__init__()
-        self.texture = arcade.load_texture("circle_white.png")
+        self.texture = arcade.load_texture("Sprites/circle_white.png")
         self.scale = 0.15
         self.radius = 24
 
@@ -202,9 +211,10 @@ class Asteroid(arcade.Sprite):
 
 
 def main():
-    game = GameWindow(SCREEN_WIDTH,SCREEN_HEIGHT,TITLE)
+    game = GameWindow(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE)
     game.reset()
     arcade.run()
+
 
 if __name__ == "__main__":
     main()

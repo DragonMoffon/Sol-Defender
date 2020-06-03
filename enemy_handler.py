@@ -1,11 +1,12 @@
-import arcade
-import time
 import math
 import random
+import time
 
-import vector
+import arcade
+
 import bullet
 import pointer
+import vector
 
 
 class EnemyHandler:
@@ -66,10 +67,10 @@ class Enemy(arcade.Sprite):
         self.final_angle = 0
 
         # Parent variables for drawing.
-        self.texture = arcade.load_texture("Enemy Solo.png")
+        self.texture = arcade.load_texture("Sprites/Enemy Solo.png")
         self.scale = 0.1
 
-        # checks if the enemy should be trying to
+        # checks if the enemy is in range of player
         self.handler = None
         self.target_distance = 0
         self.target_angle = 0
@@ -102,7 +103,7 @@ class Enemy(arcade.Sprite):
         """
         runs all functions necessary each update
         """
-        self.target_distance = vector.find_distance((self.center_x,self.center_y),
+        self.target_distance = vector.find_distance((self.center_x, self.center_y),
                                                     (self.handler.player.center_x, self.handler.player.center_y))
         if self.target_distance <= 300:
             self.calc_turn()
@@ -116,8 +117,8 @@ class Enemy(arcade.Sprite):
         self.if_hit_player()
 
     def shoot(self):
-        shot = bullet.Bullet([self.center_x,self.center_y], self.angle, self.velocity)
-        shot.texture = arcade.load_texture("circle red.png")
+        shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity)
+        shot.texture = arcade.load_texture("Sprites/circle red.png")
         self.bullets.append(shot)
 
     def setup(self, handler):
@@ -154,6 +155,8 @@ class Enemy(arcade.Sprite):
             self.angle += direction
         if self.target_angle - 5 < self.angle < self.target_angle + 5:
             self.shooting = True
+        else:
+            self.shooting = False
         '''
         difference = self.calc_difference()
         print(self.angular_velocity)
@@ -224,8 +227,10 @@ class Enemy(arcade.Sprite):
         if deceleration > 0: deceleration *= -1
         if velocity > 0: velocity *= -1
 
-        if deceleration == 0: time_to_0 = 0.6
-        else: time_to_0 = (velocity / deceleration) * delta_time
+        if deceleration == 0:
+            time_to_0 = 0.6
+        else:
+            time_to_0 = (velocity / deceleration) * delta_time
 
         self.final_angle = self.angle + (0.5 * (self.angular_velocity * delta_time) * time_to_0)
         """
@@ -238,7 +243,6 @@ class Enemy(arcade.Sprite):
     def check_contact(self):
         hits = arcade.check_for_collision_with_list(self, self.handler.player.bullets)
         if len(hits) > 0:
-            self.handler.player.score += 1
             for pointer in self.handler.player.enemy_pointers:
                 if pointer.target == self:
                     pointer.remove_from_sprite_lists()
@@ -252,8 +256,10 @@ class Enemy(arcade.Sprite):
     def if_hit_player(self):
         hits = arcade.check_for_collision_with_list(self.handler.player, self.bullets)
         if len(hits) > 0:
+            self.handler.player.health -= 4
+            if self.handler.player.health <= 0:
+                self.handler.player.dead = True
             self.handler.player.hit = True
-            self.handler.player.deaths += 1
             for hit in hits:
                 hit.remove_from_sprite_lists()
                 del hit
