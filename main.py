@@ -15,6 +15,7 @@ class GameWindow(arcade.Window):
         super().__init__(screen_width, screen_height, title)
         arcade.set_background_color(arcade.color.BLACK)
 
+        # check if on_update should run.
         self.process = True
 
         # x and y Coordinates for Reset Position
