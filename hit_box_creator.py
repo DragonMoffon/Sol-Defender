@@ -17,6 +17,8 @@ class HitBoxWindow(arcade.Window):
 
     HOW TO USE:
 
+        On line 52 put the name of your sprite into the brackets as a string. You can now run the script.
+
         The mouse cursor is a blue square that shows where a point of the hit box will appear.
 
         To add a point simply Left Click with the mouse, this will add a point to the pointlist.
@@ -47,7 +49,7 @@ class HitBoxWindow(arcade.Window):
 
         # This is the sprite you wish to edit..
         self.sprite = arcade.Sprite()
-        self.sprite.texture = arcade.load_texture("Sprites/Saber Solo.png") # Put the name of the texture in the "". Make sure the your texture's pixels are 10x.
+        self.sprite.texture = arcade.load_texture("")  # Put the name of the texture in the "". Make sure the your texture's pixels are 10x.
 
         # This centers the sprite
         self.sprite.center_x = SCREEN_WIDTH//2
@@ -66,6 +68,15 @@ class HitBoxWindow(arcade.Window):
 
         # This hides the mouse cursor so you can see the rounded mouse position for ease of use.
         self.set_mouse_visible(False)
+
+        # These variables are to ensure that the point rounds to the corners of every pixel
+        self.round_x = 0
+        if self.sprite.width/10 % 2 != 0:
+            self.round_x = 5
+
+        self.round_y = 0
+        if self.sprite.height/10 % 2 != 0:
+            self.round_y = 5
 
     def on_draw(self):
         """
@@ -105,8 +116,8 @@ class HitBoxWindow(arcade.Window):
         """
 
         # Sets the mouse pointer X and Y to the nearest 5
-        self.mouse_x = round_to_5(x)
-        self.mouse_y = round_to_5(y)
+        self.mouse_x = round_to_num(x, self.round_x)
+        self.mouse_y = round_to_num(y, self.round_y)
 
         # Sets the relative mouse pointer X and Y to the nearest %
         self.relative_mouse_x = self.mouse_x - self.sprite.center_x
@@ -133,9 +144,9 @@ class HitBoxWindow(arcade.Window):
                 print(self.point_list)
 
 
-def round_to_5(round_num):
+def round_to_num(round_num, num_to_round):
     """
-    This function rounds the last character (including a decimal place e.g. 123. turns into 1235) in any number to 5.
+    This function rounds the last character (including a decimal place e.g. 123. turns into 1235) in any number to the inputted .
     e.g. 122 is rounded to 125, or 129.3421 is rounded to 129.3425
     """
     # Initialise the list that will hold each character of the number.
@@ -144,8 +155,8 @@ def round_to_5(round_num):
     [str_list.append(i) for i in str(round_num)]
 
     # If the last character is not 5, make it 5
-    if str_list[-1] != "5":
-        str_list[-1] = "5"
+    if str_list[-1] != str(num_to_round):
+        str_list[-1] = str(num_to_round)
 
     # turn the list of characters into a single string
     string = ""
