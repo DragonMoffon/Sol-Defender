@@ -17,6 +17,9 @@ class Player(arcade.Sprite):
         self.dead = False
         self.show_hitbox = False
 
+        # The Seven Stats
+        self.damage = 4
+
         # Variables for movement
         self.thruster_force = 330000
         self.thrusters_output = [0.0, 0.0]

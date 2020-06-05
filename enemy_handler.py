@@ -66,10 +66,6 @@ class Enemy(arcade.Sprite):
         self.final_velocity = 0
         self.final_angle = 0
 
-        # Parent variables for drawing.
-        self.texture = arcade.load_texture("Sprites/Enemy Solo.png")
-        self.scale = 0.1
-
         # checks if the enemy is in range of player
         self.handler = None
         self.target_distance = 0
@@ -95,28 +91,46 @@ class Enemy(arcade.Sprite):
         self.shoot_delay = 0.1
         self.next_shot = 0
 
+        # sprites
+        self.textures = []
+        self.scale = 0.15
+        self.get_sprites()
+        self.health = 12
+        self.full_health = 12
+        self.health_segment = 4
+        self.frame = 1
+
         # hit box
-        self.point_list = [[-165, -5], [-165, 5], [-135, 5], [-135, 15], [-125, 15], [-125, 25], [-135, 25], [-135, 65],
-                           [-125, 65], [-125, 75], [-65, 75], [-65, 85], [-95, 85], [-95, 95], [-145, 95], [-145, 105],
-                           [-165, 105], [-165, 115], [-145, 115], [-145, 125], [-125, 125], [-125, 135], [-75, 135],
-                           [-75, 145], [-65, 145], [-65, 155], [-35, 155], [-35, 165], [35, 165], [35, 155], [65, 155],
-                           [65, 145], [75, 145], [75, 135], [125, 135], [125, 125], [145, 125], [145, 115], [165, 115],
-                           [165, 105], [145, 105], [145, 95], [105, 95], [105, 105], [25, 105], [25, 95], [-5, 95],
-                           [-5, 65], [15, 65], [15, 56], [45, 55], [45, 45], [65, 45], [65, 35], [95, 35], [95, 25],
-                           [115, 25], [115, 15], [165, 15], [165, 5], [135, 5], [135, -5], [165, -5], [165, -15],
-                           [115, -15], [115, -25], [95, -25], [95, -35], [65, -35], [65, -45], [45, -45], [45, -55],
-                           [15, -55], [15, -65], [-6, -65], [-6, -95], [25, -95], [25, -105], [105, -105], [105, -95],
-                           [145, -95], [145, -105], [165, -105], [165, -115], [145, -115], [145, -125], [125, -125],
-                           [125, -135], [75, -135], [75, -145], [65, -145], [65, -155], [35, -155], [35, -165],
-                           [-35, -165], [-35, -155], [-65, -155], [-65, -145], [-75, -145], [-75, -135], [-125, -135],
-                           [-125, -125], [-145, -125], [-145, -115], [-165, -115], [-165, -105], [-145, -105],
-                           [-145, -95], [-95, -95], [-95, -85], [-65, -85], [-65, -75], [-125, -75], [-125, -65],
-                           [-135, -65], [-135, -25], (-125, -25), [-125, -15], [-135, -15], [-135, -5]]
+        self.point_list = [
+                           (165.0, -15.0), (165.0, -115.0), (155.0, -115.0), (155.0, -125.0), (145.0, -125.0),
+                           (145.0, -135.0), (125.0, -135.0), (125.0, -145.0), (115.0, -145.0), (115.0, -155.0),
+                           (85.0, -155.0), (85.0, -165.0), (35.0, -165.0), (35.0, -155.0), (-5.0, -155.0),
+                           (-5.0, -145.0), (-85.0, -145.0), (-85.0, -135.0), (-115.0, -135.0), (-115.0, -125.0),
+                           (-145.0, -125.0), (-145.0, -115.0), (-105.0, -115.0), (-105.0, -105.0), (-155.0, -105.0),
+                           (-155.0, -95.0), (-135.0, -95.0), (-135.0, -85.0), (-125.0, -85.0), (-125.0, -75.0),
+                           (-165.0, -75.0), (-165.0, -65.0), (-145.0, -65.0), (-145.0, -55.0), (-125.0, -55.0),
+                           (-125.0, -45.0), (-105.0, -45.0), (-105.0, -35.0), (-25.0, -35.0), (-25.0, -25.0),
+                           (-45.0, -25.0), (-45.0, -15.0), (-75.0, -15.0), (-75.0, -5.0), (-125.0, -5.0), (-125.0, 5.0),
+                           (-75.0, 5.0), (-75.0, 15.0), (-45.0, 15.0), (-45.0, 25.0), (-25.0, 25.0), (-25.0, 35.0),
+                           (-105.0, 35.0), (-105.0, 45.0), (-125.0, 45.0), (-125.0, 55.0), (-145.0, 55.0),
+                           (-145.0, 65.0), (-165.0, 65.0), (-165.0, 75.0), (-125.0, 75.0), (-125.0, 85.0),
+                           (-135.0, 85.0), (-135.0, 95.0), (-155.0, 95.0), (-155.0, 105.0), (-105.0, 105.0),
+                           (-105.0, 115.0), (-145.0, 115.0), (-145.0, 125.0), (-115.0, 125.0), (-115.0, 135.0),
+                           (-85.0, 135.0), (-85.0, 145.0), (-5.0, 145.0), (-5.0, 155.0), (35.0, 155.0), (35.0, 165.0),
+                           (85.0, 165.0), (85.0, 155.0), (115.0, 155.0), (115.0, 145.0), (125.0, 145.0), (125.0, 135.0),
+                           (145.0, 135.0), (145.0, 125.0), (155.0, 125.0), (155.0, 105.0), (165.0, 105.0), (165.0, 15.0)
+                            ]
         self.set_hit_box(self.point_list)
+
+    def get_sprites(self):
+        for i in range(4):
+            texture = arcade.load_texture("Sprites/Enemy Hunter + Damage Frames.png", 0, 330*i,330,330)
+            self.textures.append(texture)
+        self.texture = self.textures[0]
 
     def draw(self):
         self.bullets.draw()
-        self.draw_hit_box(arcade.color.LIME_GREEN)
+        #self.draw_hit_box(arcade.color.LIME_GREEN)
         super().draw()
 
     def on_update(self, delta_time: float = 1 / 60):
@@ -263,15 +277,19 @@ class Enemy(arcade.Sprite):
     def check_contact(self):
         hits = arcade.check_for_collision_with_list(self, self.handler.player.bullets)
         if len(hits) > 0:
-            for pointer in self.handler.player.enemy_pointers:
-                if pointer.target == self:
-                    pointer.remove_from_sprite_lists()
-                    del pointer
-            self.remove_from_sprite_lists()
-            for hit in hits:
-                hit.remove_from_sprite_lists()
-                del hit
-            del self
+            hits[0].remove_from_sprite_lists()
+            del hits[0]
+            self.health -= self.handler.player.damage
+            if self.health <= self.full_health - (self.frame * self.health_segment) and not self.health < 0:
+                self.texture = self.textures[self.frame]
+                self.frame += 1
+            if self.health < 0:
+                for point in self.handler.player.enemy_pointers:
+                    if point.target == self:
+                        point.remove_from_sprite_lists()
+                        del point
+                self.remove_from_sprite_lists()
+                del self
 
     def if_hit_player(self):
         hits = arcade.check_for_collision_with_list(self.handler.player, self.bullets)
