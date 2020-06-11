@@ -62,33 +62,35 @@ class Enemy(arcade.Sprite):
 
     def __init__(self):
         super().__init__()
-        self.max_velocity = 153
-        self.final_velocity = 0
-        self.final_angle = 0
 
         # checks if the enemy is in range of player
         self.handler = None
-        self.target_distance = 0
+
+        # debug guff
+        self.rule_1_effect = [0.0,0.0]
+        self.rule_2_effect = [0.0,0.0]
+        self.rule_3_effect = [0.0,0.0]
+        self.rule_4_effect = [0.0,0.0]
+        self.behind_point = [0.0,0.0]
+        self.do_rule = 0
+
+        # angle info
         self.target_angle = 0
-        self.angular_momentum_max = 0
+        self.direction = 0
+        self.difference = [0.0,0.0]
 
-        # variables for both forward thrust and turning thrust
-        self.weight = 525054
-        self.thruster_force = 300000
+        # distance info
+        self.target_distance = 0
 
-        # variables for turning
-        self.turning_distance = 28
-        self.angular_inertia = (1 / 12) * self.weight * (49.5 ** 2)
-        self.turn_thrust_percent = 0.0
-        self.angular_force = 0
-        self.angular_acceleration = 0
-        self.angular_velocity = 0
+        # movement
+        self.turning_speed = 100
+        self.velocity = [0.0,0.0]
 
         # shooting variables
         self.shooting = False
         self.bullets = arcade.SpriteList()
         self.last_shot = 0
-        self.shoot_delay = 0.1
+        self.shoot_delay = 1
         self.next_shot = 0
 
         # sprites
@@ -122,38 +124,15 @@ class Enemy(arcade.Sprite):
                             ]
         self.set_hit_box(self.point_list)
 
-    def get_sprites(self):
-        for i in range(4):
-            texture = arcade.load_texture("Sprites/Enemy Hunter + Damage Frames.png", 0, 330*i,330,330)
-            self.textures.append(texture)
-        self.texture = self.textures[0]
+        # algorithm variables
+        self.target = [0.0,0.0]
+        self.target_speed = 0
 
-    def draw(self):
-        self.bullets.draw()
-        #self.draw_hit_box(arcade.color.LIME_GREEN)
-        super().draw()
-
-    def on_update(self, delta_time: float = 1 / 60):
-        """
-        runs all functions necessary each update
-        """
-        self.target_distance = vector.find_distance((self.center_x, self.center_y),
-                                                    (self.handler.player.center_x, self.handler.player.center_y))
-        if self.target_distance <= 300:
-            self.calc_turn()
-            if self.shooting and self.last_shot + self.shoot_delay < time.time():
-                self.last_shot = time.time()
-                self.shoot()
-        self.check_contact()
-        self.calc_turning_acceleration()
-        self.apply_acceleration_velocity(delta_time)
-        self.bullets.on_update(delta_time)
-        self.if_hit_player()
-
-    def shoot(self):
-        shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity)
-        shot.texture = arcade.load_texture("Sprites/circle red.png")
-        self.bullets.append(shot)
+        # Rules
+        self.rule_1_priority = 1
+        self.rule_2_priority = 1
+        self.rule_3_priority = 1
+        self.rule_4_priority = 1
 
     def setup(self, handler):
         """
@@ -176,103 +155,98 @@ class Enemy(arcade.Sprite):
         point.target = self
         self.handler.player.enemy_pointers.append(point)
 
-    def calc_turn(self):
-        """
-        calculates the direction the enemy must turn as well as whether they must be decelerating or accelerating.
-        """
+    def get_sprites(self):
+        for i in range(4):
+            texture = arcade.load_texture("Sprites/Enemy Hunter + Damage Frames.png", 0, 330*i,330,330)
+            self.textures.append(texture)
+        self.texture = self.textures[0]
+
+    def shoot(self):
+        shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity)
+        shot.texture = arcade.load_texture("Sprites/circle red.png")
+        self.bullets.append(shot)
+
+    def draw(self):
+        if self.handler.player.show_hitbox:
+            # arcade.draw_line(self.center_x,self.center_y, self.handler.player.center_x, self.handler.player.center_y,arcade.color.LIME_GREEN, 1)
+            # self.draw_hit_box(color=arcade.color.LIME_GREEN)
+
+            arcade.draw_line(self.center_x + self.rule_1_effect[0]*20, self.center_y + self.rule_1_effect[1]*20, self.center_x, self.center_y,
+                             arcade.color.RADICAL_RED)
+            arcade.draw_line(self.center_x + self.rule_2_effect[0]*20, self.center_y + self.rule_2_effect[1]*20, self.center_x, self.center_y,
+                             arcade.color.LIME_GREEN)
+            arcade.draw_line(self.center_x + self.rule_3_effect[0]*20, self.center_y + self.rule_3_effect[1]*20, self.center_x, self.center_y,
+                             arcade.color.OCEAN_BOAT_BLUE)
+            arcade.draw_line(self.center_x,self.center_y, self.center_x+self.rule_4_effect[0] * 20, self.center_y+self.rule_4_effect[1] * 20,
+                             arcade.color.WHITE_SMOKE)
+            arcade.draw_line(self.center_x + self.velocity[0], self.center_y + self.velocity[1], self.center_x, self.center_y,
+                             arcade.color.CYBER_YELLOW)
+        self.bullets.draw()
+        super().draw()
+
+    def on_update(self, delta_time: float = 1/60):
+
+        # check contact
+        self.check_contact()
+        self.if_hit_player()
+
+        self.fix_angle()
+        self.calculate_movement()
+
+        self.turn(delta_time)
+
+        self.do_rule += 1*delta_time
+        self.rules()
+
+        self.center_x += self.velocity[0] * delta_time
+        self.center_y += self.velocity[1] * delta_time
+
+        if self.last_shot + self.shoot_delay < time.time():
+            if self.shooting:
+                self.shoot()
+            self.last_shot = time.time()
+            self.shoot_delay = random.randrange(5, 9)
+        self.bullets.on_update()
+
+    def calculate_movement(self):
+
+        # get the angle towards the player
         target = self.handler.player
-        pos_T = (target.center_x, target.center_y)
-        pos_S = (self.center_x, self.center_y)
-        self.target_angle = vector.find_angle(pos_T, pos_S)
-        direction = self.calc_direction()
-        if round(self.target_angle) != self.angle:
-            self.angle += direction
-        if self.target_angle - 5 < self.angle < self.target_angle + 5:
-            self.shooting = True
+        self_pos = (self.center_x, self.center_y)
+        target_pos = (target.center_x, target.center_y)
+        self.target_angle = vector.find_angle(target_pos, self_pos)
+
+        # find the difference and the direction
+        self.difference = vector.calc_difference(self.target_angle, self.angle)
+        self.direction = vector.calc_direction(self.target_angle, self.angle)
+
+        # distance to player
+        dx = self_pos[0] - target_pos[0]
+        dy = self_pos[1] - target_pos[1]
+        self.target_distance = math.sqrt(dx**2 + dy**2)
+        self.target_speed = math.sqrt(target.acceleration[0]**2 + target.acceleration[1]**2)
+
+    def turn(self, delta_time):
+        if self.direction == -1:
+            small_difference = self.difference[1]
         else:
-            self.shooting = False
-        '''
-        difference = self.calc_difference()
-        print(self.angular_velocity)
-        if self.target_angle - 1 < self.angle < self.target_angle + 1 and self.angular_velocity < 0.25:
-            self.turn_thrust_percent = 0.0
-        elif difference[0] < 300 or difference[1] < 300:
-            self.turn_thrust_percent = direction
-            if difference[0] < 50 and self.angular_velocity < 0.25:
-                self.turn_thrust_percent = 0.0
-            if difference[0] < 50 and self.angular_velocity > -0.25:
-                self.turn_thrust_percent = 0.0
-        elif direction == 1 and self.angular_velocity < self.max_velocity:
-            self.turn_thrust_percent = 1.0
-        elif direction == -1 and self.angular_velocity > -self.max_velocity:
-            self.turn_thrust_percent = -1.0
-            '''
+            small_difference = self.difference[0]
 
-    def calc_difference(self):
-        difference_left = self.target_angle - self.angle
-        difference_right = self.angle + (360 - self.target_angle)
-        if difference_left < 0:
-            difference_left += 360
-        if difference_right > 360:
-            difference_right -= 360
-
-        return difference_left, difference_right
-
-    def calc_direction(self):
-        direction = 0
-        difference = self.calc_difference()
-        difference_left = difference[0]
-        difference_right = difference[1]
-        # print("left:", difference_left, ":", "right:", difference_right)
-        if difference_left < difference_right:
-            direction = 1
-        elif difference_right < difference_left:
-            direction = -1
-        return direction
-
-    def calc_turning_acceleration(self):
-        """
-        calculates the amount of force the thruster is outputting and the acceleration in a direction
-        """
-        self.angular_force = self.thruster_force * self.turn_thrust_percent
-        turning_torque = self.turning_distance * self.angular_force
-        if turning_torque != 0:
-            self.angular_acceleration = turning_torque / self.angular_inertia
+        if self.turning_speed * delta_time < small_difference:
+            self.angle += self.turning_speed * delta_time * self.direction
         else:
-            self.angular_acceleration = 0
+            self.angle += small_difference * self.direction
 
-    def apply_acceleration_velocity(self, delta_time):
+    def fix_angle(self):
         """
-        applies the acceleration and the velocity. the velocity applied to the angle is * by delta_time to convert it
-        from degree per second to degrees per frame
+        for ease of calculating difference, fix the angle of the enemy sprite.
         """
-        self.angular_velocity += math.degrees(self.angular_acceleration)
-        self.angle += self.angular_velocity * delta_time
         if self.angle > 360:
             self.angle -= 360
         elif self.angle < 0:
             self.angle += 360
 
-        self.find_final_angle(delta_time)
-
-    def find_final_angle(self, delta_time):
-        deceleration = math.degrees(self.angular_acceleration)
-        velocity = self.angular_velocity
-        if deceleration > 0: deceleration *= -1
-        if velocity > 0: velocity *= -1
-
-        if deceleration == 0:
-            time_to_0 = 0.6
-        else:
-            time_to_0 = (velocity / deceleration) * delta_time
-
-        self.final_angle = self.angle + (0.5 * (self.angular_velocity * delta_time) * time_to_0)
-        """
-            debug print statements
-            print(velocity, ":", deceleration)
-            print(time_to_0)
-            print(self.final_angle, ":", self.target_angle)
-        """
+        self.radians = math.radians(self.angle)
 
     def check_contact(self):
         hits = arcade.check_for_collision_with_list(self, self.handler.player.bullets)
@@ -301,3 +275,132 @@ class Enemy(arcade.Sprite):
             for hit in hits:
                 hit.remove_from_sprite_lists()
                 del hit
+
+    def rules(self):
+        self.rule_1_effect = self.rule1()
+        if self.do_rule > 0.1:
+            self.do_rule = 0
+            self.rule_2_effect = self.rule2()
+            self.rule_3_effect = self.rule3()
+            self.rule_4_effect = self.rule4()
+        final = [0.0,0.0]
+        final[0] = self.rule_1_effect[0] + self.rule_2_effect[0] + self.rule_3_effect[0] + self.rule_4_effect[0]
+        final[1] = self.rule_1_effect[1] + self.rule_2_effect[1] + self.rule_3_effect[1] + self.rule_4_effect[1]
+
+        self.velocity[0] += final[0]
+        self.velocity[1] += final[1]
+
+        speed_limit = 700
+        speed = math.sqrt(self.velocity[0] ** 2 + self.velocity[1]**2)
+        if speed > speed_limit:
+            self.velocity[0] = (self.velocity[0] / speed) * speed_limit
+            self.velocity[1] = (self.velocity[1] / speed) * speed_limit
+
+        self.shooting = self.shoot_rule()
+
+    def shoot_rule(self):
+        player = self.handler.player
+        angle_to_target = vector.find_angle((player.center_x, player.center_y),
+                                            (self.center_x, self.center_y))
+        difference = vector.calc_difference(angle_to_target, self.angle)
+        result = False
+        if difference[0] < 20 or difference[1] < 20:
+            result = True
+
+        return result
+
+    def rule1(self):
+        """
+        Rule One: Move Towards the player but stay 300 pixels away.
+        """
+        target = self.handler.player
+        distance = vector.find_distance((self.center_x,self.center_y), (target.center_x, target.center_y))
+        rad_angle = math.radians(self.target_angle)
+        if distance > 480:
+            x = math.cos(rad_angle) * 2.8
+            y = math.sin(rad_angle) * 2.8
+        elif distance > 330:
+            x = math.cos(rad_angle) * 2.5
+            y = math.sin(rad_angle) * 2.5
+        elif distance < 285:
+            x = math.cos(rad_angle) * -2.5
+            y = math.sin(rad_angle) * -2.5
+        elif not self.target_speed:
+            x = 0
+            y = 0
+        else:
+            x = math.cos(rad_angle) * self.target_speed
+            y = math.sin(rad_angle) * self.target_speed
+        result = [x * self.rule_1_priority, y * self.rule_1_priority]
+        return result
+
+    def rule2(self):
+        """
+        Rule Two: Avoid being in front of the player.
+        """
+        player = self.handler.player
+        angle_to_self = vector.find_angle((self.center_x,self.center_y),
+                                          (player.center_x, player.center_y))
+        difference = vector.calc_difference(player.angle, angle_to_self)
+        direction = 0
+        move = 0
+        if difference[0] < 45 and difference[0] < difference[1]:
+            direction = player.angle - 90
+            move = (45 - difference[0])
+        if difference[1] < 45 and difference[1] < difference[0]:
+            direction = player.angle + 90
+            move = (45 - difference[1])
+        x,y = 0,0
+        if direction:
+            rad_difference = math.radians(direction)
+            x = math.cos(rad_difference) * move
+            y = math.sin(rad_difference) * move
+        result = [x * self.rule_2_priority * 0.05, y * self.rule_2_priority * 0.05]
+        return result
+
+    def rule3(self):
+        """
+        Avoid being infront of allies, and do not crash into each other.
+        """
+        x = 0
+        y = 0
+        total = 0
+        for neighbor in self.handler.enemy_sprites:
+            if neighbor != self:
+                distance = vector.find_distance((self.center_x,self.center_y),(neighbor.center_x, neighbor.center_y))
+                if distance < 100:
+                    angle_to_self = vector.find_angle((self.center_x,self.center_y),
+                                                      (neighbor.center_x, neighbor.center_y))
+                    difference = vector.calc_difference(neighbor.angle, angle_to_self)
+                    direction = vector.calc_direction(neighbor.angle, angle_to_self)
+                    if difference[0] < 45 and difference[0] < difference[1]:
+                        perp_rad_angle = math.radians(neighbor.angle + 90 * -direction)
+                        x += math.cos(perp_rad_angle) * ((90 - difference[0])/45)
+                        y += math.sin(perp_rad_angle) * ((90 - difference[0])/45)
+                    elif difference[1] < 45 and difference[1] < difference[0]:
+                        perp_rad_angle = math.radians(neighbor.angle + 90 * -direction)
+                        x += math.cos(perp_rad_angle) * ((90 - difference[1])/45)
+                        y += math.sin(perp_rad_angle) * ((90 - difference[1])/45)
+                    else:
+                        x += (self.center_x - neighbor.center_x)
+                        y += (self.center_y - neighbor.center_y)
+                        total += 1
+        if total:
+            x /= total
+            y /= total
+        result = [x * self.rule_3_priority * 0.05, y * self.rule_3_priority * 0.05]
+        return result
+
+    def rule4(self):
+        """
+        Attempt to slow down or speed up to match the players velocity
+        """
+        target = self.handler.player
+        target_velocity = (target.velocity[0], target.velocity[1])
+        distance = vector.find_distance((self.center_x,self.center_y),(target.center_x, target.center_y))
+        result = [0.0,0.0]
+        if distance < 700:
+            result[0] = (target_velocity[0] - self.velocity[0])/8
+            result[1] = (target_velocity[1] - self.velocity[1])/8
+
+        return [result[0] * 0.05 * self.rule_4_priority, result[1] * 0.05 * self.rule_4_priority]

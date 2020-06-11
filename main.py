@@ -17,6 +17,7 @@ class GameWindow(arcade.Window):
 
         # check if on_update should run.
         self.process = True
+        self.changed = False
 
         # x and y Coordinates for Reset Position
         self.center_x = SCREEN_WIDTH // 2
@@ -66,7 +67,8 @@ class GameWindow(arcade.Window):
             self.asteroid.check_wall(self.left_view, self.bottom_view)
 
             # Enemy update
-            self.enemy_handler.on_update(delta_time)
+            if self.changed:
+                self.enemy_handler.on_update(delta_time)
 
             if self.player.dead:
                 self.text_sprite.center_x, self.text_sprite.center_y = self.left_view + SCREEN_WIDTH // 2, self.bottom_view + SCREEN_WIDTH // 2
@@ -85,16 +87,16 @@ class GameWindow(arcade.Window):
         Moves the Viewport to keep the player in the center of the screen.
         """
 
-        changed = False
+        self.changed = False
         prev_value = [self.left_view, self.bottom_view]
 
         self.left_view += self.player.velocity[0] * delta_time
         self.bottom_view += self.player.velocity[1] * delta_time
 
         if prev_value[0] != self.left_view or prev_value[1] != self.bottom_view:
-            changed = True
+            self.changed = True
 
-        if changed:
+        if self.changed:
             arcade.set_viewport(self.left_view,
                                 SCREEN_WIDTH + self.left_view,
                                 self.bottom_view,
@@ -105,11 +107,9 @@ class GameWindow(arcade.Window):
         Runs all of the draw functions for all Sprites and SpriteLists
         """
         arcade.start_render()
-
         text = "Player Health: " + str(self.player.health)
         arcade.draw_text(text, self.left_view + SCREEN_WIDTH // 2, self.bottom_view + SCREEN_HEIGHT - 50,
                          arcade.color.WHITE, font_size=15, anchor_x="center")
-
         self.asteroid.draw()
         self.player.draw()
         self.enemy_handler.draw()
@@ -122,6 +122,7 @@ class GameWindow(arcade.Window):
         Needs to be neatened with setups.
         """
         self.process = True
+        self.changed = False
 
         # view
         self.left_view = 0

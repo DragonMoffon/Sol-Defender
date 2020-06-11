@@ -1,7 +1,5 @@
 import arcade
 
-import vector
-
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 SCREEN_TITLE = "Hit Box Maker"

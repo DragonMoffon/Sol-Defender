@@ -17,7 +17,7 @@ class Bullet(arcade.Sprite):
         self.velocity = [0.0, 0.0]
         self.speed = 500
         self.life = 0
-        self.max_age = 0.6
+        self.max_age = 2
         self.spawn(pos, angle, velocity)
 
     def spawn(self, pos, angle, velocity):

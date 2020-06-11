@@ -65,8 +65,46 @@ class Player(arcade.Sprite):
                       (-125, -185), (-145, -185), (-145, -155), (-135, -155), (-135, -135), (-125, -135), (-125, -105),
                       (-85, -105), (-85, -75), (-115, -75), (-115, -55), (-125, -55), (-125, -35), (-135, -35),
                       (-135, -25), (-75, -25), (-75, -15), (-105, -15), (-105, -5))
-
         self.set_hit_box(point_list)
+
+        # view cone
+        self.view_cone_points = []
+        self.view_range = 300
+
+    """
+    arcade.Sprite Methods
+    """
+
+    def on_update(self, delta_time: float = 1 / 60):
+        print(math.sqrt(self.velocity[0]**2 + self.velocity[1]**2))
+
+        self.calculate_thruster_force()
+        self.calculate_acceleration()
+        self.apply_acceleration()
+        self.move(delta_time)
+        self.apply_correction()
+
+        self.bullets.on_update(delta_time)
+        if self.shooting and self.last_shot + self.delay < time.time():
+            self.shoot()
+            self.last_shot = time.time()
+
+        self.enemy_pointers.on_update(delta_time)
+
+    def draw(self):
+        self.enemy_pointers.draw()
+        self.bullets.draw()
+        super().draw()
+        if self.show_hitbox:
+            arcade.draw_line(self.center_x, self.center_y,
+                             self.center_x + self.velocity[0], self.center_y + self.velocity[1],
+                             arcade.color.CYBER_YELLOW)
+            """
+            self.draw_hit_box(color=arcade.color.LIME_GREEN)
+            """
+    """
+    Physics Movement Methods
+    """
 
     def apply_correction(self):
         if not self.turn_key:
@@ -105,33 +143,25 @@ class Player(arcade.Sprite):
             self.angle -= 360
         elif self.angle < 0:
             self.angle += 360
+        speed_limit = 500
+        speed = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
+        if speed > speed_limit:
+            self.velocity[0] = (self.velocity[0]/speed) * speed_limit
+            self.velocity[1] = (self.velocity[1]/speed) * speed_limit
         self.center_x += self.velocity[0] * delta_time
         self.center_y += self.velocity[1] * delta_time
 
-    def on_update(self, delta_time: float = 1 / 60):
-        self.calculate_thruster_force()
-        self.calculate_acceleration()
-        self.apply_acceleration()
-        self.move(delta_time)
-        self.apply_correction()
-
-        self.bullets.on_update(delta_time)
-        if self.shooting and self.last_shot + self.delay < time.time():
-            self.shoot()
-            self.last_shot = time.time()
-
-        self.enemy_pointers.on_update(delta_time)
+    """
+    Other Methods
+    """
 
     def shoot(self):
         shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity)
         self.bullets.append(shot)
 
-    def draw(self):
-        self.enemy_pointers.draw()
-        self.bullets.draw()
-        super().draw()
-        if self.show_hitbox:
-            self.draw_hit_box(color=arcade.color.LIME_GREEN)
+    """
+    Key Press methods
+    """
 
     def key_down(self, key):
         if key == arcade.key.W:
