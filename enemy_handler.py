@@ -205,7 +205,7 @@ class Enemy(arcade.Sprite):
             if self.shooting:
                 self.shoot()
             self.last_shot = time.time()
-            self.shoot_delay = random.randrange(5, 9)
+            self.shoot_delay = random.randrange(3, 7)
         self.bullets.on_update()
 
     def calculate_movement(self):
@@ -250,6 +250,12 @@ class Enemy(arcade.Sprite):
 
     def check_contact(self):
         hits = arcade.check_for_collision_with_list(self, self.handler.player.bullets)
+        for enemy in self.handler.enemy_sprites:
+            if enemy != self:
+                e_hits = arcade.check_for_collision_with_list(self, enemy.bullets)
+                if len(e_hits) > 0:
+                    for hit in e_hits:
+                        hits.append(hit)
         if len(hits) > 0:
             hits[0].remove_from_sprite_lists()
             del hits[0]
@@ -303,10 +309,22 @@ class Enemy(arcade.Sprite):
         angle_to_target = vector.find_angle((player.center_x, player.center_y),
                                             (self.center_x, self.center_y))
         difference = vector.calc_difference(angle_to_target, self.angle)
+        distance_to_target = vector.find_distance((self.center_x,self.center_y),(player.center_x,player.center_y))
         result = False
-        if difference[0] < 20 or difference[1] < 20:
+        if difference[0] < 30 or difference[1] < 30:
             result = True
+            for neighbor in self.handler.enemy_sprites:
+                distance_to_neighbor = vector.find_distance((self.center_x,self.center_y),(neighbor.center_x,neighbor.center_y))
+                if neighbor != self:
+                    if distance_to_neighbor < distance_to_target:
+                        angle_to_neighbor = vector.find_angle((neighbor.center_x, neighbor.center_y),
+                                                          (self.center_x, self.center_y))
+                        difference = vector.calc_difference(angle_to_neighbor, self.angle)
+                        if difference[0] < 20 or difference[1] < 20:
+                            result = False
 
+                    if result is False:
+                        break
         return result
 
     def rule1(self):
@@ -360,7 +378,7 @@ class Enemy(arcade.Sprite):
 
     def rule3(self):
         """
-        Avoid being infront of allies, and do not crash into each other.
+        Avoid being in front of allies, and do not crash into each other.
         """
         x = 0
         y = 0
