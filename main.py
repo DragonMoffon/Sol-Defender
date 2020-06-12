@@ -64,11 +64,13 @@ class GameWindow(arcade.Window):
             self.view_port(delta_time)
 
             # Check The Asteroids Position
-            self.asteroid.check_wall(self.left_view, self.bottom_view)
+            if self.asteroid is not None:
+                self.asteroid.check_wall(self.left_view, self.bottom_view)
 
             # Enemy update
             if self.changed:
-                self.enemy_handler.on_update(delta_time)
+                if self.enemy_handler.enemy_sprites is not None:
+                    self.enemy_handler.on_update(delta_time)
 
             if self.player.dead:
                 self.text_sprite.center_x, self.text_sprite.center_y = self.left_view + SCREEN_WIDTH // 2, self.bottom_view + SCREEN_WIDTH // 2
@@ -110,13 +112,15 @@ class GameWindow(arcade.Window):
         text = "Player Health: " + str(self.player.health)
         arcade.draw_text(text, self.left_view + SCREEN_WIDTH // 2, self.bottom_view + SCREEN_HEIGHT - 50,
                          arcade.color.WHITE, font_size=15, anchor_x="center")
-        self.asteroid.draw()
+        if self.asteroid is not None:
+            self.asteroid.draw()
         self.player.draw()
-        self.enemy_handler.draw()
+        if self.enemy_handler.enemy_sprites is not None:
+            self.enemy_handler.draw()
         if self.show_text:
             self.text_sprite.draw()
 
-    def reset(self):
+    def reset(self, enemies = True, asteroids = True):
         """
         Resets the game world.
         Needs to be neatened with setups.
@@ -138,16 +142,20 @@ class GameWindow(arcade.Window):
         self.player.center_y = self.center_y
 
         # asteroid
-        self.asteroid.center_x = self.center_x
-        self.asteroid.center_y = self.center_y
+        self.asteroid = None
+        if asteroids:
+            self.asteroid = Asteroid()
+            self.asteroid.center_x = self.center_x
+            self.asteroid.center_y = self.center_y
 
         # enemies
         self.enemy_handler = enemy_handler.EnemyHandler()
-        self.enemy_handler.player = self.player
-        self.enemy_handler.setup()
+        if enemies:
+            self.enemy_handler.player = self.player
+            self.enemy_handler.setup()
 
         # player pointer
-        self.player.enemy_handler = self.enemy_handler
+            self.player.enemy_handler = self.enemy_handler
 
     def on_key_press(self, key, modifiers):
         """
@@ -162,6 +170,13 @@ class GameWindow(arcade.Window):
 
         if key == arcade.key.ESCAPE:
             self.close()
+
+        if key == arcade.key.P:
+            self.reset(enemies=False)
+        elif key == arcade.key.O:
+            self.reset(asteroids=False)
+        elif key == arcade.key.I:
+            self.reset(False,False)
 
     def on_key_release(self, key, modifier):
         """

@@ -163,13 +163,18 @@ class Enemy(arcade.Sprite):
 
     def shoot(self):
         shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity)
-        shot.texture = arcade.load_texture("Sprites/circle red.png")
+        shot.texture = arcade.load_texture("Sprites/Enemy Bullet.png")
+        shot.scale = 0.05
+        point_list = ((-220.0, 10.0), (-110.0, 60.0), (150.0, 60.0), (200.0, 40.0), (220.0, 20.0), (220.0, -20.0), (200.0, -40.0), (150.0, -60.0), (-110.0, -60.0), (-220.0, -10.0))
+        shot.set_hit_box(point_list)
         self.bullets.append(shot)
 
     def draw(self):
         if self.handler.player.show_hitbox:
             # arcade.draw_line(self.center_x,self.center_y, self.handler.player.center_x, self.handler.player.center_y,arcade.color.LIME_GREEN, 1)
             # self.draw_hit_box(color=arcade.color.LIME_GREEN)
+            for bullet in self.bullets:
+                arcade.draw_line(bullet.center_x, bullet.center_y, bullet.velocity[0] + bullet.center_x, bullet.velocity[1] + bullet.center_y, arcade.color.CYBER_YELLOW)
 
             arcade.draw_line(self.center_x + self.rule_1_effect[0]*20, self.center_y + self.rule_1_effect[1]*20, self.center_x, self.center_y,
                              arcade.color.RADICAL_RED)

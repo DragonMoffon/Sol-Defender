@@ -3,6 +3,8 @@ import time
 
 import arcade
 
+import vector
+
 
 class Bullet(arcade.Sprite):
 
@@ -30,6 +32,8 @@ class Bullet(arcade.Sprite):
         self.velocity[0] = velocity[0] + (math.cos(angle_rad) * self.speed)
         self.velocity[1] = velocity[1] + (math.sin(angle_rad) * self.speed)
         self.life = time.time() + self.max_age
+
+        self.angle = angle
 
     def on_update(self, delta_time: float = 1 / 60):
         self.center_x += self.velocity[0] * delta_time

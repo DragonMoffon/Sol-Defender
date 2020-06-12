@@ -43,7 +43,7 @@ class Player(arcade.Sprite):
 
         # shooting variables
         self.shooting = False
-        self.delay = 0.1
+        self.delay = 0.125
         self.bullets = arcade.SpriteList()
         self.last_shot = 0
 
@@ -76,8 +76,6 @@ class Player(arcade.Sprite):
     """
 
     def on_update(self, delta_time: float = 1 / 60):
-        print(math.sqrt(self.velocity[0]**2 + self.velocity[1]**2))
-
         self.calculate_thruster_force()
         self.calculate_acceleration()
         self.apply_acceleration()
@@ -96,6 +94,9 @@ class Player(arcade.Sprite):
         self.bullets.draw()
         super().draw()
         if self.show_hitbox:
+            for bullet in self.bullets:
+                arcade.draw_line(bullet.center_x, bullet.center_y, bullet.velocity[0] + bullet.center_x, bullet.velocity[1] + bullet.center_y, arcade.color.CYBER_YELLOW)
+
             arcade.draw_line(self.center_x, self.center_y,
                              self.center_x + self.velocity[0], self.center_y + self.velocity[1],
                              arcade.color.CYBER_YELLOW)
@@ -118,6 +119,11 @@ class Player(arcade.Sprite):
 
     def calculate_thruster_force(self):
         self.turning_force = self.thruster_force * self.thrusters_output[0]
+        if self.thrusters_output[0] < -self.correction and self.angle_velocity > 0:
+            self.turning_force *= 1.5
+        elif self.thrusters_output[0] > self.correction and self.angle_velocity < 0:
+            self.turning_force *= 1.5
+        print(self.turning_force)
         self.forward_force = self.thrusters_output[1] * self.thruster_force * 4
 
     def calculate_acceleration(self):
