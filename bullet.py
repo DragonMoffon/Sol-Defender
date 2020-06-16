@@ -3,8 +3,6 @@ import time
 
 import arcade
 
-import vector
-
 
 class Bullet(arcade.Sprite):
 
@@ -23,6 +21,9 @@ class Bullet(arcade.Sprite):
         self.spawn(pos, angle, velocity)
 
     def spawn(self, pos, angle, velocity):
+        """
+        Taking many variables from the parent spawn the bullet and give it velocity
+        """
         angle_rad = math.radians(angle)
 
         self.center_x = pos[0] + math.cos(angle_rad) * self.spawn_away
@@ -36,6 +37,10 @@ class Bullet(arcade.Sprite):
         self.angle = angle
 
     def on_update(self, delta_time: float = 1 / 60):
+        """
+        Update the bullet and kill it if it's to old.
+        """
+
         self.center_x += self.velocity[0] * delta_time
         self.center_y += self.velocity[1] * delta_time
         if time.time() > self.life:

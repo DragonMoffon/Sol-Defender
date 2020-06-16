@@ -22,16 +22,100 @@ class EnemyHandler:
         # The sprite list that holds all of the enemy sprites
         self.enemy_sprites = None
 
-        # A simplified variable that represents the difficulty of the wave. currently just how many enemies there are.
-        self.num_enemies = 5
+        # the current wave, plus which stage of difficulty
         self.wave = 0
+        self.stage = 0
 
-    def setup(self):
+        # The number of enemies and the starting number.
+        self.starting_num_enemies = 2
+        self.num_enemies = 0
+
+        # the difficulty and whether the difficulty changes
+        self.difficulty = 0
+        self.stay_same = False
+
+        # the wave times for difficulties
+        self.wave_times = []
+        self.average_time = 0
+        self.current_wave_time = 0
+
+        # player health for enemy waves
+        self.last_player_health = 0
+
+        # clustering variables
+        self.count_in_clusters = 6
+        self.cluster_count = 1
+
+    def assign_player_health(self):
         """
-        this sets up the enemy waves. It will be separated into a setup for each type of wave
-        (each mission has a different type)
+        This method is Just to ensure no bugs arise.
+        """
+        if self.player is not None:
+            self.last_player_health = self.player.health
+
+    def calc_wave(self):
+
+        """
+        using variables calculated based on the how the player is doing
+         the number of enemies is based of a difficult equation.
+        """
+        loss = self.last_player_health - self.player.health
+        self.assign_player_health()
+        if loss > 0:
+            loss_factor = 1/loss
+        else:
+            loss_factor = 0
+
+        if len(self.wave_times) > 0:
+            time_factor = self.average_time / self.wave_times[-1]
+        #    print(f"Average Time = {self.average_time}. Last Time = {self.wave_times[-1]}")
+        else:
+            time_factor = 0
+
+        base = 1.05
+        last_difficulty = self.difficulty
+        if last_difficulty > 0:
+            modifier = (loss_factor + time_factor + (last_difficulty-base))*(self.stage/20)
+        #    print(
+        #        f"difficulty = base[{base}] + (loss factor[{loss_factor}] + time factor[{time_factor}]"
+        #        f" + last difficulty[{last_difficulty - base}])*(stage[{self.stage / 20}]). ")
+        else:
+            modifier = 0
+        self.difficulty = round(base + modifier, 2)
+        prev_num_enemies = self.num_enemies
+        self.num_enemies = round(self.starting_num_enemies * (self.difficulty ** self.wave))
+
+        if self.num_enemies < self.starting_num_enemies:
+            self.num_enemies = self.starting_num_enemies
+
+        if self.num_enemies < prev_num_enemies:
+            self.num_enemies = prev_num_enemies
+
+        print("difficulty =", self.difficulty, "- Number of enemies =", self.num_enemies)
+
+    def do_wave_time(self):
+        """
+        All steps based on record keeping the time A player takes to complete a mission
+        """
+        if self.current_wave_time > 0:
+            self.wave_times.append(time.time() - self.current_wave_time)
+            total = 0
+            for times in self.wave_times:
+                total += times
+            self.average_time = total/len(self.wave_times)
+        self.current_wave_time = time.time()
+
+    def setup_wave(self):
+        """
+        The method called to set up the next wave.
         """
         self.wave += 1
+        if self.wave % 5 == 1:
+            self.stage += 1
+        print("Stage:", self.stage, "Wave:", self.wave)
+        self.do_wave_time()
+        self.calc_wave()
+
         self.enemy_sprites = arcade.SpriteList()
         for i in range(self.num_enemies):
             enemy = Enemy()
@@ -44,6 +128,8 @@ class EnemyHandler:
         """
         for enemy in self.enemy_sprites:
             enemy.draw()
+        if self.wave % 6 == 0:
+            arcade.draw_text(str(self.stage), self.player.center_x, self.player.center_y - 30, arcade.color.WHITE)
 
     def on_update(self, delta_time: float = 1 / 60):
         """
@@ -51,7 +137,7 @@ class EnemyHandler:
         """
         self.enemy_sprites.on_update(delta_time)
         if len(self.enemy_sprites) == 0:
-            self.setup()
+            self.setup_wave()
 
 
 class Enemy(arcade.Sprite):
@@ -67,24 +153,23 @@ class Enemy(arcade.Sprite):
         self.handler = None
 
         # debug guff
-        self.rule_1_effect = [0.0,0.0]
-        self.rule_2_effect = [0.0,0.0]
-        self.rule_3_effect = [0.0,0.0]
-        self.rule_4_effect = [0.0,0.0]
-        self.behind_point = [0.0,0.0]
+        self.rule_1_effect = [0.0, 0.0]
+        self.rule_2_effect = [0.0, 0.0]
+        self.rule_3_effect = [0.0, 0.0]
+        self.rule_4_effect = [0.0, 0.0]
         self.do_rule = 0
 
         # angle info
         self.target_angle = 0
         self.direction = 0
-        self.difference = [0.0,0.0]
+        self.difference = [0.0, 0.0]
 
         # distance info
         self.target_distance = 0
 
         # movement
         self.turning_speed = 100
-        self.velocity = [0.0,0.0]
+        self.velocity = [0.0, 0.0]
 
         # shooting variables
         self.shooting = False
@@ -125,7 +210,7 @@ class Enemy(arcade.Sprite):
         self.set_hit_box(self.point_list)
 
         # algorithm variables
-        self.target = [0.0,0.0]
+        self.target = [0.0, 0.0]
         self.target_speed = 0
 
         # Rules
@@ -156,40 +241,64 @@ class Enemy(arcade.Sprite):
         self.handler.player.enemy_pointers.append(point)
 
     def get_sprites(self):
+        """
+        Gets all of the hurt sprites for the enemy
+        """
         for i in range(4):
-            texture = arcade.load_texture("Sprites/Enemy Hunter + Damage Frames.png", 0, 330*i,330,330)
+            texture = arcade.load_texture("Sprites/Enemy Hunter + Damage Frames.png", 0, 330*i, 330, 330)
             self.textures.append(texture)
         self.texture = self.textures[0]
 
     def shoot(self):
+        """
+        shoots a bullets.
+        """
         shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity)
         shot.texture = arcade.load_texture("Sprites/Enemy Bullet.png")
         shot.scale = 0.05
-        point_list = ((-220.0, 10.0), (-110.0, 60.0), (150.0, 60.0), (200.0, 40.0), (220.0, 20.0), (220.0, -20.0), (200.0, -40.0), (150.0, -60.0), (-110.0, -60.0), (-220.0, -10.0))
+        point_list = ((-220.0, 10.0), (-110.0, 60.0), (150.0, 60.0), (200.0, 40.0), (220.0, 20.0), (220.0, -20.0),
+                      (200.0, -40.0), (150.0, -60.0), (-110.0, -60.0), (-220.0, -10.0))
         shot.set_hit_box(point_list)
         self.bullets.append(shot)
 
     def draw(self):
-        if self.handler.player.show_hitbox:
-            # arcade.draw_line(self.center_x,self.center_y, self.handler.player.center_x, self.handler.player.center_y,arcade.color.LIME_GREEN, 1)
-            # self.draw_hit_box(color=arcade.color.LIME_GREEN)
-            for bullet in self.bullets:
-                arcade.draw_line(bullet.center_x, bullet.center_y, bullet.velocity[0] + bullet.center_x, bullet.velocity[1] + bullet.center_y, arcade.color.CYBER_YELLOW)
+        """
+        Draws the enemy sprite and bullets, as well as debug information
+        """
+        if self.handler.player.show_hit_box:
+            """
+            arcade.draw_line(self.center_x,self.center_y, self.handler.player.center_x, self.handler.player.center_y, 
+                             arcade.color.LIME_GREEN, 1)
+            self.draw_hit_box(color=arcade.color.LIME_GREEN)
+            """
+            for shot in self.bullets:
+                arcade.draw_line(shot.center_x, shot.center_y,
+                                 shot.velocity[0] + shot.center_x, shot.velocity[1] + shot.center_y,
+                                 arcade.color.CYBER_YELLOW)
 
-            arcade.draw_line(self.center_x + self.rule_1_effect[0]*20, self.center_y + self.rule_1_effect[1]*20, self.center_x, self.center_y,
+            arcade.draw_line(self.center_x + self.rule_1_effect[0]*20, self.center_y + self.rule_1_effect[1]*20,
+                             self.center_x, self.center_y,
                              arcade.color.RADICAL_RED)
-            arcade.draw_line(self.center_x + self.rule_2_effect[0]*20, self.center_y + self.rule_2_effect[1]*20, self.center_x, self.center_y,
+            arcade.draw_line(self.center_x + self.rule_2_effect[0]*20, self.center_y + self.rule_2_effect[1]*20,
+                             self.center_x, self.center_y,
                              arcade.color.LIME_GREEN)
-            arcade.draw_line(self.center_x + self.rule_3_effect[0]*20, self.center_y + self.rule_3_effect[1]*20, self.center_x, self.center_y,
+            arcade.draw_line(self.center_x + self.rule_3_effect[0]*20, self.center_y + self.rule_3_effect[1]*20,
+                             self.center_x, self.center_y,
                              arcade.color.OCEAN_BOAT_BLUE)
-            arcade.draw_line(self.center_x,self.center_y, self.center_x+self.rule_4_effect[0] * 20, self.center_y+self.rule_4_effect[1] * 20,
+            arcade.draw_line(self.center_x, self.center_y,
+                             self.center_x+self.rule_4_effect[0] * 20, self.center_y+self.rule_4_effect[1] * 20,
                              arcade.color.WHITE_SMOKE)
-            arcade.draw_line(self.center_x + self.velocity[0], self.center_y + self.velocity[1], self.center_x, self.center_y,
+            arcade.draw_line(self.center_x + self.velocity[0], self.center_y + self.velocity[1],
+                             self.center_x, self.center_y,
                              arcade.color.CYBER_YELLOW)
         self.bullets.draw()
         super().draw()
 
     def on_update(self, delta_time: float = 1/60):
+
+        """
+        Every update run different method for the enemy and its algorithms.
+        """
 
         # check contact
         self.check_contact()
@@ -214,6 +323,9 @@ class Enemy(arcade.Sprite):
         self.bullets.on_update()
 
     def calculate_movement(self):
+        """
+        calculates the variables needed for the algorithms.
+        """
 
         # get the angle towards the player
         target = self.handler.player
@@ -232,6 +344,9 @@ class Enemy(arcade.Sprite):
         self.target_speed = math.sqrt(target.acceleration[0]**2 + target.acceleration[1]**2)
 
     def turn(self, delta_time):
+        """
+        turn the enemy to face the player.
+        """
         if self.direction == -1:
             small_difference = self.difference[1]
         else:
@@ -254,6 +369,9 @@ class Enemy(arcade.Sprite):
         self.radians = math.radians(self.angle)
 
     def check_contact(self):
+        """
+        Check to see if the player or an ally hits the enemy.
+        """
         hits = arcade.check_for_collision_with_list(self, self.handler.player.bullets)
         for enemy in self.handler.enemy_sprites:
             if enemy != self:
@@ -277,6 +395,9 @@ class Enemy(arcade.Sprite):
                 del self
 
     def if_hit_player(self):
+        """
+        check if the enemy hits the player
+        """
         hits = arcade.check_for_collision_with_list(self.handler.player, self.bullets)
         if len(hits) > 0:
             self.handler.player.health -= 4
@@ -288,13 +409,16 @@ class Enemy(arcade.Sprite):
                 del hit
 
     def rules(self):
+        """
+        all of the enemy rules for movement.
+        """
         self.rule_1_effect = self.rule1()
         if self.do_rule > 0.1:
             self.do_rule = 0
-            self.rule_2_effect = self.rule2()
+            # self.rule_2_effect = self.rule2() - This rule makes the basic AI too smart. It wont be used on most AI
             self.rule_3_effect = self.rule3()
             self.rule_4_effect = self.rule4()
-        final = [0.0,0.0]
+        final = [0.0, 0.0]
         final[0] = self.rule_1_effect[0] + self.rule_2_effect[0] + self.rule_3_effect[0] + self.rule_4_effect[0]
         final[1] = self.rule_1_effect[1] + self.rule_2_effect[1] + self.rule_3_effect[1] + self.rule_4_effect[1]
 
@@ -310,20 +434,24 @@ class Enemy(arcade.Sprite):
         self.shooting = self.shoot_rule()
 
     def shoot_rule(self):
+        """
+        Calculates if the enemy should shoot.
+        """
         player = self.handler.player
         angle_to_target = vector.find_angle((player.center_x, player.center_y),
                                             (self.center_x, self.center_y))
         difference = vector.calc_difference(angle_to_target, self.angle)
-        distance_to_target = vector.find_distance((self.center_x,self.center_y),(player.center_x,player.center_y))
+        distance_to_target = vector.find_distance((self.center_x, self.center_y), (player.center_x, player.center_y))
         result = False
         if difference[0] < 30 or difference[1] < 30:
             result = True
             for neighbor in self.handler.enemy_sprites:
-                distance_to_neighbor = vector.find_distance((self.center_x,self.center_y),(neighbor.center_x,neighbor.center_y))
+                distance_to_neighbor = vector.find_distance((self.center_x, self.center_y),
+                                                            (neighbor.center_x, neighbor.center_y))
                 if neighbor != self:
                     if distance_to_neighbor < distance_to_target:
                         angle_to_neighbor = vector.find_angle((neighbor.center_x, neighbor.center_y),
-                                                          (self.center_x, self.center_y))
+                                                              (self.center_x, self.center_y))
                         difference = vector.calc_difference(angle_to_neighbor, self.angle)
                         if difference[0] < 20 or difference[1] < 20:
                             result = False
@@ -337,7 +465,8 @@ class Enemy(arcade.Sprite):
         Rule One: Move Towards the player but stay 300 pixels away.
         """
         target = self.handler.player
-        distance = vector.find_distance((self.center_x,self.center_y), (target.center_x, target.center_y))
+        distance = vector.find_distance((self.center_x, self.center_y),
+                                        (target.center_x, target.center_y))
         rad_angle = math.radians(self.target_angle)
         if distance > 480:
             x = math.cos(rad_angle) * 2.8
@@ -362,7 +491,7 @@ class Enemy(arcade.Sprite):
         Rule Two: Avoid being in front of the player.
         """
         player = self.handler.player
-        angle_to_self = vector.find_angle((self.center_x,self.center_y),
+        angle_to_self = vector.find_angle((self.center_x, self.center_y),
                                           (player.center_x, player.center_y))
         difference = vector.calc_difference(player.angle, angle_to_self)
         direction = 0
@@ -373,7 +502,7 @@ class Enemy(arcade.Sprite):
         if difference[1] < 45 and difference[1] < difference[0]:
             direction = player.angle + 90
             move = (45 - difference[1])
-        x,y = 0,0
+        x, y = 0, 0
         if direction:
             rad_difference = math.radians(direction)
             x = math.cos(rad_difference) * move
@@ -390,20 +519,20 @@ class Enemy(arcade.Sprite):
         total = 0
         for neighbor in self.handler.enemy_sprites:
             if neighbor != self:
-                distance = vector.find_distance((self.center_x,self.center_y),(neighbor.center_x, neighbor.center_y))
+                distance = vector.find_distance((self.center_x, self.center_y), (neighbor.center_x, neighbor.center_y))
                 if distance < 100:
-                    angle_to_self = vector.find_angle((self.center_x,self.center_y),
+                    angle_to_self = vector.find_angle((self.center_x, self.center_y),
                                                       (neighbor.center_x, neighbor.center_y))
                     difference = vector.calc_difference(neighbor.angle, angle_to_self)
                     direction = vector.calc_direction(neighbor.angle, angle_to_self)
                     if difference[0] < 45 and difference[0] < difference[1]:
-                        perp_rad_angle = math.radians(neighbor.angle + 90 * -direction)
-                        x += math.cos(perp_rad_angle) * ((90 - difference[0])/45)
-                        y += math.sin(perp_rad_angle) * ((90 - difference[0])/45)
+                        perpendicular_rad_angle = math.radians(neighbor.angle + 90 * -direction)
+                        x += math.cos(perpendicular_rad_angle) * ((90 - difference[0])/45)
+                        y += math.sin(perpendicular_rad_angle) * ((90 - difference[0])/45)
                     elif difference[1] < 45 and difference[1] < difference[0]:
-                        perp_rad_angle = math.radians(neighbor.angle + 90 * -direction)
-                        x += math.cos(perp_rad_angle) * ((90 - difference[1])/45)
-                        y += math.sin(perp_rad_angle) * ((90 - difference[1])/45)
+                        perpendicular_rad_angle = math.radians(neighbor.angle + 90 * -direction)
+                        x += math.cos(perpendicular_rad_angle) * ((90 - difference[1])/45)
+                        y += math.sin(perpendicular_rad_angle) * ((90 - difference[1])/45)
                     else:
                         x += (self.center_x - neighbor.center_x)
                         y += (self.center_y - neighbor.center_y)
@@ -420,8 +549,8 @@ class Enemy(arcade.Sprite):
         """
         target = self.handler.player
         target_velocity = (target.velocity[0], target.velocity[1])
-        distance = vector.find_distance((self.center_x,self.center_y),(target.center_x, target.center_y))
-        result = [0.0,0.0]
+        distance = vector.find_distance((self.center_x, self.center_y), (target.center_x, target.center_y))
+        result = [0.0, 0.0]
         if distance < 700:
             result[0] = (target_velocity[0] - self.velocity[0])/8
             result[1] = (target_velocity[1] - self.velocity[1])/8

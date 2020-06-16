@@ -12,10 +12,13 @@ class Player(arcade.Sprite):
 
         super().__init__()
 
+        self.start = 0
+
         self.hit = False
-        self.health = 100
+        self.max_health = 100
+        self.health = self.max_health
         self.dead = False
-        self.show_hitbox = False
+        self.show_hit_box = False
 
         # The Seven Stats
         self.damage = 4
@@ -93,16 +96,18 @@ class Player(arcade.Sprite):
         self.enemy_pointers.draw()
         self.bullets.draw()
         super().draw()
-        if self.show_hitbox:
-            for bullet in self.bullets:
-                arcade.draw_line(bullet.center_x, bullet.center_y, bullet.velocity[0] + bullet.center_x, bullet.velocity[1] + bullet.center_y, arcade.color.CYBER_YELLOW)
-
+        if self.show_hit_box:
+            """
+            self.draw_hit_box(color=arcade.color.LIME_GREEN)
+            
+            for shot in self.bullets:
+                arcade.draw_line(shot.center_x, shot.center_y,
+                                 shot.velocity[0] + shot.center_x, shot.velocity[1] + shot.center_y,
+                                 arcade.color.CYBER_YELLOW)
+            """
             arcade.draw_line(self.center_x, self.center_y,
                              self.center_x + self.velocity[0], self.center_y + self.velocity[1],
                              arcade.color.CYBER_YELLOW)
-            """
-            self.draw_hit_box(color=arcade.color.LIME_GREEN)
-            """
     """
     Physics Movement Methods
     """
@@ -123,7 +128,6 @@ class Player(arcade.Sprite):
             self.turning_force *= 1.5
         elif self.thrusters_output[0] > self.correction and self.angle_velocity < 0:
             self.turning_force *= 1.5
-        print(self.turning_force)
         self.forward_force = self.thrusters_output[1] * self.thruster_force * 4
 
     def calculate_acceleration(self):
@@ -180,10 +184,10 @@ class Player(arcade.Sprite):
             self.turn_key = True
         elif key == arcade.key.SPACE:
             self.shooting = True
-        elif key == arcade.key.TAB and not self.show_hitbox:
-            self.show_hitbox = True
-        elif key == arcade.key.TAB and self.show_hitbox:
-            self.show_hitbox = False
+        elif key == arcade.key.TAB and not self.show_hit_box:
+            self.show_hit_box = True
+        elif key == arcade.key.TAB and self.show_hit_box:
+            self.show_hit_box = False
 
     def key_up(self, key):
         if key == arcade.key.W:

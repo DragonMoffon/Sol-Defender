@@ -51,8 +51,8 @@ class GameWindow(arcade.Window):
     def on_update(self, delta_time: float = 1 / 60):
 
         """
-        This method calls 60 times per second roughly and is what is used to update things such as positions, view ports,
-        and scores
+        This method calls 60 times per second roughly and is what is used to update things such as positions,
+        view ports, and scores
         """
         # FPS for debugging
         # print("FPS:",1/delta_time)
@@ -69,11 +69,16 @@ class GameWindow(arcade.Window):
 
             # Enemy update
             if self.changed:
+                if self.player.start == 1:
+                    self.enemy_handler.setup_wave()
+                    self.player.start = 2
+
                 if self.enemy_handler.enemy_sprites is not None:
                     self.enemy_handler.on_update(delta_time)
 
             if self.player.dead:
-                self.text_sprite.center_x, self.text_sprite.center_y = self.left_view + SCREEN_WIDTH // 2, self.bottom_view + SCREEN_WIDTH // 2
+                self.text_sprite.center_x, self.text_sprite.center_y = [self.left_view + SCREEN_WIDTH // 2,
+                                                                        self.bottom_view + SCREEN_WIDTH // 2]
                 self.text_sprite.texture = arcade.load_texture("Sprites/dead.png")
                 self.show_text = True
                 self.spawn_time = time.time()
@@ -120,7 +125,7 @@ class GameWindow(arcade.Window):
         if self.show_text:
             self.text_sprite.draw()
 
-    def reset(self, enemies = True, asteroids = True):
+    def reset(self, enemies=True, asteroids=True):
         """
         Resets the game world.
         Needs to be neatened with setups.
@@ -152,7 +157,8 @@ class GameWindow(arcade.Window):
         self.enemy_handler = enemy_handler.EnemyHandler()
         if enemies:
             self.enemy_handler.player = self.player
-            self.enemy_handler.setup()
+            self.enemy_handler.assign_player_health()
+            self.player.start = 1
 
         # player pointer
             self.player.enemy_handler = self.enemy_handler
@@ -176,7 +182,7 @@ class GameWindow(arcade.Window):
         elif key == arcade.key.O:
             self.reset(asteroids=False)
         elif key == arcade.key.I:
-            self.reset(False,False)
+            self.reset(False, False)
 
     def on_key_release(self, key, modifier):
         """
@@ -211,8 +217,8 @@ class Asteroid(arcade.Sprite):
 
     def check_wall(self, left, bottom):
         """
-        since there is only one asteroid this method moves the asteroid to the opposite side of the screen if it goes past
-         the edge of the screen ensuring the player can always see it.
+        since there is only one asteroid this method moves the asteroid to the opposite side of the screen if it goes
+         past the edge of the screen ensuring the player can always see it.
         """
         # left and right
         if left - self.radius > self.center_x:
@@ -225,6 +231,12 @@ class Asteroid(arcade.Sprite):
             self.center_y = bottom + SCREEN_HEIGHT + self.radius
         elif self.center_y > bottom + SCREEN_HEIGHT + self.radius:
             self.center_y = bottom - self.radius
+
+
+class Grid(arcade.Sprite):
+
+    def __init__(self):
+        super().__init__()
 
 
 def main():
