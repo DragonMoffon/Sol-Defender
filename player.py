@@ -11,6 +11,8 @@ class Player(arcade.Sprite):
     def __init__(self):
 
         super().__init__()
+        
+        self.alt = False
 
         self.start = 0
 
@@ -97,6 +99,10 @@ class Player(arcade.Sprite):
         self.bullets.draw()
         super().draw()
         if self.show_hit_box:
+            for shot in self.bullets:
+                arcade.draw_line(shot.center_x, shot.center_y,
+                                 shot.velocity[0] + shot.center_x, shot.velocity[1] + shot.center_y,
+                                 arcade.color.CYBER_YELLOW)
             """
             self.draw_hit_box(color=arcade.color.LIME_GREEN)
             
@@ -174,7 +180,13 @@ class Player(arcade.Sprite):
     """
 
     def key_down(self, key):
-        if key == arcade.key.W:
+
+        if key == arcade.key.A and self.alt:
+            self.angle += 90
+        elif key == arcade.key.D and self.alt:
+            self.angle -= 90
+
+        elif key == arcade.key.W:
             self.thrusters_output[1] = 1.0
         elif key == arcade.key.A:
             self.thrusters_output[0] = 1.0
@@ -182,12 +194,19 @@ class Player(arcade.Sprite):
         elif key == arcade.key.D:
             self.thrusters_output[0] = -1.0
             self.turn_key = True
+
         elif key == arcade.key.SPACE:
             self.shooting = True
+
         elif key == arcade.key.TAB and not self.show_hit_box:
             self.show_hit_box = True
         elif key == arcade.key.TAB and self.show_hit_box:
             self.show_hit_box = False
+
+        elif key == arcade.key.LALT:
+            self.alt = True
+        elif key == arcade.key.LSHIFT:
+            self.velocity = [0.0, 0.0]
 
     def key_up(self, key):
         if key == arcade.key.W:
@@ -200,3 +219,5 @@ class Player(arcade.Sprite):
             self.turn_key = False
         elif key == arcade.key.SPACE:
             self.shooting = False
+        elif key == arcade.key.LALT:
+            self.alt = False

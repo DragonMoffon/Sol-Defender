@@ -3,6 +3,7 @@ import arcade
 
 import enemy_handler
 import player
+import stars
 
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
 TITLE = "MVP Sol Defender"
@@ -47,6 +48,10 @@ class GameWindow(arcade.Window):
 
         # setup
         self.center_window()
+
+        # stars
+        self.star_field = stars.StarField()
+        self.star_field.holder = self
 
     def on_update(self, delta_time: float = 1 / 60):
 
@@ -109,23 +114,33 @@ class GameWindow(arcade.Window):
                                 self.bottom_view,
                                 SCREEN_HEIGHT + self.bottom_view)
 
+            if self.star_field.holder is not None:
+                change = (self.left_view - prev_value[0], self.bottom_view - prev_value[1])
+                self.star_field.on_update(change)
+
     def on_draw(self):
         """
         Runs all of the draw functions for all Sprites and SpriteLists
         """
         arcade.start_render()
+        if self.star_field.holder is not None:
+            self.star_field.draw()
         text = "Player Health: " + str(self.player.health)
         arcade.draw_text(text, self.left_view + SCREEN_WIDTH // 2, self.bottom_view + SCREEN_HEIGHT - 50,
                          arcade.color.WHITE, font_size=15, anchor_x="center")
+
         if self.asteroid is not None:
             self.asteroid.draw()
+
         self.player.draw()
+
         if self.enemy_handler.enemy_sprites is not None:
             self.enemy_handler.draw()
+
         if self.show_text:
             self.text_sprite.draw()
 
-    def reset(self, enemies=True, asteroids=True):
+    def reset(self, enemies=True, asteroids=True, star_field=True):
         """
         Resets the game world.
         Needs to be neatened with setups.
@@ -163,6 +178,11 @@ class GameWindow(arcade.Window):
         # player pointer
             self.player.enemy_handler = self.enemy_handler
 
+        # stars
+        self.star_field = stars.StarField()
+        if star_field:
+            self.star_field.setup(self)
+
     def on_key_press(self, key, modifiers):
         """
         Method runs each time the user presses a key.
@@ -178,11 +198,11 @@ class GameWindow(arcade.Window):
             self.close()
 
         if key == arcade.key.P:
-            self.reset(enemies=False)
+            self.reset(enemies=False, asteroids=True)
         elif key == arcade.key.O:
-            self.reset(asteroids=False)
+            self.reset(asteroids=False, star_field=False)
         elif key == arcade.key.I:
-            self.reset(False, False)
+            self.reset(False, False, True)
 
     def on_key_release(self, key, modifier):
         """

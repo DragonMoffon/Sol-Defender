@@ -1,5 +1,5 @@
 """
-These are all general use mathmatical functions based around 2D points(vectors) and angles.
+These are all general use mathematical functions based around 2D points(vectors) and angles.
 """
 
 import math

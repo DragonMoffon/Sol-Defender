@@ -3,13 +3,16 @@ import time
 
 import arcade
 
+import vector
+
 
 class Bullet(arcade.Sprite):
 
     def __init__(self, pos, angle, velocity):
         super().__init__()
         # parent variables
-        self.texture = arcade.load_texture("Sprites/circle_white.png")
+        texture_location = "Sprites/circle_blue.png"
+        self.texture = arcade.load_texture(texture_location)
         self.scale = 0.01
         self.spawn_away = 0
 

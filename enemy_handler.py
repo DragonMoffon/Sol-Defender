@@ -22,6 +22,13 @@ class EnemyHandler:
         # The sprite list that holds all of the enemy sprites
         self.enemy_sprites = None
 
+        # clusters for when there are more than 10 enemies
+        self.clusters = []
+        self.min_count_in_clusters = 5
+        self.max_count_in_clusters = 10
+        self.total_count_in_clusters = 0
+        self.cluster_count = 1
+
         # the current wave, plus which stage of difficulty
         self.wave = 0
         self.stage = 0
@@ -42,16 +49,16 @@ class EnemyHandler:
         # player health for enemy waves
         self.last_player_health = 0
 
-        # clustering variables
-        self.count_in_clusters = 6
-        self.cluster_count = 1
-
     def assign_player_health(self):
         """
         This method is Just to ensure no bugs arise.
         """
         if self.player is not None:
+            loss = self.last_player_health - self.player.health
             self.last_player_health = self.player.health
+            return loss
+        else:
+            return None
 
     def calc_wave(self):
 
@@ -59,8 +66,7 @@ class EnemyHandler:
         using variables calculated based on the how the player is doing
          the number of enemies is based of a difficult equation.
         """
-        loss = self.last_player_health - self.player.health
-        self.assign_player_health()
+        loss = self.assign_player_health()
         if loss > 0:
             loss_factor = 1/loss
         else:
@@ -116,11 +122,39 @@ class EnemyHandler:
         self.do_wave_time()
         self.calc_wave()
 
+        self.setup_enemies()
+
+    def setup_enemies(self):
         self.enemy_sprites = arcade.SpriteList()
-        for i in range(self.num_enemies):
-            enemy = Enemy()
-            enemy.setup(self)
-            self.enemy_sprites.append(enemy)
+        if self.num_enemies > self.max_count_in_clusters:
+            self.cluster()
+        else:
+            for i in range(self.num_enemies):
+                enemy = Enemy()
+                enemy.setup(self)
+                self.enemy_sprites.append(enemy)
+
+    def cluster(self):
+        screen_x, screen_y = arcade.get_display_size()
+        self.clusters = []
+        remaining = self.num_enemies % self.min_count_in_clusters
+        if not remaining:
+            num_clusters = int(self.num_enemies / self.min_count_in_clusters)
+        else:
+            num_clusters = int((self.num_enemies - remaining) / self.min_count_in_clusters)
+        for i in range(num_clusters):
+            cluster = Cluster(self)
+            cluster.num_enemies = self.min_count_in_clusters + remaining
+            remaining = 0
+            close = True
+            while close:
+                cluster.center_x = self.player.center_x + random.randint(-3 * screen_x, 3 * screen_x + 1)
+                cluster.center_y = self.player.center_y + random.randint(-3 * screen_x, 3 * screen_x + 1)
+                distance = vector.find_distance((cluster.center_x, cluster.center_y),
+                                                (self.player.center_x, self.player.center_y))
+                if distance > 1.5 * arcade.get_display_size()[0]:
+                    close = False
+            self.clusters.append(cluster)
 
     def draw(self):
         """
@@ -128,6 +162,10 @@ class EnemyHandler:
         """
         for enemy in self.enemy_sprites:
             enemy.draw()
+
+        for cluster in self.clusters:
+            arcade.draw_text(str(cluster.num_enemies), cluster.center_x, cluster.center_y, arcade.color.WHITE)
+
         if self.wave % 6 == 0:
             arcade.draw_text(str(self.stage), self.player.center_x, self.player.center_y - 30, arcade.color.WHITE)
 
@@ -136,8 +174,47 @@ class EnemyHandler:
         updates all of the enemies
         """
         self.enemy_sprites.on_update(delta_time)
-        if len(self.enemy_sprites) == 0:
+        if len(self.clusters) != 0:
+            for clusters in self.clusters:
+                if not clusters.spawned:
+                    clusters.spawn_enemies()
+
+        self.total_count_in_clusters = 0
+        for clusters in self.clusters:
+            self.total_count_in_clusters += clusters.num_enemies
+
+        if len(self.enemy_sprites) == 0 and self.total_count_in_clusters <= 0:
             self.setup_wave()
+
+
+class Cluster:
+
+    def __init__(self, handler):
+        self.num_enemies = 0
+
+        self.center_x = 0
+        self.center_y = 0
+
+        self.handler = handler
+        self.spawned = False
+
+        self.point = pointer.Pointer()
+        self.point.holder = self.handler.player
+        self.point.target = self
+        self.handler.player.enemy_pointers.append(self.point)
+
+    def spawn_enemies(self):
+        t_d = self.handler.player.center_x, self.handler.player.center_y
+        s_d = self.center_x, self.center_y
+        distance = vector.find_distance(t_d, s_d)
+        if distance < arcade.get_display_size()[0]:
+            for i in range(self.num_enemies):
+                enemy = Enemy()
+                enemy.setup(self.handler, s_d)
+                enemy.cluster = self
+                self.handler.enemy_sprites.append(enemy)
+            self.point.remove_from_sprite_lists()
+            self.spawned = True
 
 
 class Enemy(arcade.Sprite):
@@ -151,13 +228,7 @@ class Enemy(arcade.Sprite):
 
         # checks if the enemy is in range of player
         self.handler = None
-
-        # debug guff
-        self.rule_1_effect = [0.0, 0.0]
-        self.rule_2_effect = [0.0, 0.0]
-        self.rule_3_effect = [0.0, 0.0]
-        self.rule_4_effect = [0.0, 0.0]
-        self.do_rule = 0
+        self.cluster = None
 
         # angle info
         self.target_angle = 0
@@ -175,7 +246,7 @@ class Enemy(arcade.Sprite):
         self.shooting = False
         self.bullets = arcade.SpriteList()
         self.last_shot = 0
-        self.shoot_delay = 1
+        self.shoot_delay = 0.1
         self.next_shot = 0
 
         # sprites
@@ -214,22 +285,32 @@ class Enemy(arcade.Sprite):
         self.target_speed = 0
 
         # Rules
+        self.rule_1_effect = [0.0, 0.0]
+        self.rule_2_effect = [0.0, 0.0]
+        self.rule_3_effect = [0.0, 0.0]
+        self.rule_4_effect = [0.0, 0.0]
+
+        self.do_rule = 0
+
         self.rule_1_priority = 1
         self.rule_2_priority = 1
         self.rule_3_priority = 1
         self.rule_4_priority = 1
 
-    def setup(self, handler):
+    def setup(self, handler, x_y_pos: tuple = None):
         """
         sets up the enemy in relation to the player. it also gives the enemy the handler for easier access to variables
         """
+        if x_y_pos is None:
+            x_y_pos = handler.player.center_x, handler.player.center_y
+
         self.handler = handler
         self.angle = random.randint(0, 360)
         screen = arcade.get_display_size()
         close = True
         while close:
-            self.center_x = handler.player.center_x + random.randint(-(screen[0] // 2) + 30, (screen[0] // 2) - 29)
-            self.center_y = handler.player.center_y + random.randint(-(screen[1] // 2) + 30, (screen[1] // 2) - 29)
+            self.center_x = x_y_pos[0] + random.randint(-(screen[0] // 2) + 30, (screen[0] // 2) - 29)
+            self.center_y = x_y_pos[1] + random.randint(-(screen[1] // 2) + 30, (screen[1] // 2) - 29)
             self.target_distance = vector.find_distance((self.center_x, self.center_y),
                                                         (self.handler.player.center_x, self.handler.player.center_y))
             if self.target_distance > 300:
@@ -391,6 +472,8 @@ class Enemy(arcade.Sprite):
                     if point.target == self:
                         point.remove_from_sprite_lists()
                         del point
+                if self.cluster is not None:
+                    self.cluster.num_enemies -= 1
                 self.remove_from_sprite_lists()
                 del self
 

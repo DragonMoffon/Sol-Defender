@@ -1,0 +1,41 @@
+Stars Code:
+
+        Draw Function
+        """
+        # Y Lines
+        x = self.holder.left_view + 160
+        y = self.holder.bottom_view + 160
+        arcade.draw_line(x, y, x + self.screen_size[0] - 320, y,
+                         arcade.color.RADICAL_RED)
+        arcade.draw_line(x + 80, y + 80, x + self.screen_size[0] - 400, y + 80,
+                         arcade.color.WHITE)
+
+        y = y + self.screen_size[1] - 320
+        arcade.draw_line(x, y, x + self.screen_size[0] - 320, y,
+                         arcade.color.RADICAL_RED)
+        arcade.draw_line(x + 80, y - 80, x + self.screen_size[0] - 400, y - 80,
+                         arcade.color.WHITE)
+
+        # X Lines
+        x = self.holder.left_view + 160
+        y = self.holder.bottom_view + 160
+        arcade.draw_line(x, y, x, y + self.screen_size[1] - 320,
+                         arcade.color.RADICAL_RED)
+        arcade.draw_line(x + 80, y + 80, x + 80, y + self.screen_size[1] - 400,
+                         arcade.color.WHITE)
+
+        x = self.holder.left_view + self.screen_size[0] - 160
+        arcade.draw_line(x, y, x, y + self.screen_size[1] - 320,
+                         arcade.color.RADICAL_RED)
+        arcade.draw_line(x - 80, y + 80, x - 80, y + self.screen_size[1] - 400,
+                         arcade.color.WHITE)
+        """
+
+        Update function
+        """
+        self.camera_dx = d_points[0]
+        self.camera_dy = d_points[1]
+        self.close_movement = (self.camera_dx * 0.85, self.camera_dy * 0.85)
+        self.med_movement = (self.camera_dx * 0.9, self.camera_dy * 0.9)
+        self.far_movement = (self.camera_dx * 0.95, self.camera_dy * 0.95)
+        """
