@@ -43,7 +43,6 @@ class Bullet(arcade.Sprite):
         """
         Update the bullet and kill it if it's to old.
         """
-
         self.center_x += self.velocity[0] * delta_time
         self.center_y += self.velocity[1] * delta_time
         if time.time() > self.life:
