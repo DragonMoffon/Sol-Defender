@@ -245,8 +245,8 @@ class StarList(arcade.SpriteList):
             end_y -= 80
             self.lost_side[3] = 1
 
-        for x in range(start_x, end_x + 1, 80):
-            for y in range(start_y, end_y + 1, 80):
+        for x in range(start_x, end_x + 1, 160):
+            for y in range(start_y, end_y + 1, 160):
                 self.make_gridded_star(x, y)
 
     def give_edge(self, direction):

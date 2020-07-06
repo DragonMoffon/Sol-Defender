@@ -50,7 +50,7 @@ class HitBoxWindow(arcade.Window):
 
         # This is the sprite you wish to edit..
         self.sprite = arcade.Sprite()
-        self.sprite.texture = arcade.load_texture("Sprites/Enemy Bullet.png")  # Put the name of the texture in the "".
+        self.sprite.texture = arcade.load_texture("Sprites/blitz.png")  # Put the name of the texture in the "".
         # Make sure the your texture's pixels are 10x.
 
         # This centers the sprite
@@ -131,7 +131,7 @@ class HitBoxWindow(arcade.Window):
 
     def on_mouse_press(self, x, y, button, key_modifiers):
         # This adds the relative position of the mouse to the pointlist
-        self.point_list.append((self.relative_mouse_x, self.relative_mouse_y))
+        self.point_list.append([self.relative_mouse_x, self.relative_mouse_y])
 
         # This sets the Sprites Hit Box to the pointlist only if there is 1 or more points in the list.
         # To protect against errors

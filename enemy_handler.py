@@ -2,6 +2,7 @@ import math
 import random
 import time
 
+import json
 import arcade
 
 import bullet
@@ -16,6 +17,13 @@ class EnemyHandler:
     """
 
     def __init__(self):
+
+        # Enemy type Json file reading.
+        file = "basic_enemy_types.json"
+        self.enemy_types = {}
+        with open("basic_enemy_types.json") as json_file:
+            self.enemy_types = json.load(json_file)
+
         # The player object. This allows the enemies to get its position.
         self.player = None
 
@@ -101,7 +109,7 @@ class EnemyHandler:
 
     def do_wave_time(self):
         """
-        All steps based on record keeping the time A player takes to complete a mission
+        All steps based on record keeping the time a player takes to complete a mission
         """
         if self.current_wave_time > 0:
             self.wave_times.append(time.time() - self.current_wave_time)
@@ -130,7 +138,8 @@ class EnemyHandler:
             self.cluster()
         else:
             for i in range(self.num_enemies):
-                enemy = Enemy()
+                enemy_type = random.randrange(0, len(self.enemy_types['types']))
+                enemy = Enemy(self.enemy_types['types'][enemy_type])
                 enemy.setup(self)
                 self.enemy_sprites.append(enemy)
 
@@ -152,7 +161,7 @@ class EnemyHandler:
                 cluster.center_y = self.player.center_y + random.randint(-3 * screen_x, 3 * screen_x + 1)
                 distance = vector.find_distance((cluster.center_x, cluster.center_y),
                                                 (self.player.center_x, self.player.center_y))
-                if distance > 1.5 * arcade.get_display_size()[0]:
+                if distance > 1.5 * screen_x:
                     close = False
             self.clusters.append(cluster)
 
@@ -166,7 +175,7 @@ class EnemyHandler:
         for cluster in self.clusters:
             arcade.draw_text(str(cluster.num_enemies), cluster.center_x, cluster.center_y, arcade.color.WHITE)
 
-        if self.wave % 6 == 0:
+        if self.wave % 5 == 1:
             arcade.draw_text(str(self.stage), self.player.center_x, self.player.center_y - 30, arcade.color.WHITE)
 
     def on_update(self, delta_time: float = 1 / 60):
@@ -209,7 +218,8 @@ class Cluster:
         distance = vector.find_distance(t_d, s_d)
         if distance < arcade.get_display_size()[0]:
             for i in range(self.num_enemies):
-                enemy = Enemy()
+                enemy_type = random.randrange(0, len(self.handler.enemy_types['types']))
+                enemy = Enemy(self.handler.enemy_types['types'][enemy_type])
                 enemy.setup(self.handler, s_d)
                 enemy.cluster = self
                 self.handler.enemy_sprites.append(enemy)
@@ -219,12 +229,16 @@ class Cluster:
 
 class Enemy(arcade.Sprite):
     """
-    The Enemy class is used by the enemy handler in each wave. their movement works just like the
-    players, however they have decision trees on whether to turn left or right or when to move forward.
+    The Enemy class is used by the enemy handler in each wave. their movement works on a set of rules that
+    calculate how they should move every update.
     """
 
-    def __init__(self):
+    def __init__(self, type_data: dict):
         super().__init__()
+
+        # type
+        self.type_data = type_data
+        self.type = type_data['type']
 
         # checks if the enemy is in range of player
         self.handler = None
@@ -247,37 +261,22 @@ class Enemy(arcade.Sprite):
         self.bullets = arcade.SpriteList()
         self.last_shot = 0
         self.shoot_delay = 0.1
+        self.shoot_delay_range = type_data['shoot_delay']
         self.next_shot = 0
 
         # sprites
         self.textures = []
         self.scale = 0.15
-        self.get_sprites()
-        self.health = 12
-        self.full_health = 12
-        self.health_segment = 4
+        self.get_sprites(type_data['image_file'])
+        self.health = type_data['health']
+        self.full_health = self.health
+        self.health_segment = self.health / (len(self.textures)-1)
+        print(self.health)
+        print(self.health_segment)
         self.frame = 1
 
         # hit box
-        self.point_list = [
-                           (165.0, -15.0), (165.0, -115.0), (155.0, -115.0), (155.0, -125.0), (145.0, -125.0),
-                           (145.0, -135.0), (125.0, -135.0), (125.0, -145.0), (115.0, -145.0), (115.0, -155.0),
-                           (85.0, -155.0), (85.0, -165.0), (35.0, -165.0), (35.0, -155.0), (-5.0, -155.0),
-                           (-5.0, -145.0), (-85.0, -145.0), (-85.0, -135.0), (-115.0, -135.0), (-115.0, -125.0),
-                           (-145.0, -125.0), (-145.0, -115.0), (-105.0, -115.0), (-105.0, -105.0), (-155.0, -105.0),
-                           (-155.0, -95.0), (-135.0, -95.0), (-135.0, -85.0), (-125.0, -85.0), (-125.0, -75.0),
-                           (-165.0, -75.0), (-165.0, -65.0), (-145.0, -65.0), (-145.0, -55.0), (-125.0, -55.0),
-                           (-125.0, -45.0), (-105.0, -45.0), (-105.0, -35.0), (-25.0, -35.0), (-25.0, -25.0),
-                           (-45.0, -25.0), (-45.0, -15.0), (-75.0, -15.0), (-75.0, -5.0), (-125.0, -5.0), (-125.0, 5.0),
-                           (-75.0, 5.0), (-75.0, 15.0), (-45.0, 15.0), (-45.0, 25.0), (-25.0, 25.0), (-25.0, 35.0),
-                           (-105.0, 35.0), (-105.0, 45.0), (-125.0, 45.0), (-125.0, 55.0), (-145.0, 55.0),
-                           (-145.0, 65.0), (-165.0, 65.0), (-165.0, 75.0), (-125.0, 75.0), (-125.0, 85.0),
-                           (-135.0, 85.0), (-135.0, 95.0), (-155.0, 95.0), (-155.0, 105.0), (-105.0, 105.0),
-                           (-105.0, 115.0), (-145.0, 115.0), (-145.0, 125.0), (-115.0, 125.0), (-115.0, 135.0),
-                           (-85.0, 135.0), (-85.0, 145.0), (-5.0, 145.0), (-5.0, 155.0), (35.0, 155.0), (35.0, 165.0),
-                           (85.0, 165.0), (85.0, 155.0), (115.0, 155.0), (115.0, 145.0), (125.0, 145.0), (125.0, 135.0),
-                           (145.0, 135.0), (145.0, 125.0), (155.0, 125.0), (155.0, 105.0), (165.0, 105.0), (165.0, 15.0)
-                            ]
+        self.point_list = type_data['point_list']
         self.set_hit_box(self.point_list)
 
         # algorithm variables
@@ -292,10 +291,10 @@ class Enemy(arcade.Sprite):
 
         self.do_rule = 0
 
-        self.rule_1_priority = 1
-        self.rule_2_priority = 1
-        self.rule_3_priority = 1
-        self.rule_4_priority = 1
+        self.rule_1_priority = type_data['rules'][0]
+        self.rule_2_priority = type_data['rules'][1]
+        self.rule_3_priority = type_data['rules'][2]
+        self.rule_4_priority = type_data['rules'][3]
 
     def setup(self, handler, x_y_pos: tuple = None):
         """
@@ -321,12 +320,12 @@ class Enemy(arcade.Sprite):
         point.target = self
         self.handler.player.enemy_pointers.append(point)
 
-    def get_sprites(self):
+    def get_sprites(self, image_file):
         """
         Gets all of the hurt sprites for the enemy
         """
         for i in range(4):
-            texture = arcade.load_texture("Sprites/Enemy Hunter + Damage Frames.png", 0, 330*i, 330, 330)
+            texture = arcade.load_texture(image_file, 0, 330*i, 330, 330)
             self.textures.append(texture)
         self.texture = self.textures[0]
 
@@ -362,13 +361,13 @@ class Enemy(arcade.Sprite):
                              arcade.color.RADICAL_RED)
             arcade.draw_line(self.center_x + self.rule_2_effect[0]*20, self.center_y + self.rule_2_effect[1]*20,
                              self.center_x, self.center_y,
-                             arcade.color.LIME_GREEN)
+                             arcade.color.OCEAN_BOAT_BLUE)
             arcade.draw_line(self.center_x + self.rule_3_effect[0]*20, self.center_y + self.rule_3_effect[1]*20,
                              self.center_x, self.center_y,
-                             arcade.color.OCEAN_BOAT_BLUE)
+                             arcade.color.WHITE_SMOKE)
             arcade.draw_line(self.center_x, self.center_y,
                              self.center_x+self.rule_4_effect[0] * 20, self.center_y+self.rule_4_effect[1] * 20,
-                             arcade.color.WHITE_SMOKE)
+                             arcade.color.LIME_GREEN)
             arcade.draw_line(self.center_x + self.velocity[0], self.center_y + self.velocity[1],
                              self.center_x, self.center_y,
                              arcade.color.CYBER_YELLOW)
@@ -400,7 +399,7 @@ class Enemy(arcade.Sprite):
             if self.shooting:
                 self.shoot()
             self.last_shot = time.time()
-            self.shoot_delay = random.randrange(3, 7)
+            self.shoot_delay = random.randrange(self.shoot_delay_range[0], self.shoot_delay_range[1])
         self.bullets.on_update()
 
     def calculate_movement(self):
@@ -498,9 +497,12 @@ class Enemy(arcade.Sprite):
         self.rule_1_effect = self.rule1()
         if self.do_rule > 0.1:
             self.do_rule = 0
-            # self.rule_2_effect = self.rule2() - This rule makes the basic AI too smart. It wont be used on most AI
-            self.rule_3_effect = self.rule3()
-            self.rule_4_effect = self.rule4()
+            if self.rule_2_priority:
+                self.rule_2_effect = self.rule2()  # This rule makes the basic AI too smart. It wont be used on most AI
+            if self.rule_3_priority:
+                self.rule_3_effect = self.rule3()
+            if self.rule_3_priority:
+                self.rule_4_effect = self.rule4()
         final = [0.0, 0.0]
         final[0] = self.rule_1_effect[0] + self.rule_2_effect[0] + self.rule_3_effect[0] + self.rule_4_effect[0]
         final[1] = self.rule_1_effect[1] + self.rule_2_effect[1] + self.rule_3_effect[1] + self.rule_4_effect[1]
@@ -571,6 +573,53 @@ class Enemy(arcade.Sprite):
 
     def rule2(self):
         """
+        Avoid being in front of allies, and do not crash into each other.
+        """
+        x = 0
+        y = 0
+        total = 0
+        for neighbor in self.handler.enemy_sprites:
+            if neighbor != self:
+                distance = vector.find_distance((self.center_x, self.center_y), (neighbor.center_x, neighbor.center_y))
+                if distance < 100:
+                    angle_to_self = vector.find_angle((self.center_x, self.center_y),
+                                                      (neighbor.center_x, neighbor.center_y))
+                    difference = vector.calc_difference(neighbor.angle, angle_to_self)
+                    direction = vector.calc_direction(neighbor.angle, angle_to_self)
+                    if difference[0] < 45 and difference[0] < difference[1]:
+                        perpendicular_rad_angle = math.radians(neighbor.angle + 90 * -direction)
+                        x += math.cos(perpendicular_rad_angle) * ((90 - difference[0]) / 45)
+                        y += math.sin(perpendicular_rad_angle) * ((90 - difference[0]) / 45)
+                    elif difference[1] < 45 and difference[1] < difference[0]:
+                        perpendicular_rad_angle = math.radians(neighbor.angle + 90 * -direction)
+                        x += math.cos(perpendicular_rad_angle) * ((90 - difference[1]) / 45)
+                        y += math.sin(perpendicular_rad_angle) * ((90 - difference[1]) / 45)
+                    else:
+                        x += (self.center_x - neighbor.center_x)
+                        y += (self.center_y - neighbor.center_y)
+                        total += 1
+        if total:
+            x /= total
+            y /= total
+        result = [x * self.rule_2_priority * 0.05, y * self.rule_2_priority * 0.05]
+        return result
+
+    def rule3(self):
+        """
+        Attempt to slow down or speed up to match the players velocity
+        """
+        target = self.handler.player
+        target_velocity = (target.velocity[0], target.velocity[1])
+        distance = vector.find_distance((self.center_x, self.center_y), (target.center_x, target.center_y))
+        result = [0.0, 0.0]
+        if distance < 700:
+            result[0] = (target_velocity[0] - self.velocity[0]) / 8
+            result[1] = (target_velocity[1] - self.velocity[1]) / 8
+
+        return [result[0] * 0.05 * self.rule_3_priority, result[1] * 0.05 * self.rule_3_priority]
+
+    def rule4(self):
+        """
         Rule Two: Avoid being in front of the player.
         """
         player = self.handler.player
@@ -590,52 +639,20 @@ class Enemy(arcade.Sprite):
             rad_difference = math.radians(direction)
             x = math.cos(rad_difference) * move
             y = math.sin(rad_difference) * move
-        result = [x * self.rule_2_priority * 0.05, y * self.rule_2_priority * 0.05]
+        result = [x * self.rule_4_priority * 0.05, y * self.rule_4_priority * 0.05]
         return result
 
-    def rule3(self):
-        """
-        Avoid being in front of allies, and do not crash into each other.
-        """
-        x = 0
-        y = 0
-        total = 0
-        for neighbor in self.handler.enemy_sprites:
-            if neighbor != self:
-                distance = vector.find_distance((self.center_x, self.center_y), (neighbor.center_x, neighbor.center_y))
-                if distance < 100:
-                    angle_to_self = vector.find_angle((self.center_x, self.center_y),
-                                                      (neighbor.center_x, neighbor.center_y))
-                    difference = vector.calc_difference(neighbor.angle, angle_to_self)
-                    direction = vector.calc_direction(neighbor.angle, angle_to_self)
-                    if difference[0] < 45 and difference[0] < difference[1]:
-                        perpendicular_rad_angle = math.radians(neighbor.angle + 90 * -direction)
-                        x += math.cos(perpendicular_rad_angle) * ((90 - difference[0])/45)
-                        y += math.sin(perpendicular_rad_angle) * ((90 - difference[0])/45)
-                    elif difference[1] < 45 and difference[1] < difference[0]:
-                        perpendicular_rad_angle = math.radians(neighbor.angle + 90 * -direction)
-                        x += math.cos(perpendicular_rad_angle) * ((90 - difference[1])/45)
-                        y += math.sin(perpendicular_rad_angle) * ((90 - difference[1])/45)
-                    else:
-                        x += (self.center_x - neighbor.center_x)
-                        y += (self.center_y - neighbor.center_y)
-                        total += 1
-        if total:
-            x /= total
-            y /= total
-        result = [x * self.rule_3_priority * 0.05, y * self.rule_3_priority * 0.05]
-        return result
+    def rule5(self):
+        pass
 
-    def rule4(self):
-        """
-        Attempt to slow down or speed up to match the players velocity
-        """
-        target = self.handler.player
-        target_velocity = (target.velocity[0], target.velocity[1])
-        distance = vector.find_distance((self.center_x, self.center_y), (target.center_x, target.center_y))
-        result = [0.0, 0.0]
-        if distance < 700:
-            result[0] = (target_velocity[0] - self.velocity[0])/8
-            result[1] = (target_velocity[1] - self.velocity[1])/8
 
-        return [result[0] * 0.05 * self.rule_4_priority, result[1] * 0.05 * self.rule_4_priority]
+if __name__ == "__main__":
+    with open('basic_enemy_types.json') as enemy_file:
+        enemies = json.load(enemy_file)
+        for enem in enemies['types']:
+            print('Type:', enem['type'])
+            print('Difficulty:', enem['difficulty_value'])
+            print('Rules:', enem['rules'])
+            print('Health:', enem['health'])
+            print('Shoot Delay:', enem['shoot_delay'])
+            print('Image location:', enem['image_file'], end='\n \n')

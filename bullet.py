@@ -3,8 +3,6 @@ import time
 
 import arcade
 
-import vector
-
 
 class Bullet(arcade.Sprite):
 
