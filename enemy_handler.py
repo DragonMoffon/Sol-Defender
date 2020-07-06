@@ -346,11 +346,6 @@ class Enemy(arcade.Sprite):
         Draws the enemy sprite and bullets, as well as debug information
         """
         if self.handler.player.show_hit_box:
-            """
-            arcade.draw_line(self.center_x,self.center_y, self.handler.player.center_x, self.handler.player.center_y, 
-                             arcade.color.LIME_GREEN, 1)
-            self.draw_hit_box(color=arcade.color.LIME_GREEN)
-            """
             for shot in self.bullets:
                 arcade.draw_line(shot.center_x, shot.center_y,
                                  shot.velocity[0] + shot.center_x, shot.velocity[1] + shot.center_y,
