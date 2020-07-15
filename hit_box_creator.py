@@ -1,7 +1,7 @@
 import arcade
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = arcade.get_display_size()[0]
+SCREEN_HEIGHT = arcade.get_display_size()[1]
 SCREEN_TITLE = "Hit Box Maker"
 
 
@@ -50,7 +50,7 @@ class HitBoxWindow(arcade.Window):
 
         # This is the sprite you wish to edit..
         self.sprite = arcade.Sprite()
-        self.sprite.texture = arcade.load_texture("Sprites/blitz.png")  # Put the name of the texture in the "".
+        self.sprite.texture = arcade.load_texture("Sprites/circles/circle_green.png")  # Put the name of the texture in the "".
         # Make sure the your texture's pixels are 10x.
 
         # This centers the sprite

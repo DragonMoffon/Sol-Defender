@@ -6,20 +6,25 @@ import arcade
 
 class Bullet(arcade.Sprite):
 
-    def __init__(self, pos, angle, velocity):
+    def __init__(self, pos, angle, velocity, bullet_type: dict, texture: str = None):
         super().__init__()
         # parent variables
-        texture_location = "Sprites/circle_blue.png"
+        if texture is not None:
+            texture_location = texture
+        else:
+            texture_location = bullet_type['texture']
         self.texture = arcade.load_texture(texture_location)
-        self.scale = 0.01
+        self.scale = bullet_type['scale']
         self.spawn_away = 0
+        self.hit_box = bullet_type['hit_box']
 
         # variables for bullets
         self.velocity = [0.0, 0.0]
-        self.speed = 500
+        self.speed = bullet_type['speed']
         self.life = 0
-        self.max_age = 2
+        self.max_age = bullet_type['age']
         self.spawn(pos, angle, velocity)
+        self.damage = bullet_type['damage']
 
     def spawn(self, pos, angle, velocity):
         """
@@ -29,13 +34,13 @@ class Bullet(arcade.Sprite):
 
         self.center_x = pos[0] + math.cos(angle_rad) * self.spawn_away
         self.center_y = pos[1] + math.sin(angle_rad) * self.spawn_away
-        self.angle = angle
 
         self.velocity[0] = velocity[0] + (math.cos(angle_rad) * self.speed)
         self.velocity[1] = velocity[1] + (math.sin(angle_rad) * self.speed)
-        self.life = time.time() + self.max_age
 
         self.angle = angle
+
+        self.life = time.time() + self.max_age
 
     def on_update(self, delta_time: float = 1 / 60):
         """

@@ -4,14 +4,28 @@ import time
 import arcade
 
 import bullet
+import ui
 
 
 class Player(arcade.Sprite):
 
-    def __init__(self):
+    def __init__(self, holder):
 
         super().__init__()
-        
+
+        self.bullet_type = {
+             "type": "Standard",
+             "scale": 0.01,
+             "texture": "Sprites/circles/circle_blue.png",
+             "speed": 420,
+             "age": 2,
+             "damage": 4,
+             "hit_box": [[-40.0, 160.0], [40.0, 160.0], [70.0, 150.0], [90.0, 140.0], [140.0, 90.0], [150.0, 70.0],
+                         [160.0, 40.0], [160.0, -40.0], [150.0, -70.0], [140.0, -90.0], [90.0, -140.0], [70.0, -150.0],
+                         [40.0, -160.0], [-40.0, -160.0], [-70.0, -150.0], [-90.0, -140.0], [-140.0, -90.0],
+                         [-150.0, -70.0], [-160.0, -40.0], [-160.0, 40.0], [-150.0, 70.0], [-140.0, 90.0],
+                         [-90.0, 140.0], [-70.0, 150.0]]}
+
         self.alt = False
 
         self.start = 0
@@ -22,10 +36,20 @@ class Player(arcade.Sprite):
         self.dead = False
         self.show_hit_box = False
 
+        # Ui
+        self.holder = holder
+        self.ui = ui.PlayerUi(self, self.holder)
+
+        # variables for gun overheating
+        self.heat_level = 0
+        self.cool_speed = 0.01
+        self.heat_speed = 0
+
         # The Seven Stats
         self.damage = 4
 
         # Variables for movement
+        self.speed_limit = False
         self.thruster_force = 330000
         self.thrusters_output = [0.0, 0.0]
         self.weight = 549054
@@ -57,24 +81,19 @@ class Player(arcade.Sprite):
         self.enemy_pointers = arcade.SpriteList()
 
         # hit box
-        point_list = ((-145, -5), (-145, 5), (-105, 5), (-105, 15), (-75, 15), (-75, 25), (-135, 25), (-135, 35),
-                      (-125, 35), (-125, 55), (-115, 55), (-115, 75), (-85, 75), (-85, 105), (-125, 105), (-125, 135),
-                      (-135, 135), (-135, 155), (-145, 155), (-145, 185), (-125, 185), (-125, 195), (-165, 195),
-                      (-165, 205), (-135, 205), (-135, 215), (-35, 215), (-35, 205), (25, 205), (25, 195), (85, 195),
-                      (85, 185), (125, 185), (125, 175), (135, 175), (135, 165), (145, 165), (145, 155), (155, 155),
-                      (155, 135), (165, 135), (165, 55), (115, 55), (115, 45), (65, 45), (65, 35), (75, 35), (75, 15),
-                      (85, 15), (85, -15), (75, -15), (75, -35), (65, -35), (65, -45), (115, -45), (115, -55),
-                      (165, -55), (165, -135), (155, -135), (155, -155), (145, -155), (145, -165), (135, -165),
-                      (135, -175), (125, -175), (125, -185), (85, -185), (85, -195), (25, -195), (25, -205),
-                      (-35, -205), (-35, -215), (-135, -215), (-135, -205), (-165, -205), (-165, -195), (-125, -195),
-                      (-125, -185), (-145, -185), (-145, -155), (-135, -155), (-135, -135), (-125, -135), (-125, -105),
-                      (-85, -105), (-85, -75), (-115, -75), (-115, -55), (-125, -55), (-125, -35), (-135, -35),
-                      (-135, -25), (-75, -25), (-75, -15), (-105, -15), (-105, -5))
-        self.set_hit_box(point_list)
-
-        # view cone
-        self.view_cone_points = []
-        self.view_range = 300
+        self.hit_box = ((-145, -5), (-145, 5), (-105, 5), (-105, 15), (-75, 15), (-75, 25), (-135, 25), (-135, 35),
+                        (-125, 35), (-125, 55), (-115, 55), (-115, 75), (-85, 75), (-85, 105), (-125, 105), (-125, 135),
+                        (-135, 135), (-135, 155), (-145, 155), (-145, 185), (-125, 185), (-125, 195), (-165, 195),
+                        (-165, 205), (-135, 205), (-135, 215), (-35, 215), (-35, 205), (25, 205), (25, 195), (85, 195),
+                        (85, 185), (125, 185), (125, 175), (135, 175), (135, 165), (145, 165), (145, 155), (155, 155),
+                        (155, 135), (165, 135), (165, 55), (115, 55), (115, 45), (65, 45), (65, 35), (75, 35), (75, 15),
+                        (85, 15), (85, -15), (75, -15), (75, -35), (65, -35), (65, -45), (115, -45), (115, -55),
+                        (165, -55), (165, -135), (155, -135), (155, -155), (145, -155), (145, -165), (135, -165),
+                        (135, -175), (125, -175), (125, -185), (85, -185), (85, -195), (25, -195), (25, -205),
+                        (-35, -205), (-35, -215), (-135, -215), (-135, -205), (-165, -205), (-165, -195), (-125, -195),
+                        (-125, -185), (-145, -185), (-145, -155), (-135, -155), (-135, -135), (-125, -135),
+                        (-125, -105), (-85, -105), (-85, -75), (-115, -75), (-115, -55), (-125, -55), (-125, -35),
+                        (-135, -35), (-135, -25), (-75, -25), (-75, -15), (-105, -15), (-105, -5))
 
     """
     arcade.Sprite Methods
@@ -88,17 +107,32 @@ class Player(arcade.Sprite):
         self.apply_correction()
 
         self.bullets.on_update(delta_time)
-        if self.shooting and self.last_shot + self.delay < time.time():
+        if self.shooting and self.last_shot + self.delay < time.time() and self.heat_level < 1:
             self.shoot()
             self.last_shot = time.time()
+            self.heat_speed = self.damage / 50
+            self.heat_level += self.heat_speed
+            if self.heat_level > 1:
+                self.heat_level = 1
+        elif self.heat_level > self.cool_speed and not self.shooting:
+            self.heat_level -= self.cool_speed
+        elif not self.shooting:
+            self.heat_level = 0
 
         self.enemy_pointers.on_update(delta_time)
 
     def draw(self):
+        self.ui.draw()
         self.enemy_pointers.draw()
         self.bullets.draw()
         super().draw()
         if self.show_hit_box:
+            arcade.draw_circle_outline(self.center_x, self.center_y, 480, arcade.color.GREEN)
+            arcade.draw_circle_outline(self.center_x, self.center_y, 330, arcade.color.GREEN)
+            arcade.draw_circle_outline(self.center_x, self.center_y, 285, arcade.color.ORANGE)
+            arcade.draw_circle_outline(self.center_x, self.center_y, 75, arcade.color.RADICAL_RED)
+
+            self.draw_hit_box()
             for shot in self.bullets:
                 arcade.draw_line(shot.center_x, shot.center_y,
                                  shot.velocity[0] + shot.center_x, shot.velocity[1] + shot.center_y,
@@ -159,11 +193,13 @@ class Player(arcade.Sprite):
             self.angle -= 360
         elif self.angle < 0:
             self.angle += 360
-        speed_limit = 500
-        speed = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
-        if speed > speed_limit:
-            self.velocity[0] = (self.velocity[0]/speed) * speed_limit
-            self.velocity[1] = (self.velocity[1]/speed) * speed_limit
+        if self.speed_limit:
+            speed_limit = 500
+            speed = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
+            if speed > speed_limit:
+                self.velocity[0] = (self.velocity[0]/speed) * speed_limit
+                self.velocity[1] = (self.velocity[1]/speed) * speed_limit
+
         self.center_x += self.velocity[0] * delta_time
         self.center_y += self.velocity[1] * delta_time
 
@@ -172,7 +208,7 @@ class Player(arcade.Sprite):
     """
 
     def shoot(self):
-        shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity)
+        shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity, self.bullet_type)
         self.bullets.append(shot)
 
     """

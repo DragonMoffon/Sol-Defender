@@ -1,0 +1,12 @@
+The conventions for versioning are:
+        1st: Completed: all sprint tasks completes,
+        2nd: Version 'Release version(not shown unless greater than 0).
+                      sprint number.
+                      difficulty changing feature number.
+                      patch and minor feature number',
+        3rd: Which sprint
+
+        e.g. "Completed: random rubbish. Version (0.)3.7.3. Sprint: 3"
+
+Current Version:
+    3.7.0 Soldier

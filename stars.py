@@ -22,40 +22,38 @@ class StarListsField:
 
         close_copy = self.star_lists
         for index, lists in enumerate(close_copy):
-            lists.calc_field_sides()
-
             if lists.center_on_screen:
                 lists.all_false()
                 for other_lists in self.star_lists:
-                    if other_lists.center_x > lists.center_x and \
+                    if lists.stars_tr is False and other_lists.center_x > lists.center_x and \
                             other_lists.center_y > lists.center_y:
                         lists.stars_tr = True
 
-                    if other_lists.center_x < lists.center_x and \
+                    if lists.stars_tl is False and other_lists.center_x < lists.center_x and \
                             other_lists.center_y > lists.center_y:
                         lists.stars_tl = True
 
-                    if other_lists.center_x > lists.center_x and \
+                    if lists.stars_br is False and other_lists.center_x > lists.center_x and \
                             other_lists.center_y < lists.center_y:
                         lists.stars_br = True
 
-                    if other_lists.center_x < lists.center_x and \
+                    if lists.stars_bl is False and other_lists.center_x < lists.center_x and \
                             other_lists.center_y < lists.center_y:
                         lists.stars_bl = True
 
-                    if other_lists.center_x > lists.center_x and \
+                    if lists.stars_r is False and other_lists.center_x > lists.center_x and \
                             other_lists.center_y == lists.center_y:
                         lists.stars_r = True
 
-                    if other_lists.center_x < lists.center_x and \
+                    if lists.stars_l is False and other_lists.center_x < lists.center_x and \
                             other_lists.center_y == lists.center_y:
                         lists.stars_l = True
 
-                    if other_lists.center_x == lists.center_x and \
+                    if lists.stars_t is False and other_lists.center_x == lists.center_x and \
                             other_lists.center_y > lists.center_y:
                         lists.stars_t = True
 
-                    if other_lists.center_x == lists.center_x and \
+                    if lists.stars_b is False and other_lists.center_x == lists.center_x and \
                             other_lists.center_y < lists.center_y:
                         lists.stars_b = True
 
@@ -63,7 +61,9 @@ class StarListsField:
                 if lists.stars_tr is False and camera_movement[0] >= 0 and camera_movement[1] >= 0:
                     star_list = StarList(self,
                                          lists.center_x + lists.base_field_size[0],
-                                         lists.center_y + lists.base_field_size[1])
+                                         lists.center_y + lists.base_field_size[1],
+                                         skip_side=(1, 1, 0, 0)
+                                         )
                     self.star_lists.append(star_list)
                     lists.stars_tr = True
 
@@ -71,7 +71,9 @@ class StarListsField:
                 if lists.stars_tl is False and camera_movement[0] <= 0 and camera_movement[1] >= 0:
                     star_list = StarList(self,
                                          lists.center_x - lists.base_field_size[0],
-                                         lists.center_y + lists.base_field_size[1])
+                                         lists.center_y + lists.base_field_size[1],
+                                         skip_side=(0, 1, 1, 0)
+                                         )
                     self.star_lists.append(star_list)
                     self.star_lists[-1].creator = self.star_lists[index]
                     lists.stars_tl = True
@@ -80,7 +82,9 @@ class StarListsField:
                 if lists.stars_br is False and camera_movement[0] >= 0 and camera_movement[1] <= 0:
                     star_list = StarList(self,
                                          lists.center_x + lists.base_field_size[0],
-                                         lists.center_y - lists.base_field_size[1])
+                                         lists.center_y - lists.base_field_size[1],
+                                         skip_side=(1, 0, 0, 1)
+                                         )
                     self.star_lists.append(star_list)
                     self.star_lists[-1].creator = self.star_lists[index]
                     lists.stars_br = True
@@ -89,7 +93,9 @@ class StarListsField:
                 if lists.stars_bl is False and camera_movement[0] <= 0 and camera_movement[1] <= 0:
                     star_list = StarList(self,
                                          lists.center_x - lists.base_field_size[0],
-                                         lists.center_y - lists.base_field_size[1])
+                                         lists.center_y - lists.base_field_size[1],
+                                         skip_side=(0, 0, 1, 1)
+                                         )
                     self.star_lists.append(star_list)
                     self.star_lists[-1].creator = self.star_lists[index]
                     lists.stars_bl = True
@@ -98,7 +104,9 @@ class StarListsField:
                 if lists.stars_r is False and camera_movement[0] > 0:
                     star_list = StarList(self,
                                          lists.center_x + lists.base_field_size[0],
-                                         lists.center_y)
+                                         lists.center_y,
+                                         skip_side=(1, 0, 0, 0)
+                                         )
                     self.star_lists.append(star_list)
                     self.star_lists[-1].creator = self.star_lists[index]
                     lists.stars_r = True
@@ -107,7 +115,9 @@ class StarListsField:
                 if lists.stars_l is False and camera_movement[0] < 0:
                     star_list = StarList(self,
                                          lists.center_x - lists.base_field_size[0],
-                                         lists.center_y)
+                                         lists.center_y,
+                                         skip_side=(0, 0, 1, 0)
+                                         )
                     self.star_lists.append(star_list)
                     self.star_lists[-1].creator = self.star_lists[index]
                     lists.stars_l = True
@@ -116,7 +126,9 @@ class StarListsField:
                 if lists.stars_t is False and camera_movement[1] > 0:
                     star_list = StarList(self,
                                          lists.center_x,
-                                         lists.center_y + lists.base_field_size[1])
+                                         lists.center_y + lists.base_field_size[1],
+                                         skip_side=(0, 1, 0, 0)
+                                         )
                     self.star_lists.append(star_list)
                     self.star_lists[-1].creator = self.star_lists[index]
                     lists.stars_t = True
@@ -125,7 +137,9 @@ class StarListsField:
                 if lists.stars_b is False and camera_movement[1] < 0:
                     star_list = StarList(self,
                                          lists.center_x,
-                                         lists.center_y - lists.base_field_size[1])
+                                         lists.center_y - lists.base_field_size[1],
+                                         skip_side=(0, 0, 0, 1)
+                                         )
                     self.star_lists.append(star_list)
                     self.star_lists[-1].creator = self.star_lists[index]
                     lists.stars_b = True
@@ -144,6 +158,7 @@ class StarListsField:
             lists.change_x = self.movement_x
             lists.change_y = self.movement_y
             lists.update()
+            lists.calc_field_sides()
 
     def draw(self):
         for star_lists in self.star_lists:
@@ -158,8 +173,10 @@ class StarList(arcade.SpriteList):
                  skip_side: tuple = (0, 0, 0, 0)):
         super().__init__()
 
-        self.base_field_size = (round_to_80(size_x),
-                                round_to_80(size_y))
+        self.base_field_size = (size_x, size_y)
+        self.grid_horizontal = 0
+        self.grid_vertical = 0
+        self.setup_grid_sizes(size_x, size_y)
 
         self.creator = None
 
@@ -177,8 +194,8 @@ class StarList(arcade.SpriteList):
 
         self.center_on_screen = False
 
-        self.skip_side = skip_side
-        self.lost_side = [0, 0, 0, 0]
+        self.skip_side = (0, 0, 0, 0)  # skip_side
+        self.lost_side = [False, False, False, False]
 
         if center_x is not None:
             self.center_x = center_x
@@ -201,6 +218,24 @@ class StarList(arcade.SpriteList):
         self.change_x = 0
 
         self.setup_stars()
+
+    def setup_grid_sizes(self, size_x, size_y):
+        hori_good = False
+        start_num = 9
+        while not hori_good:
+            if size_x % start_num != 0:
+                start_num -= 1
+            else:
+                hori_good = True
+                self.grid_horizontal = size_x / start_num
+        vert_good = False
+        start_num = 9
+        while not vert_good:
+            if size_y % start_num != 0:
+                start_num -= 1
+            else:
+                vert_good = True
+                self.grid_vertical = size_y / start_num
 
     def all_false(self):
         self.stars_t = False
@@ -226,72 +261,77 @@ class StarList(arcade.SpriteList):
     def draw(self):
         super().draw()
 
-    def setup_stars(self):
-        start_x = int(self.center_x - (self.base_field_size[0]//2))
-        start_y = int(self.center_y - (self.base_field_size[1]//2))
-        end_x = int(self.center_x + (self.base_field_size[0]//2))
-        end_y = int(self.center_y + self.base_field_size[1]//2)
-
-        if self.skip_side[0]:
-            start_x += 80
-            self.lost_side[0] = 1
-        if self.skip_side[1]:
-            start_y += 80
-            self.lost_side[1] = 1
-        if self.skip_side[2]:
-            end_x -= 80
-            self.lost_side[2] = 1
-        if self.skip_side[3]:
-            end_y -= 80
-            self.lost_side[3] = 1
-
-        for x in range(start_x, end_x + 1, 160):
-            for y in range(start_y, end_y + 1, 160):
-                self.make_gridded_star(x, y)
-
-    def give_edge(self, direction):
+    def make_side(self, direction):
         if direction == 1:
-            for y in range(self.bottom_side, self.top_side + 1, 80):
-                self.make_gridded_star(self.left_side - 80, y)
-        elif direction == 2:
-            for x in range(self.left_side, self.right_side + 1, 80):
-                self.make_gridded_star(x, self.bottom_side - 80)
-        elif direction == 3:
-            for y in range(self.bottom_side, self.top_side + 1, 80):
-                self.make_gridded_star(self.right_side + 80, y)
-        elif direction == 4:
-            for x in range(self.left_side, self.right_side + 1, 80):
-                self.make_gridded_star(x, self.top_side + 80)
+            diff_y = self.top_side - self.bottom_side
+            for multi_y in range(int(diff_y/self.grid_vertical) + 1):
+                y = self.bottom_side + (multi_y * self.grid_vertical)
+                x = self.left_side - self.grid_horizontal
+                print(x, y)
+                self.append(self.make_star((x, y)))
+        if direction == 2:
+            diff_x = self.right_side - self.left_side
+        pass
+
+    def setup_stars(self):
+        start_x = self.center_x - (arcade.get_display_size()[0]/2)
+        start_y = self.center_y - (arcade.get_display_size()[1]/2)
+        end_x = self.center_x + (arcade.get_display_size()[0]/2)
+        end_y = self.center_y + (arcade.get_display_size()[1]/2)
+
+        if self.skip_side[0] > 0:
+            start_x += self.grid_horizontal
+            self.lost_side[0] = True
+        if self.skip_side[1] > 0:
+            start_y += self.grid_vertical
+            self.lost_side[1] = True
+        if self.skip_side[2] > 0:
+            end_x -= self.grid_horizontal
+            self.lost_side[2] = True
+        if self.skip_side[3] > 0:
+            end_y -= self.grid_vertical
+            self.lost_side[3] = True
+
+        x_diff = end_x - start_x
+        y_diff = end_y - start_y
+
+        for x_multi in range(int(x_diff/self.grid_horizontal) + 1):
+            for y_multi in range(int(y_diff/self.grid_vertical) + 1):
+                x = start_x + (self.grid_horizontal * x_multi)
+                y = start_y + (self.grid_vertical * y_multi)
+                # self.append(self.make_star((x, y)))
+                self.make_gridded_star(x, y)
 
     def calc_field_sides(self):
         true_holder = self.holder.holder
 
-        self.bottom_side = self.center_y
-        self.top_side = self.center_y
-
-        self.left_side = self.center_x
-        self.left_side = self.center_x
-
         if true_holder.left_view < self.center_x < true_holder.left_view + self.holder.screen_size[0]\
                 and true_holder.bottom_view < self.center_y < true_holder.bottom_view + self.holder.screen_size[1]:
             self.center_on_screen = True
+
         else:
             self.center_on_screen = False
 
+        self.bottom_side = self.center_y
+        self.top_side = self.center_y
+
+        self.right_side = self.center_x
+        self.left_side = self.center_x
+
         for stars in self:
-            if stars.core_y < self.bottom_side:
+            if stars.core_y <= self.bottom_side:
                 self.bottom_side = stars.core_y
-            elif stars.core_y > self.top_side:
+            elif stars.core_y >= self.top_side:
                 self.top_side = stars.core_y
 
-            if stars.core_x < self.left_side:
+            if stars.core_x <= self.left_side:
                 self.left_side = stars.core_x
-            elif stars.core_x > self.right_side:
+            elif stars.core_x >= self.right_side:
                 self.right_side = stars.core_x
 
     def make_gridded_star(self, x, y):
-        s_x = x + random.randint(-40, 40)
-        s_y = y + random.randint(-40, 40)
+        s_x = x + random.randint(-self.grid_horizontal/2, self.grid_horizontal/2)
+        s_y = y + random.randint(-self.grid_vertical/2, self.grid_vertical/2)
         star = self.make_star((s_x, s_y))
         star.core_x = x
         star.core_y = y
@@ -315,7 +355,7 @@ class StarBody(arcade.Sprite):
 
     def __init__(self):
         super().__init__()
-        self.texture = arcade.load_texture("Sprites/circle_white.png")
+        self.texture = arcade.load_texture("Sprites/circles/circle_white.png")
         self.scale = round(random.uniform(0.005, 0.02), 3)
 
         self.core_x = 0
@@ -335,12 +375,14 @@ class StarBody(arcade.Sprite):
 
 class StarField:
 
-    def __init__(self):
+    def __init__(self, num: int = 3):
         self.screen_size = arcade.get_display_size()
 
         self.close_lists = None
         self.med_lists = None
         self.far_lists = None
+
+        self.num = num
 
         self.holder = None
 
@@ -349,19 +391,43 @@ class StarField:
 
     def setup(self, holder):
         self.holder = holder
-        self.close_lists = StarListsField(holder, 0.85)
-        self.med_lists = StarListsField(holder, 0.9)
-        self.far_lists = StarListsField(holder, 0.95)
+
+        if self.num:
+            self.close_lists = StarListsField(holder, 0.85)
+        if self.num > 1:
+            self.med_lists = StarListsField(holder, 0.9)
+        if self.num > 2:
+            self.far_lists = StarListsField(holder, 0.95)
 
     def on_update(self, camera_movement: tuple = (0.0, 0.0)):
-        self.close_lists.on_update(camera_movement)
-        self.med_lists.on_update(camera_movement)
-        self.far_lists.on_update(camera_movement)
+        if self.close_lists is not None:
+            self.close_lists.on_update(camera_movement)
+        if self.med_lists is not None:
+            self.med_lists.on_update(camera_movement)
+        if self.far_lists is not None:
+            self.far_lists.on_update(camera_movement)
 
     def draw(self):
-        self.close_lists.draw()
-        self.med_lists.draw()
-        self.far_lists.draw()
+        if self.close_lists is not None:
+            self.close_lists.draw()
+        if self.med_lists is not None:
+            self.med_lists.draw()
+        if self.far_lists is not None:
+            self.far_lists.draw()
+
+        """
+        for lists in self.close_lists.star_lists:
+            arcade.draw_point(lists.center_x, lists.center_y, arcade.color.RADICAL_RED, 5)
+
+            arcade.draw_line(lists.left_side, lists.bottom_side, lists.left_side, lists.top_side,
+                             arcade.color.RADICAL_RED, 1)
+            arcade.draw_line(lists.right_side, lists.bottom_side, lists.right_side, lists.top_side,
+                             arcade.color.WHITE, 1)
+            arcade.draw_line(lists.left_side, lists.bottom_side, lists.right_side, lists.bottom_side,
+                             arcade.color.WHITE, 1)
+            arcade.draw_line(lists.left_side, lists.top_side, lists.right_side, lists.top_side,
+                             arcade.color.WHITE, 1)
+        # """
     
 
 def round_to_n(num_round, n):

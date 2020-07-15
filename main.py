@@ -13,7 +13,7 @@ class GameWindow(arcade.Window):
 
     def __init__(self, screen_width=1000, screen_height=750, title="Title"):
 
-        super().__init__(screen_width, screen_height, title)
+        super().__init__(screen_width, screen_height, title, fullscreen=True)
         arcade.set_background_color(arcade.color.BLACK)
 
         # check if on_update should run.
@@ -123,11 +123,9 @@ class GameWindow(arcade.Window):
         Runs all of the draw functions for all Sprites and SpriteLists
         """
         arcade.start_render()
+
         if self.star_field.holder is not None:
             self.star_field.draw()
-        text = "Player Health: " + str(self.player.health)
-        arcade.draw_text(text, self.left_view + SCREEN_WIDTH // 2, self.bottom_view + SCREEN_HEIGHT - 50,
-                         arcade.color.WHITE, font_size=15, anchor_x="center")
 
         if self.asteroid is not None:
             self.asteroid.draw()
@@ -140,7 +138,7 @@ class GameWindow(arcade.Window):
         if self.show_text:
             self.text_sprite.draw()
 
-    def reset(self, enemies=True, asteroids=True, star_field=True):
+    def reset(self, enemies=True, asteroids=True, star_field=3):
         """
         Resets the game world.
         Needs to be neatened with setups.
@@ -157,7 +155,7 @@ class GameWindow(arcade.Window):
                             SCREEN_HEIGHT + self.bottom_view)
 
         # player
-        self.player = player.Player()
+        self.player = player.Player(self)
         self.player.center_x = self.center_x
         self.player.center_y = self.center_y
 
@@ -179,7 +177,7 @@ class GameWindow(arcade.Window):
             self.player.enemy_handler = self.enemy_handler
 
         # stars
-        self.star_field = stars.StarField()
+        self.star_field = stars.StarField(star_field)
         if star_field:
             self.star_field.setup(self)
 
@@ -198,11 +196,13 @@ class GameWindow(arcade.Window):
             self.close()
 
         if key == arcade.key.P:
-            self.reset(enemies=False, asteroids=True)
+            self.reset(enemies=False)
         elif key == arcade.key.O:
-            self.reset(asteroids=False, star_field=False)
+            self.reset(asteroids=False, star_field=0)
         elif key == arcade.key.I:
-            self.reset(False, False, True)
+            self.reset(False, False, 3)
+        elif key == arcade.key.L:
+            self.reset(star_field=1)
 
     def on_key_release(self, key, modifier):
         """
@@ -231,9 +231,9 @@ class Asteroid(arcade.Sprite):
 
     def __init__(self):
         super().__init__()
-        self.texture = arcade.load_texture("Sprites/circle_white.png")
+        self.texture = arcade.load_texture("Sprites/circles/circle_yellow.png")
         self.scale = 0.15
-        self.radius = 24
+        self.radius = 320/2 * self.scale
 
     def check_wall(self, left, bottom):
         """
@@ -251,12 +251,6 @@ class Asteroid(arcade.Sprite):
             self.center_y = bottom + SCREEN_HEIGHT + self.radius
         elif self.center_y > bottom + SCREEN_HEIGHT + self.radius:
             self.center_y = bottom - self.radius
-
-
-class Grid(arcade.Sprite):
-
-    def __init__(self):
-        super().__init__()
 
 
 def main():
