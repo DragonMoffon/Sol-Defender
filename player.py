@@ -26,6 +26,8 @@ class Player(arcade.Sprite):
                          [-150.0, -70.0], [-160.0, -40.0], [-160.0, 40.0], [-150.0, 70.0], [-140.0, 90.0],
                          [-90.0, 140.0], [-70.0, 150.0]]}
 
+        self.pause_delay = 0
+
         self.alt = False
 
         self.start = 0
@@ -36,9 +38,17 @@ class Player(arcade.Sprite):
         self.dead = False
         self.show_hit_box = False
 
+        # Gravity_variables
+        self.gravity_handler = None
+        self.gravity_influences = []
+        self.gravity_acceleration = [0.0, 0.0]
+        self.gravity_weakener = 1
+
         # Ui
         self.holder = holder
         self.ui = ui.PlayerUi(self, self.holder)
+        self.holder.gravity_handler.set_gravity_object(self)
+        self.collision_warning = False
 
         # variables for gun overheating
         self.heat_level = 0
@@ -50,9 +60,10 @@ class Player(arcade.Sprite):
 
         # Variables for movement
         self.speed_limit = False
-        self.thruster_force = 330000
+        self.thruster_force = 1716750
+        self.turning_thruster_force = 330000
         self.thrusters_output = [0.0, 0.0]
-        self.weight = 549054
+        self.weight = 500000
         self.forward_force = 0
         self.acceleration = [0.0, 0.0]
         self.velocity = [0.0, 0.0]
@@ -122,7 +133,7 @@ class Player(arcade.Sprite):
         self.enemy_pointers.on_update(delta_time)
 
     def draw(self):
-        self.ui.draw()
+        self.ui.under_draw()
         self.enemy_pointers.draw()
         self.bullets.draw()
         super().draw()
@@ -148,6 +159,9 @@ class Player(arcade.Sprite):
             arcade.draw_line(self.center_x, self.center_y,
                              self.center_x + self.velocity[0], self.center_y + self.velocity[1],
                              arcade.color.CYBER_YELLOW)
+
+        self.ui.draw()
+        
     """
     Physics Movement Methods
     """
@@ -163,7 +177,7 @@ class Player(arcade.Sprite):
                 self.thrusters_output[0] = 0.0
 
     def calculate_thruster_force(self):
-        self.turning_force = self.thruster_force * self.thrusters_output[0]
+        self.turning_force = self.turning_thruster_force * self.thrusters_output[0]
         if self.thrusters_output[0] < -self.correction and self.angle_velocity > 0:
             self.turning_force *= 1.5
         elif self.thrusters_output[0] > self.correction and self.angle_velocity < 0:
@@ -187,6 +201,10 @@ class Player(arcade.Sprite):
         self.velocity[0] += self.acceleration[0]
         self.velocity[1] += self.acceleration[1]
 
+        if self.start > 1:
+            self.velocity[0] += self.gravity_acceleration[0] * self.gravity_weakener
+            self.velocity[1] += self.gravity_acceleration[1] * self.gravity_weakener
+
     def move(self, delta_time):
         self.angle += self.angle_velocity * delta_time
         if self.angle > 360:
@@ -209,6 +227,7 @@ class Player(arcade.Sprite):
 
     def shoot(self):
         shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity, self.bullet_type)
+        self.gravity_handler.set_gravity_object(shot)
         self.bullets.append(shot)
 
     """
@@ -241,8 +260,6 @@ class Player(arcade.Sprite):
 
         elif key == arcade.key.LALT:
             self.alt = True
-        elif key == arcade.key.LSHIFT:
-            self.velocity = [0.0, 0.0]
 
     def key_up(self, key):
         if key == arcade.key.W:

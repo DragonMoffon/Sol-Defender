@@ -1,24 +1,41 @@
 import time
+
 import arcade
 
 import enemy_handler
 import player
 import stars
+import space
 
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
-TITLE = "MVP Sol Defender"
+TITLE = "Sol Defender - Sprint 3"
 
 
 class GameWindow(arcade.Window):
 
     def __init__(self, screen_width=1000, screen_height=750, title="Title"):
 
-        super().__init__(screen_width, screen_height, title, fullscreen=True)
+        super().__init__(screen_width, screen_height, title, fullscreen=False)
         arcade.set_background_color(arcade.color.BLACK)
+        # audio
+        # file_name = "Music/Planetary.wav"
+        # self.playback_audio = arcade.Sound(file_name, streaming=True)
+        # self.playback_audio.play(volume=0.1)
+
+        # Temporary Planet and Moon
+        self.planet = None
+        self.moon = None
+
+        # gravity handler
+        self.gravity_handler = None
 
         # check if on_update should run.
         self.process = True
         self.changed = False
+        self.pause_delay = 0
+
+        self.menus = False
+        self.menu = None
 
         # x and y Coordinates for Reset Position
         self.center_x = SCREEN_WIDTH // 2
@@ -27,17 +44,12 @@ class GameWindow(arcade.Window):
         # The Player Sprite and Setup
         self.player = None
 
-        # Asteroid Sprite and Setup
-        self.asteroid = Asteroid()
-        self.asteroid.center_x = self.center_x
-        self.asteroid.center_y = self.center_y
-
         # Viewport Variables
         self.bottom_view = 0
         self.left_view = 0
 
         # Enemy Handler Variables
-        self.enemy_handler = enemy_handler.EnemyHandler()
+        self.enemy_handler = None
 
         # Text Sprite
         self.text_sprite = arcade.Sprite()
@@ -61,16 +73,26 @@ class GameWindow(arcade.Window):
         """
         # FPS for debugging
         # print("FPS:",1/delta_time)
-        if self.process:
+        if self.menus:
+            pass
+        elif self.process:
+            # print("position:", self.playback_audio.get_stream_position(), "Length:", self.playback_audio.get_length())
+
+            # if self.playback_audio.get_stream_position() == 0:
+            #     self.playback_audio.play(0.1)
+
+            # Move Planet and Moon
+            if self.moon is not None:
+                self.moon.on_update(delta_time)
+
+            # Gravity Update
+            self.gravity_handler.calculate_each_gravity()
+
             # Players Update
             self.player.on_update(delta_time)
 
             # Move Viewport
             self.view_port(delta_time)
-
-            # Check The Asteroids Position
-            if self.asteroid is not None:
-                self.asteroid.check_wall(self.left_view, self.bottom_view)
 
             # Enemy update
             if self.changed:
@@ -127,24 +149,26 @@ class GameWindow(arcade.Window):
         if self.star_field.holder is not None:
             self.star_field.draw()
 
-        if self.asteroid is not None:
-            self.asteroid.draw()
-
-        self.player.draw()
+        if self.planet is not None:
+            self.planet.draw()
+            self.moon.draw()
 
         if self.enemy_handler.enemy_sprites is not None:
             self.enemy_handler.draw()
 
+        self.player.draw()
+
         if self.show_text:
             self.text_sprite.draw()
 
-    def reset(self, enemies=True, asteroids=True, star_field=3):
+    def reset(self, enemies=True, star_field=3):
         """
         Resets the game world.
         Needs to be neatened with setups.
         """
         self.process = True
         self.changed = False
+        self.gravity_handler = space.GravityHandler()
 
         # view
         self.left_view = 0
@@ -159,22 +183,21 @@ class GameWindow(arcade.Window):
         self.player.center_x = self.center_x
         self.player.center_y = self.center_y
 
-        # asteroid
-        self.asteroid = None
-        if asteroids:
-            self.asteroid = Asteroid()
-            self.asteroid.center_x = self.center_x
-            self.asteroid.center_y = self.center_y
-
         # enemies
-        self.enemy_handler = enemy_handler.EnemyHandler()
+        self.enemy_handler = enemy_handler.EnemyHandler(self)
         if enemies:
             self.enemy_handler.player = self.player
             self.enemy_handler.assign_player_health()
             self.player.start = 1
 
-        # player pointer
+            # player pointer
             self.player.enemy_handler = self.enemy_handler
+        else:
+            pass
+
+        self.planet = space.Planet(self)
+        self.moon = space.Satellite(self.planet)
+        self.moon.setup(self.gravity_handler)
 
         # stars
         self.star_field = stars.StarField(star_field)
@@ -192,15 +215,26 @@ class GameWindow(arcade.Window):
         if key == arcade.key.R:
             self.reset()
 
-        if key == arcade.key.ESCAPE:
+        elif key == arcade.key.LSHIFT and self.process:
+            self.process = False
+            self.pause_delay = time.time()
+        elif key == arcade.key.LSHIFT and not self.process and self.player.start:
+            self.process = True
+            self.pause_delay = time.time() - self.pause_delay
+            for shots in self.player.bullets:
+                shots.pause_delay += self.pause_delay
+            self.enemy_handler.pause_delay(self.pause_delay)
+            self.pause_delay = 0
+
+        elif key == arcade.key.ESCAPE:
             self.close()
 
-        if key == arcade.key.P:
-            self.reset(enemies=False)
+        elif key == arcade.key.P:
+            self.reset(enemies=False, star_field=1)
         elif key == arcade.key.O:
-            self.reset(asteroids=False, star_field=0)
+            self.reset(star_field=0)
         elif key == arcade.key.I:
-            self.reset(False, False, 3)
+            self.reset(False, 3)
         elif key == arcade.key.L:
             self.reset(star_field=1)
 
@@ -222,35 +256,6 @@ class GameWindow(arcade.Window):
             print(dx,dy)
             print(math.sqrt(dx**2 + dy**2))
         """
-
-
-class Asteroid(arcade.Sprite):
-    """
-    A simple sprite class that shows how the player is moving
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.texture = arcade.load_texture("Sprites/circles/circle_yellow.png")
-        self.scale = 0.15
-        self.radius = 320/2 * self.scale
-
-    def check_wall(self, left, bottom):
-        """
-        since there is only one asteroid this method moves the asteroid to the opposite side of the screen if it goes
-         past the edge of the screen ensuring the player can always see it.
-        """
-        # left and right
-        if left - self.radius > self.center_x:
-            self.center_x = left + SCREEN_WIDTH + self.radius
-        elif self.center_x > left + SCREEN_WIDTH + self.radius:
-            self.center_x = left - self.radius
-
-        # top and bottom
-        if bottom - self.radius > self.center_y:
-            self.center_y = bottom + SCREEN_HEIGHT + self.radius
-        elif self.center_y > bottom + SCREEN_HEIGHT + self.radius:
-            self.center_y = bottom - self.radius
 
 
 def main():

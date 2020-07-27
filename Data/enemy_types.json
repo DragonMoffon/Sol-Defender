@@ -68,7 +68,7 @@
          ],
          "abilities": ["invisibility"],
          "ability_frames": ["Sprites/Enemies/Bosses/predator_ability_frames_1.png"],
-         "health": 32,
+         "health": 124,
          "shoot_type": 1,
          "shoot_delay": [
             1,
