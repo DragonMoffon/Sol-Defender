@@ -1,5 +1,3 @@
-import time
-import math
 import json
 
 import arcade
@@ -13,83 +11,91 @@ import enemy_handler
 
 class Mission:
 
-    def __init__(self, game_window, level_data: dict = None):
+    def __init__(self, game_window):
         self.game_window = game_window
+        self.level_data = None
 
-        if level_data is not None:
-            self.num_stages = level_data['stages']
-            self.possible_enemies = level_data['possible_enemies']
-            self.possible_bosses = level_data['possible_bosses']
-            self.planets_data = level_data['planets']
-            self.satellites_data = level_data['satellites']
-            self.asteroids_data = level_data['asteroids']
-        else:
-            self.num_stages = 5
-            self.possible_enemies = None
-            self.possible_bosses = None
-            self.planets_data = None
-            self.satellites_data = None
-            self.asteroids_data = None
         self.enemy_handler = None
-        self.planets = None
-        self.satellites = None
+        self.curr_planet = None
         self.asteroids = None
 
-    def load_mission(self):
-        self.enemy_handler = enemy_handler.EnemyHandler(self.possible_enemies, self.possible_bosses)
-        """
-        Asteroids not yet implemented.
-        Satellites not yet implemented.
-        
-        if self.satellites_data is not None:
-            self.satellites = arcade.SpriteList()
-            for data in self.satellites_data:
-                satellite = space.Satellite(data)
-                self.satellites.append(asteroid)
-           
-        if self.asteroids_data is not None:
-            self.asteroids = arcade.SpriteList()
-            for data in self.asteroids_data:
-                asteroid = space.Asteroid(data)
-                self.asteroids.append(asteroid)
-        """
+    def mission_setup(self, level_data: dict = None):
+        self.level_data = level_data
 
-        if self.planets_data is None:
-            self.planets = arcade.SpriteList()
-            self.planets.append(space.Planet())
-        else:
-            self.planets = arcade.SpriteList()
-            for data in self.planets_data:
-                planet = space.Planet(data)
-                self.planets.append(planet)
+        self.enemy_handler = None
+        self.curr_planet = None
+        self.asteroids = None
+
+        if level_data is not None:
+            self.setup()
+
+    def setup(self):
+        if self.level_data is not None:
+            with open("Data/enemy_types.json") as enemy_file:
+                enemy_types = json.load(enemy_file)
+                basic_enemies = enemy_types['basic_types']
+                boss_enemies = enemy_types['boss_types']
+
+            with open("Data/sol_system.json") as sol_file:
+                sol_system = json.load(sol_file)
+                planets = sol_system['planets']
+
+            """
+            TO SETUP:
+            Asteroid Json file and setup within mission.
+            """
+
+            for planet in planets:
+                if planet['name'] == self.level_data['planet']:
+                    self.curr_planet = space.Planet(self.game_window, planet)
+                    break
+
+            mission_enemies = []
+            for enemies in basic_enemies:
+                for pos_enemies in self.level_data['possible_enemies']:
+                    if enemies['type'] == pos_enemies:
+                        mission_enemies.append(enemies)
+                        break
+
+            mission_bosses = []
+            for bosses in boss_enemies:
+                for pos_bosses in self.level_data['possible_bosses']:
+                    if bosses['type'] == pos_bosses:
+                        mission_bosses.append(bosses)
+                        break
+
+            self.enemy_handler = enemy_handler.EnemyHandler(self.game_window,
+                                                            mission_enemies, mission_bosses,
+                                                            self.level_data)
+
+            # give the enemy_handler the player
+            self.enemy_handler.player = self.game_window.player
+            self.enemy_handler.assign_player_health()
+
+            # player pointer
+            self.game_window.player.enemy_handler = self.enemy_handler
+
+    def check_setup(self):
+        if self.game_window.player.start == 1:
+            self.enemy_handler.setup_wave()
+            self.game_window.player.start = 2
 
     def draw(self):
-        if self.enemy_handler is not None:
+        if self.asteroids is not None:
+            self.asteroids.draw()
+
+        if self.curr_planet is not None:
+            self.curr_planet.draw()
+
+        if self.enemy_handler is not None and self.enemy_handler.enemy_sprites is not None:
             self.enemy_handler.draw()
 
-        if self.planets is not None:
-            for planet in self.planets:
-                planet.draw()
-
-        if self.asteroids is not None:
-            for asteroid in self.asteroids:
-                asteroid.draw()
-
-        if self.satellites is not None:
-            for satellites in self.satellites:
-                satellites.draw()
-
     def on_update(self, delta_time: float = 1/60):
-        if self.enemy_handler is not None:
-            self.enemy_handler.on_update(delta_time)
-
-        if self.planets is not None:
-            self.planets.on_update(delta_time)
-
         if self.asteroids is not None:
-            for asteroid in self.asteroids:
-                asteroid.on_update(delta_time)
+            self.asteroids.on_update(delta_time)
 
-        if self.satellites is not None:
-            for satellites in self.satellites:
-                satellites.on_update(delta_time)
+        if self.curr_planet is not None:
+            self.curr_planet.on_update(delta_time)
+
+        if self.enemy_handler is not None and self.enemy_handler.enemy_sprites is not None:
+            self.enemy_handler.on_update(delta_time)

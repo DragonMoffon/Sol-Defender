@@ -3,6 +3,8 @@ import time
 
 import arcade
 
+import vector
+
 
 class Bullet(arcade.Sprite):
 
@@ -22,13 +24,14 @@ class Bullet(arcade.Sprite):
 
         # variables for bullets
         self.gravity_acceleration = [0.0, 0.0]
+        self.gravity_mod = 0
         self.velocity = [0.0, 0.0]
         self.speed = bullet_type['speed']
         self.life = 0
         self.max_age = bullet_type['age']
         self.spawn(pos, angle, velocity)
         self.damage = bullet_type['damage']
-        self.weight = 2
+        self.weight = 1
 
     def spawn(self, pos, angle, velocity):
         """
@@ -50,14 +53,18 @@ class Bullet(arcade.Sprite):
         """
         Update the bullet and kill it if it's to old.
         """
-        self.velocity[0] += self.gravity_acceleration[0]
-        self.velocity[1] += self.gravity_acceleration[1]
+
+        self.velocity[0] += self.gravity_acceleration[0] * self.gravity_mod
+        self.velocity[1] += self.gravity_acceleration[1] * self.gravity_mod
+
         self.center_x += self.velocity[0] * delta_time
         self.center_y += self.velocity[1] * delta_time
         if time.time() - self.pause_delay > self.life:
-            self.remove_from_sprite_lists()
             self.kill()
 
     def kill(self):
         self.remove_from_sprite_lists()
         del self
+
+    def draw(self):
+        super().draw()

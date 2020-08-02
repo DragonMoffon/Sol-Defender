@@ -1,0 +1,32 @@
+{
+  "start_missions":
+  [
+    {
+      "key": 0,
+      "name": "mission_1",
+      "stages": 2,
+      "possible_enemies": ["hunter", "blitz"],
+      "possible_bosses": ["predator"],
+      "planet": "planet_1",
+      "asteroids": []
+    },
+    {
+      "key": 1,
+      "name": "mission_2",
+      "stages": 2,
+      "possible_enemies": ["blitz"],
+      "possible_bosses": ["predator"],
+      "planet": "planet_2",
+      "asteroids": []
+    },
+    {
+      "key": 2,
+      "name": "mission_3",
+      "stages": 3,
+      "possible_enemies": ["hunter"],
+      "possible_bosses": ["predator"],
+      "planet": "planet_3",
+      "asteroids": []
+    }
+  ]
+}

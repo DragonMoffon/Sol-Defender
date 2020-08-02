@@ -17,20 +17,11 @@ class EnemyHandler:
     creating waves and updating enemies
     """
 
-    def __init__(self, game_window, basic_types: list = None, boss_types: list = None):
+    def __init__(self, game_window, basic_types: list = None, boss_types: list = None, mission_data: dict = None):
 
         # Enemy type Json file reading.
         self.basic_types = basic_types
         self.boss_types = boss_types
-        if basic_types is None or boss_types is None:
-            file = "Data/enemy_types.json"
-            self.enemy_types = {}
-            with open(file) as json_file:
-                self.enemy_types = json.load(json_file)
-            if basic_types is None:
-                self.basic_types = self.enemy_types["basic_types"]
-            if boss_types is None:
-                self.boss_types = self.enemy_types["boss_types"]
 
         file = "Data/bullet_types.json"
         self.bullet_types = []
@@ -61,6 +52,7 @@ class EnemyHandler:
         # the current wave, plus which stage of difficulty
         self.wave = 0
         self.stage = 1
+        self.num_stages = mission_data['stages']
         self.boss_wave = False
 
         # The number of enemies and the starting number.
@@ -99,7 +91,7 @@ class EnemyHandler:
         """
         loss = self.assign_player_health()
         if loss > 0:
-            loss_factor = 1/loss
+            loss_factor = 1 / loss
         else:
             loss_factor = 0
 
@@ -112,10 +104,10 @@ class EnemyHandler:
         base = 1.05
         last_difficulty = self.difficulty
         if last_difficulty > 0:
-            modifier = round((loss_factor + time_factor + (last_difficulty-base))*(self.stage/20), 2)
-        #    print(
-        #        f"difficulty = base[{base}] + (loss factor[{loss_factor}] + time factor[{time_factor}]"
-        #        f" + last difficulty[{last_difficulty - base}])*(stage[{self.stage / 20}]). ")
+            modifier = round((loss_factor + time_factor + (last_difficulty - base)) * (self.stage / 20), 2)
+            #    print(
+            #        f"difficulty = base[{base}] + (loss factor[{loss_factor}] + time factor[{time_factor}]"
+            #        f" + last difficulty[{last_difficulty - base}])*(stage[{self.stage / 20}]). ")
             self.average_difficulty = round(((last_difficulty - base) + modifier) / 2, 2)
         else:
             modifier = 0
@@ -141,7 +133,7 @@ class EnemyHandler:
             total = 0
             for times in self.wave_times:
                 total += times
-            self.average_time = total/len(self.wave_times)
+            self.average_time = total / len(self.wave_times)
         self.current_wave_time = time.time()
 
     def setup_wave(self):
@@ -157,27 +149,22 @@ class EnemyHandler:
             self.boss_ui.setup(self.enemy_sprites)
             self.boss_wave = False
         else:
-            self.wave += 1
-            self.do_wave_time()
-            self.calc_wave()
-            self.setup_enemies()
-            if self.wave % 5 == 0:
-                self.boss_wave = True
+            if self.stage > self.num_stages:
+                self.game_window.current_mission = -1
+                self.game_window.open_clean_map()
+            else:
+                self.wave += 1
+                self.do_wave_time()
+                self.calc_wave()
+                self.setup_enemies()
+                if self.wave % 5 == 0:
+                    self.boss_wave = True
 
         print("Stage:", self.stage, "Wave:", self.wave)
 
     def setup_enemies(self):
         self.enemy_sprites = arcade.SpriteList()
-
-        if self.num_enemies >= self.max_count_in_clusters:
-            self.cluster()
-        else:
-            for i in range(self.num_enemies):
-                enemy_type = random.randrange(0, len(self.basic_types))
-                bullet_type = self.bullet_types[self.basic_types[enemy_type]["shoot_type"]]
-                enemy = Enemy(self.basic_types[enemy_type], bullet_type)
-                enemy.setup(self)
-                self.enemy_sprites.append(enemy)
+        self.cluster()
 
     def setup_boss(self):
         self.enemy_sprites = arcade.SpriteList()
@@ -189,26 +176,51 @@ class EnemyHandler:
         self.enemy_sprites.append(enemy)
 
     def cluster(self):
+        if self.num_enemies >= self.max_count_in_clusters:
+            check = self.max_count_in_clusters
+            smallest = self.max_count_in_clusters
+            not_found = True
+            while not_found:
+                if self.num_enemies % check < self.num_enemies % smallest:
+                    smallest = check
+                if self.num_enemies % check == 0 or check <= self.min_count_in_clusters:
+                    not_found = False
+                else:
+                    check -= 1
+
+            remaining = self.num_enemies % smallest
+            num_clusters = int((self.num_enemies - remaining) / smallest)
+            amount = smallest
+        else:
+            remaining = 0
+            num_clusters = 1
+            amount = self.num_enemies
+
         screen_x, screen_y = arcade.get_display_size()
         self.clusters = []
-        remaining = self.num_enemies % self.min_count_in_clusters
-        if not remaining:
-            num_clusters = int(self.num_enemies / self.min_count_in_clusters)
-        else:
-            num_clusters = int((self.num_enemies - remaining) / self.min_count_in_clusters)
         for i in range(num_clusters):
             cluster = Cluster(self)
-            cluster.num_enemies = self.min_count_in_clusters + remaining
-            remaining = 0
+            cluster.num_enemies = amount
             close = True
             while close:
-                cluster.center_x = self.player.center_x + random.randint(-3 * screen_x, 3 * screen_x + 1)
-                cluster.center_y = self.player.center_y + random.randint(-3 * screen_x, 3 * screen_x + 1)
+                if self.num_enemies < self.max_count_in_clusters:
+                    cluster.center_x = self.player.center_x + random.randint(-2 * screen_x, 2 * screen_x + 1)
+                    cluster.center_y = self.player.center_y + random.randint(-2 * screen_x, 2 * screen_x + 1)
+                else:
+                    cluster.center_x = self.player.center_x + random.randint(-3 * screen_x, 3 * screen_x + 1)
+                    cluster.center_y = self.player.center_y + random.randint(-3 * screen_x, 3 * screen_x + 1)
                 distance = vector.find_distance((cluster.center_x, cluster.center_y),
                                                 (self.player.center_x, self.player.center_y))
                 if distance > 1.5 * screen_x:
                     close = False
             self.clusters.append(cluster)
+
+        if remaining:
+            for cluster in self.clusters:
+                cluster.num_enemies += 1
+                remaining -= 1
+                if remaining <= 0:
+                    break
 
     def draw(self):
         """
@@ -243,14 +255,19 @@ class EnemyHandler:
             self.setup_wave()
 
     def pause_delay(self, pause_delay):
-        for bodies in self.enemy_sprites:
-            for shots in bodies.bullets:
-                shots.pause_delay += pause_delay
+        if self.enemy_sprites is not None:
+            for bodies in self.enemy_sprites:
+                for shots in bodies.bullets:
+                    shots.pause_delay += pause_delay
 
 
-class Cluster:
+class Cluster(arcade.Sprite):
 
     def __init__(self, handler):
+        super().__init__()
+        point_list = (0.0, 0.1), (0.1, 0.0), (0.0, 0.0)
+
+        self.set_hit_box(point_list)
         self.num_enemies = 0
 
         self.center_x = 0
@@ -331,7 +348,7 @@ class Enemy(arcade.Sprite):
         self.get_sprites(type_data['image_file'])
         self.health = type_data['health']
         self.full_health = self.health
-        self.health_segment = self.health / (len(self.textures)-1)
+        self.health_segment = self.health / (len(self.textures) - 1)
         self.frame = 1
 
         # hit box
@@ -359,6 +376,7 @@ class Enemy(arcade.Sprite):
         self.rule_2_effect = [0.0, 0.0]
         self.rule_3_effect = [0.0, 0.0]
         self.rule_4_effect = [0.0, 0.0]
+        self.rule_5_effect = [0.0, 0.0]
 
         self.do_rule = 0
 
@@ -366,7 +384,7 @@ class Enemy(arcade.Sprite):
         self.rule_2_priority = type_data['rules'][1]
         self.rule_3_priority = type_data['rules'][2]
         self.rule_4_priority = type_data['rules'][3]
-
+        self.rule_5_priority = type_data['rules'][4]
         # Ability Variables
         try:
             self.abilities = type_data['abilities']
@@ -403,31 +421,27 @@ class Enemy(arcade.Sprite):
 
         handler.game_window.gravity_handler.set_gravity_object(self)
 
-        screen = arcade.get_display_size()
-        close = True
-        while close:
-            self.center_x = x_y_pos[0] + random.randint(-(screen[0] // 2) + 30, (screen[0] // 2) - 29)
-            self.center_y = x_y_pos[1] + random.randint(-(screen[1] // 2) + 30, (screen[1] // 2) - 29)
-            self.target_distance = vector.find_distance((self.center_x, self.center_y),
-                                                        (self.handler.player.center_x, self.handler.player.center_y))
-            if self.target_distance > 300:
-                close = False
+        rad_angle = round(random.uniform(0.0, 2*math.pi), 2)
+        self.center_x = x_y_pos[0] + math.cos(rad_angle) + random.randint(320, 600)
+        self.center_y = x_y_pos[1] + math.sin(rad_angle) + random.randint(320, 600)
 
         point = ui.Pointer()
         point.holder = self.handler.player
         point.target = self
         self.handler.player.enemy_pointers.append(point)
+        self.velocity[0] = self.handler.player.velocity[0]
+        self.velocity[1] = self.handler.player.velocity[1]
 
     def get_sprites(self, image_file, list_to_append: list = None):
         """
         Gets all of the hurt sprites for the enemy
         """
         image = PIL.Image.open(image_file)
-        num_frames = image.size[1]//image.size[0]
+        num_frames = image.size[1] // image.size[0]
         x = image.size[0]
-        y = image.size[1]/num_frames
+        y = image.size[1] / num_frames
         for i in range(num_frames):
-            texture = arcade.load_texture(image_file, 0, y*i, x, y)
+            texture = arcade.load_texture(image_file, 0, y * i, x, y)
             if list_to_append is None:
                 self.textures.append(texture)
             else:
@@ -443,6 +457,7 @@ class Enemy(arcade.Sprite):
             self.draw_hit_box(arcade.color.RADICAL_RED)
 
         if self.handler.player.show_hit_box:
+            self.draw_hit_box(arcade.color.WHITE)
 
             for shot in self.bullets:
                 arcade.draw_line(shot.center_x, shot.center_y,
@@ -452,25 +467,28 @@ class Enemy(arcade.Sprite):
             string = str(self.health)
             arcade.draw_text(string, self.center_x, self.center_y - self.width, arcade.color.WHITE)
 
-            arcade.draw_line(self.center_x + self.rule_1_effect[0]*20, self.center_y + self.rule_1_effect[1]*20,
+            arcade.draw_line(self.center_x + self.rule_1_effect[0] * 20, self.center_y + self.rule_1_effect[1] * 20,
                              self.center_x, self.center_y,
                              arcade.color.RADICAL_RED)
-            arcade.draw_line(self.center_x + self.rule_2_effect[0]*20, self.center_y + self.rule_2_effect[1]*20,
+            arcade.draw_line(self.center_x + self.rule_2_effect[0] * 20, self.center_y + self.rule_2_effect[1] * 20,
                              self.center_x, self.center_y,
                              arcade.color.OCEAN_BOAT_BLUE)
-            arcade.draw_line(self.center_x + self.rule_3_effect[0]*20, self.center_y + self.rule_3_effect[1]*20,
+            arcade.draw_line(self.center_x + self.rule_3_effect[0] * 20, self.center_y + self.rule_3_effect[1] * 20,
                              self.center_x, self.center_y,
                              arcade.color.WHITE_SMOKE)
             arcade.draw_line(self.center_x, self.center_y,
-                             self.center_x+self.rule_4_effect[0] * 20, self.center_y+self.rule_4_effect[1] * 20,
+                             self.center_x + self.rule_4_effect[0] * 20, self.center_y + self.rule_4_effect[1] * 20,
                              arcade.color.LIME_GREEN)
+            arcade.draw_line(self.center_x, self.center_y,
+                             self.center_x + self.rule_5_effect[0] * 20, self.center_y + self.rule_5_effect[1] * 20,
+                             arcade.color.ALLOY_ORANGE)
             arcade.draw_line(self.center_x + self.velocity[0], self.center_y + self.velocity[1],
                              self.center_x, self.center_y,
                              arcade.color.CYBER_YELLOW)
         self.bullets.draw()
         super().draw()
 
-    def on_update(self, delta_time: float = 1/60):
+    def on_update(self, delta_time: float = 1 / 60):
         """
         Every update run different methods for the enemy and its algorithms.
         """
@@ -493,7 +511,7 @@ class Enemy(arcade.Sprite):
         self.velocity[1] += self.gravity_acceleration[1]
 
         # run a counter to check when to do some of the rules, then calculate the rules and the resultant velocity
-        self.do_rule += 1*delta_time
+        self.do_rule += 1 * delta_time
         self.rules()
 
         # apply velocity
@@ -507,7 +525,7 @@ class Enemy(arcade.Sprite):
         # shooting
         if self.active_ability is None:
             self.shoot_rule()
-        self.bullets.on_update()
+        self.bullets.on_update(delta_time)
 
     def turn(self, delta_time):
         """
@@ -562,13 +580,15 @@ class Enemy(arcade.Sprite):
                     for hit in e_hits:
                         hits.append(hit)
         if len(hits) > 0:
-            hits[0].kill()
-            self.health -= self.handler.player.damage
-            if self.health <= self.full_health - (self.frame * self.health_segment) and not self.health < 0:
-                self.texture = self.textures[self.frame]
-                self.frame += 1
-            if self.health <= 0:
-                self.kill()
+            hit_copy = hits
+            for index, hit in enumerate(hit_copy):
+                hits[index].kill()
+                self.health -= hit.damage
+                if self.health <= self.full_health - (self.frame * self.health_segment) and not self.health < 0:
+                    self.texture = self.textures[self.frame]
+                    self.frame += 1
+                if self.health <= 0:
+                    self.kill()
 
     def if_hit_player(self):
         """
@@ -577,10 +597,16 @@ class Enemy(arcade.Sprite):
         hits = arcade.check_for_collision_with_list(self.handler.player, self.bullets)
         if len(hits) > 0:
             self.handler.player.health -= self.bullet_type['damage']
+            self.handler.player.last_damage = time.time()
+            file = "Music/player_damage.wav"
+            sound = arcade.Sound(file)
+            sound.play(volume=0.0)
+
             if self.handler.player.health < 0:
                 self.handler.player.health = 0
             if self.handler.player.health <= 0:
                 self.handler.player.dead = True
+
             self.handler.player.hit = True
             for hit in hits:
                 hit.kill()
@@ -604,13 +630,13 @@ class Enemy(arcade.Sprite):
         self.direction = vector.calc_direction(self.target_angle, self.angle)
 
         self.target_velocity = target.velocity
-        self.target_speed = math.sqrt(target.velocity[0]**2 + target.velocity[1]**2)
+        self.target_speed = math.sqrt(target.velocity[0] ** 2 + target.velocity[1] ** 2)
         self.target_acceleration = target.forward_force / target.weight
 
         # distance to player
         dx = self_pos[0] - target_pos[0]
         dy = self_pos[1] - target_pos[1]
-        self.target_distance = math.sqrt(dx**2 + dy**2)
+        self.target_distance = math.sqrt(dx ** 2 + dy ** 2)
 
     def shoot_rule(self):
         if not self.firing:
@@ -647,20 +673,30 @@ class Enemy(arcade.Sprite):
                 self.rule_2_effect = self.rule2()
             if self.rule_3_priority:
                 self.rule_3_effect = self.rule3()
-            if self.rule_3_priority:
+            if self.rule_4_priority:
                 self.rule_4_effect = self.rule4()
+            if self.rule_5_priority:
+                self.rule_5_effect = self.rule5()
         final = [0.0, 0.0]
-        final[0] = self.rule_1_effect[0] + self.rule_2_effect[0] + self.rule_3_effect[0] + self.rule_4_effect[0]
-        final[1] = self.rule_1_effect[1] + self.rule_2_effect[1] + self.rule_3_effect[1] + self.rule_4_effect[1]
+        final[0] = self.rule_1_effect[0] \
+                   + self.rule_2_effect[0] \
+                   + self.rule_3_effect[0] \
+                   + self.rule_4_effect[0] \
+                   + self.rule_5_effect[0]
+        final[1] = self.rule_1_effect[1] \
+                   + self.rule_2_effect[1] \
+                   + self.rule_3_effect[1] \
+                   + self.rule_4_effect[1] \
+                   + self.rule_5_effect[1]
 
         self.velocity[0] += final[0]
         self.velocity[1] += final[1]
 
-        speed_limit = self.target_speed + 200
-        speed = math.sqrt(self.velocity[0] ** 2 + self.velocity[1]**2)
+        """speed_limit = self.target_speed + 200
+        speed = math.sqrt(self.velocity[0] ** 2 + self.velocity[1] ** 2)
         if speed > speed_limit:
             self.velocity[0] = (self.velocity[0] / speed) * speed_limit
-            self.velocity[1] = (self.velocity[1] / speed) * speed_limit
+            self.velocity[1] = (self.velocity[1] / speed) * speed_limit"""
 
     def ability_rules(self):
         if self.active_ability is None:
@@ -699,13 +735,14 @@ class Enemy(arcade.Sprite):
                             self.shooting = False
 
                     if self.shooting is False:
-                        break  
-                        
+                        break
+
     def standard_shoot(self):
         """
         shoots a bullets.
         """
         shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity, self.bullet_type)
+        self.gravity_handler.set_gravity_object(shot)
         self.bullets.append(shot)
 
     def rapid_rule(self):
@@ -763,8 +800,8 @@ class Enemy(arcade.Sprite):
         distance = self.target_distance
         rad_angle = math.radians(self.target_angle)
         if distance > 480:
-            x = math.cos(rad_angle) * 2.8
-            y = math.sin(rad_angle) * 2.8
+            x = math.cos(rad_angle) * self.target_acceleration + 0.4
+            y = math.sin(rad_angle) * self.target_acceleration + 0.4
         elif distance > 330:
             x = math.cos(rad_angle) * self.target_acceleration
             y = math.sin(rad_angle) * self.target_acceleration
@@ -854,7 +891,30 @@ class Enemy(arcade.Sprite):
         return result
 
     def rule5(self):
-        pass
+        """
+        Rule Five: Negate Gravity
+        """
+        total = len(self.gravity_handler.gravity_influences)
+        distance = 0
+        for influences in self.gravity_handler.gravity_influences:
+            v1 = (self.center_x, self.center_y)
+            v2 = (influences.center_x, influences.center_y)
+            i_distance = vector.find_distance(v1, v2)
+            if i_distance < 2000:
+                distance += i_distance
+
+        distance /= total
+        distance /= 2000
+
+        result = [0.0, 0.0]
+        if self.gravity_acceleration[0] != 0.0 or self.gravity_acceleration[1] != 0.0:
+            result[0] = self.gravity_acceleration[0] * -1 * self.rule_5_priority
+            result[1] = self.gravity_acceleration[1] * -1 * self.rule_5_priority
+
+        if distance:
+            result[0] /= (distance + 0.75)
+            result[1] /= (distance + 0.75)
+        return result
 
     """
     Ability Rules:

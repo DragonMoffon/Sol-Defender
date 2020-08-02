@@ -1,4 +1,6 @@
 import math
+import json
+import random
 
 import arcade
 
@@ -10,8 +12,8 @@ GRAVITY_CONSTANT = 6.67408 * 10 ** (-12)
 class GravityHandler:
 
     def __init__(self):
-        self.gravity_influences = []
-        self.gravity_objects = []
+        self.gravity_influences = arcade.SpriteList()
+        self.gravity_objects = arcade.SpriteList()
 
     def set_gravity_object_influence(self, gravity_object):
         gravity_object.gravity_handler = self
@@ -37,11 +39,13 @@ class GravityHandler:
                     force = (GRAVITY_CONSTANT * gravity_object.weight * influences.weight) / (distance ** 2)
                     acceleration = force / gravity_object.weight
                     if base_distance <= influences.width / 2:
-                        acceleration = force*100 / gravity_object.weight
+                        acceleration = force * 25 / gravity_object.weight
                         direction += math.pi
                         try:
                             if not gravity_object.dead:
-                                gravity_object.dead = True
+                                gravity_object.health -= 1
+                                if gravity_object.health <= 0:
+                                    gravity_object.dead = True
                         except AttributeError:
                             gravity_object.kill()
                     a_x = math.cos(direction) * acceleration
@@ -62,26 +66,35 @@ class Planet(arcade.Sprite):
 
         self.game_window = game_window
         self.gravity_handler = None
+        self.satellites = None
         self.game_window.gravity_handler.set_gravity_object_influence(self)
 
         if planet_data is not None:
+            self.name = planet_data['name']
             self.type = planet_data['type']
             self.weight = planet_data['weight']
             self.center_x = planet_data['x_pos']
             self.center_y = planet_data['y_pos']
             self.texture = arcade.load_texture(planet_data['texture'])
             self.planetary_radius = planet_data['radius']
-            self.satellites = planet_data['satellites']
-        else:
-            self.type = 'exo'
-            self.weight = 5.972 * (10 ** 24)
-            self.center_x = 3000
-            self.center_y = 3000
-            self.texture = arcade.load_texture("Sprites/Planets/Exo Planets/Exo_Planet_0_scale_1.png")
-            self.planetary_radius = 6371000
-            self.satellites = []
+            self.satellites_data = planet_data['satellites']
+
+            self.satellites = arcade.SpriteList()
+            for satellites in self.satellites_data:
+                satellite = Satellite(self, satellites)
+                if satellites['gravity']:
+                    self.game_window.gravity_handler.set_gravity_object_influence(satellite)
+                self.satellites.append(satellite)
 
         self.scale = 1.5
+
+    def draw(self):
+        if self.satellites is not None:
+            self.satellites.draw()
+        super().draw()
+
+    def on_update(self, delta_time: float = 1/60):
+        self.satellites.on_update(delta_time)
 
 
 class Satellite(arcade.Sprite):
@@ -89,8 +102,8 @@ class Satellite(arcade.Sprite):
     def __init__(self, parent, satellite_data: dict = None):
         super().__init__()
         self.scale = 0.5
-        self.starting_angle = 0
-        self.current_angle = 0
+        self.starting_angle = random.randrange(0, 360)
+        self.current_angle = self.starting_angle
 
         self.parent = parent
         self.gravity_handler = None
@@ -106,24 +119,14 @@ class Satellite(arcade.Sprite):
         self.file_name = ''
 
         if satellite_data is not None:
-            self.orbit = satellite_data['orbit']
             self.gravity = satellite_data['gravity']
             self.planetary_radius = satellite_data['radius']
             self.weight = satellite_data['weight']
             self.type = satellite_data['type']
             self.speed = satellite_data['speed']
-            self.file_name = satellite_data['file']
+            self.file_name = satellite_data['texture']
             self.texture = arcade.load_texture(self.file_name)
-        else:
-            self.gravity = True
-            self.planetary_radius = 868500
-            self.weight = 7.35 * 10 ** 22
-            self.type = 'moon'
-            self.speed = 1
-
-            self.file_name = 'Sprites/Satellites/Moons/moon_satellite_0.png'
-            self.texture = arcade.load_texture(self.file_name)
-            self.orbit = (parent.width / 2) + (self.width / 2) + 1200
+            self.orbit = (parent.width / 2) + (self.width / 2) + satellite_data['orbit']
 
     def setup(self, gravity_handler=None):
         if self.gravity and gravity_handler is None:

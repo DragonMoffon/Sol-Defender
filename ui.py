@@ -18,7 +18,7 @@ class Pointer(arcade.Sprite):
         self.holder = holder  # The arcade.Sprite that is where the pointer points from
         self.target = target  # The arcade.Sprite that the pointer points to
         self.push_out = 45  # The minimum distance the pointer can be from the holder
-        self.texture = arcade.load_texture("Sprites/Enemy Direction.png")  # The pointer's texture
+        self.texture = arcade.load_texture("Sprites/Player/Ui/Enemy Direction.png")  # The pointer's texture
         self.scale = 0.15  # The pointer's scale
 
     def kill(self):
@@ -60,7 +60,34 @@ class PlayerUi:
         self.player = player
         self.game_screen = game_screen
 
+        self.influence_warnings = None
+
     def draw(self):
+
+        self.influence_warnings = arcade.SpriteList()
+        for influences in self.player.gravity_handler.gravity_influences:
+            inf_x = influences.center_x
+            inf_y = influences.center_y
+
+            distance = vector.find_distance((self.player.center_x, self.player.center_y), (inf_x, inf_y))
+            if distance <= (influences.width/2) + SCREEN_WIDTH + 500:
+
+                if inf_x < self.game_screen.left_view + 48:
+                    inf_x = self.game_screen.left_view + 48
+                elif self.game_screen.left_view + SCREEN_WIDTH - 48 < inf_x:
+                    inf_x = self.game_screen.left_view + SCREEN_WIDTH - 48
+
+                if inf_y < self.game_screen.bottom_view + 48:
+                    inf_y = self.game_screen.bottom_view + 48
+                elif self.game_screen.bottom_view + SCREEN_HEIGHT - 48 < inf_y:
+                    inf_y = self.game_screen.bottom_view + SCREEN_HEIGHT - 48
+
+                    danger = arcade.Sprite("Sprites/Player/Ui/Gravity Influence Warning.png",
+                                           center_x=inf_x, center_y=inf_y, scale=0.2)
+                    self.influence_warnings.append(danger)
+
+        if len(self.influence_warnings) > 0:
+            self.influence_warnings.draw()
 
         # Players Direction and Thruster Direction Physical background
         direction_center_x = self.game_screen.left_view + SCREEN_WIDTH - 45
@@ -98,10 +125,10 @@ class PlayerUi:
         arcade.draw_rectangle_filled(health_x, health_y, health_width, health_height,
                                      arcade.color.RED_DEVIL)
 
-        for y in range(self.player.max_health//10):
-            if (y * 10) > self.player.health or not y:
+        for y in range(5):
+            if (y * (self.player.max_health / 5)) > self.player.health or not y:
                 continue
-            line_y = direction_center_y - 40 - (y * 10)
+            line_y = direction_center_y - 40 - (y * (self.player.max_health / 5))
             line_x_1 = health_box_x - 10 + 15/2
             line_x_2 = health_box_x - 10 - 15/2
             arcade.draw_line(line_x_1, line_y, line_x_2, line_y, arcade.color.BLACK, 1)
@@ -222,7 +249,6 @@ class PlayerUi:
             arcade.draw_point(x_1, y_1, arcade.color.RADICAL_RED, 2)
             a_1 = rad_back - math.radians(54.78)
             x_1 = self.player.center_x + math.cos(a_1) * d_1
-            y_1 = self.player.center_y + math.sin(a_1) * d_1
             y_1 = self.player.center_y + math.sin(a_1) * d_1
             arcade.draw_point(x_1, y_1, arcade.color.RADICAL_RED, 2)
 
