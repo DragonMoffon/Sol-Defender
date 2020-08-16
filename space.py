@@ -47,7 +47,12 @@ class GravityHandler:
                                 if gravity_object.health <= 0:
                                     gravity_object.dead = True
                         except AttributeError:
-                            gravity_object.kill()
+                            try:
+                                gravity_object.health -= 1
+                                if gravity_object.health <= 0:
+                                    gravity_object.kill()
+                            except AttributeError:
+                                pass
                     a_x = math.cos(direction) * acceleration
                     a_y = math.sin(direction) * acceleration
                     acceleration_vector = (a_x, a_y)
@@ -57,6 +62,10 @@ class GravityHandler:
                     finally:
                         gravity_object.gravity_acceleration[0] += a_x
                         gravity_object.gravity_acceleration[1] += a_y
+
+    def reset(self):
+        self.gravity_influences = arcade.SpriteList()
+        self.gravity_objects = arcade.SpriteList()
 
 
 class Planet(arcade.Sprite):
@@ -96,6 +105,12 @@ class Planet(arcade.Sprite):
     def on_update(self, delta_time: float = 1/60):
         self.satellites.on_update(delta_time)
 
+    def kill(self):
+        for satellite in self.satellites:
+            satellite.kill()
+        self.remove_from_sprite_lists()
+        del self
+
 
 class Satellite(arcade.Sprite):
 
@@ -115,6 +130,7 @@ class Satellite(arcade.Sprite):
         self.planetary_radius = 0
         self.weight = 0
         self.type = None
+        self.subset = None
         self.speed = 0
         self.file_name = ''
 
@@ -123,10 +139,11 @@ class Satellite(arcade.Sprite):
             self.planetary_radius = satellite_data['radius']
             self.weight = satellite_data['weight']
             self.type = satellite_data['type']
+            self.subset = satellite_data['subset']
             self.speed = satellite_data['speed']
             self.file_name = satellite_data['texture']
             self.texture = arcade.load_texture(self.file_name)
-            self.orbit = (parent.width / 2) + (self.width / 2) + satellite_data['orbit']
+            self.orbit = parent.width + self.width + satellite_data['orbit']
 
     def setup(self, gravity_handler=None):
         if self.gravity and gravity_handler is None:
@@ -140,3 +157,7 @@ class Satellite(arcade.Sprite):
         rad_angle = math.radians(self.current_angle)
         self.center_x = self.parent.center_x + math.cos(rad_angle) * self.orbit
         self.center_y = self.parent.center_y + math.sin(rad_angle) * self.orbit
+
+    def kill(self):
+        self.remove_from_sprite_lists()
+        del self

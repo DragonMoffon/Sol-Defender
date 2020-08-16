@@ -1,0 +1,133 @@
+{
+    "exo":
+    {
+        "carbon":
+        {
+            "orbit": [1, 8],
+            "size": [0.75, 5.0],
+            "weight": [1.31, 8.75],
+            "rarity": 1
+        },
+        "desert":
+        {
+            "orbit": [2, 4],
+            "size": [0.75, 4.0],
+            "weight": [0.75, 4.0],
+            "rarity": 3
+        },
+        "ice":
+        {
+            "orbit": [5, 8],
+            "size": [0.75, 3.0],
+            "weight": [0.675, 2.7],
+            "rarity": 2
+        },
+        "iron":
+        {
+            "orbit": [1, 8],
+            "size": [0.5, 0.75],
+            "weight": [7.5, 11.25],
+            "rarity": 1
+        },
+        "lava":
+        {
+            "orbit": [1, 2],
+            "size": [0.5, 1.5],
+            "weight": [0.5, 1.5],
+            "rarity": 4
+        },
+        "ocean":
+        {
+            "orbit": [3, 4],
+            "size": [3.0, 4.5],
+            "weight": [2.7, 4.05],
+            "rarity": 2
+        },
+        "silicate":
+        {
+            "orbit": [1, 8],
+            "size": [0.25, 2.0],
+            "weight": [0.25, 2.0],
+            "rarity": 6
+        },
+        "earth":
+        {
+            "orbit": [3, 4],
+            "size": [0.75, 4.0],
+            "weight": [0.75, 4.0],
+            "rarity": 2
+        },
+        "null":
+        {
+            "orbit": [1,8],
+            "rarity": 3
+        }
+    },
+    "gas":
+    {
+        "giant":
+        {
+            "orbit": [4, 8],
+            "size": [6.0, 15.0],
+            "weight": [95.0, 317.8],
+            "rarity": 3
+        },
+        "dwarf":
+        {
+            "orbit": [1, 5],
+            "size": [1.75, 4.0],
+            "weight": [10.0, 17.0],
+            "rarity": 2
+        },
+        "helium":
+        {
+            "orbit": [2, 5],
+            "size": [6.0, 15.0],
+            "weight": [95.0, 317.8],
+            "rarity": 1
+        },
+        "ice":
+        {
+            "orbit": [5, 8],
+            "size": [2.5, 5.0],
+            "weight": [12, 25],
+            "rarity": 3
+        },
+        "hot":
+        {
+            "orbit": [1, 2],
+            "size": [6.0, 15.0],
+            "weight": [114.5, 317.8],
+            "rarity": 2
+        },
+        "null":
+        {
+            "orbit": [1,8],
+            "rarity": 2
+        }
+    },
+    "basic_planet":
+    {
+            "name": "sol ",
+            "type": "",
+            "subset": "",
+            "weight": 0,
+            "x_pos": 0,
+            "y_pos": 0,
+            "texture": "",
+            "radius": 0,
+            "satellites": null,
+            "map_symbol": null
+        },
+    "basic_satellite":
+    {
+        "orbit": 0,
+        "gravity": 0,
+        "radius": 0,
+        "weight": 0,
+        "subset": "",
+        "type": "",
+        "speed": 0,
+        "texture": ""
+    }
+}

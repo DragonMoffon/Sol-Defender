@@ -1,0 +1,100 @@
+{
+    "planets": [
+        {
+            "name": "planet_1",
+            "type": "earth",
+            "subset": "exo",
+            "weight": 5972000000000000000000000,
+            "x_pos": 3000,
+            "y_pos": 3000,
+            "texture": "Sprites/Planets/exo/earth.png",
+            "radius": 6371000,
+            "satellites": [
+                {
+                    "orbit": 1200,
+                    "gravity": 1,
+                    "radius": 868500,
+                    "weight": 73500000000000000000000,
+                    "type": "moon",
+                    "speed": 1.75,
+                    "texture": "Sprites/Satellites/Moons/moon_satellite_0.png"
+                }
+            ],
+            "map_symbol": {
+                "orbit": 1,
+                "orbit_pos": -1,
+                "speed": 3.5,
+                "name": "planet_1",
+                "type": "earth",
+                "subset": "exo"
+            }
+        },
+        {
+            "name": "planet_2",
+            "type": "giant",
+            "subset": "gas",
+            "weight": 1898000000000000000000000000,
+            "x_pos": 7850,
+            "y_pos": 4520,
+            "texture": "Sprites/Planets/gas/giant.png",
+            "radius": 69911000,
+            "satellites": [
+                {
+                    "orbit": 5620,
+                    "gravity": 1,
+                    "radius": 868500,
+                    "weight": 89200000000000000000000,
+                    "type": "moon",
+                    "speed": 0.8,
+                    "texture": "Sprites/Satellites/Moons/moon_satellite_0.png"
+                },
+                {
+                    "orbit": 2530,
+                    "gravity": 1,
+                    "radius": 865200,
+                    "weight": 68900000000000000000000,
+                    "type": "moon",
+                    "speed": 1.25,
+                    "texture": "Sprites/Satellites/Moons/moon_satellite_1.png"
+                }
+            ],
+            "map_symbol": {
+                "orbit": 2,
+                "orbit_pos": -1,
+                "speed": 1.5,
+                "name": "planet_2",
+                "type": "giant",
+                "subset": "gas"
+            }
+        },
+        {
+            "name": "planet_3",
+            "type": "ice",
+            "subset": "exo",
+            "weight": 4867000000000000000000000,
+            "x_pos": -1340,
+            "y_pos": -4210,
+            "texture": "Sprites/Planets/exo/ice.png",
+            "radius": 6207000,
+            "satellites": [
+                {
+                    "orbit": 2300,
+                    "gravity": 1,
+                    "radius": 865200,
+                    "weight": 89200000000000000000000,
+                    "type": "moon",
+                    "speed": 0.56,
+                    "texture": "Sprites/Satellites/Moons/moon_satellite_2.png"
+                }
+            ],
+            "map_symbol": {
+                "orbit": 3,
+                "orbit_pos": -1,
+                "speed": 0.95,
+                "name": "planet_3",
+                "type": "ice",
+                "subset": "exo"
+            }
+        }
+    ]
+}

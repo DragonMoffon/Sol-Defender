@@ -18,7 +18,6 @@ class EnemyHandler:
     """
 
     def __init__(self, game_window, basic_types: list = None, boss_types: list = None, mission_data: dict = None):
-
         # Enemy type Json file reading.
         self.basic_types = basic_types
         self.boss_types = boss_types
@@ -35,6 +34,9 @@ class EnemyHandler:
         self.boss_ui = ui.BossUi(game_window)
 
         self.game_window = game_window
+
+        self.level_data = mission_data
+        self.planet_data = mission_data['planet']
 
         # The player object. This allows the enemies to get its position.
         self.player = None
@@ -72,13 +74,21 @@ class EnemyHandler:
         # player health for enemy waves
         self.last_player_health = 0
 
+    def slaughter(self):
+        safe_copy = self.enemy_sprites
+        for enemy in safe_copy:
+            enemy.kill()
+
+        for clusters in self.clusters:
+            clusters.slaughter()
+
     def assign_player_health(self):
         """
         This method is Just to ensure no bugs arise.
         """
         if self.player is not None:
-            loss = self.last_player_health - self.player.health
-            self.last_player_health = self.player.health
+            loss = self.last_player_health - self.player.current_segment
+            self.last_player_health = self.player.current_segment
             return loss
         else:
             return None
@@ -103,6 +113,7 @@ class EnemyHandler:
 
         base = 1.05
         last_difficulty = self.difficulty
+        print(" loss factor:", loss_factor, "time factor", time_factor)
         if last_difficulty > 0:
             modifier = round((loss_factor + time_factor + (last_difficulty - base)) * (self.stage / 20), 2)
             #    print(
@@ -134,6 +145,7 @@ class EnemyHandler:
             for times in self.wave_times:
                 total += times
             self.average_time = total / len(self.wave_times)
+            print("prev_time", (time.time() - self.current_wave_time), end="")
         self.current_wave_time = time.time()
 
     def setup_wave(self):
@@ -152,6 +164,7 @@ class EnemyHandler:
             if self.stage > self.num_stages:
                 self.game_window.current_mission = -1
                 self.game_window.open_clean_map()
+                self.game_window.open_upgrade()
             else:
                 self.wave += 1
                 self.do_wave_time()
@@ -201,18 +214,15 @@ class EnemyHandler:
         for i in range(num_clusters):
             cluster = Cluster(self)
             cluster.num_enemies = amount
-            close = True
-            while close:
-                if self.num_enemies < self.max_count_in_clusters:
-                    cluster.center_x = self.player.center_x + random.randint(-2 * screen_x, 2 * screen_x + 1)
-                    cluster.center_y = self.player.center_y + random.randint(-2 * screen_x, 2 * screen_x + 1)
-                else:
-                    cluster.center_x = self.player.center_x + random.randint(-3 * screen_x, 3 * screen_x + 1)
-                    cluster.center_y = self.player.center_y + random.randint(-3 * screen_x, 3 * screen_x + 1)
-                distance = vector.find_distance((cluster.center_x, cluster.center_y),
-                                                (self.player.center_x, self.player.center_y))
-                if distance > 1.5 * screen_x:
-                    close = False
+
+            angle = round(random.uniform(0.0, 2 * math.pi), 2)
+            cluster.center_x = self.planet_data.center_x + (math.cos(angle) *
+                                                            (self.planet_data.width +
+                                                             random.randint(1000, screen_x * 3)))
+            cluster.center_y = self.planet_data.center_y + (math.sin(angle) *
+                                                            (self.planet_data.width +
+                                                             random.randint(1000, screen_x * 3)))
+
             self.clusters.append(cluster)
 
         if remaining:
@@ -286,15 +296,34 @@ class Cluster(arcade.Sprite):
         s_d = self.center_x, self.center_y
         distance = vector.find_distance(t_d, s_d)
         if distance < arcade.get_display_size()[0]:
+            planet_pos = (self.handler.planet_data.center_x, self.handler.planet_data.center_y)
+            half_planet = self.handler.planet_data.width/2
+            r_angle_to_cluster = math.radians(vector.find_angle((self.center_x, self.center_y), planet_pos))
+            distance_to_planet = (vector.find_distance((self.center_x, self.center_y), planet_pos)
+                                  - half_planet)
+
             for i in range(self.num_enemies):
                 enemy_type = random.randrange(0, len(self.handler.basic_types))
                 bullet_type = self.handler.bullet_types[self.handler.basic_types[enemy_type]["shoot_type"]]
                 enemy = Enemy(self.handler.basic_types[enemy_type], bullet_type)
-                enemy.setup(self.handler, s_d)
-                enemy.cluster = self
+                enemy.setup(self.handler, s_d, self)
+
+                enemy.center_x = self.handler.planet_data.center_x
+                enemy.center_y = self.handler.planet_data.center_y
+
+                random_angle = random.uniform(-0.0872665, 0.0872665)
+                enemy.center_x += math.cos(r_angle_to_cluster + random_angle) * (half_planet + distance_to_planet
+                                                                                 + random.randint(-100, 100))
+                enemy.center_y += math.sin(r_angle_to_cluster + random_angle) * (half_planet + distance_to_planet
+                                                                                 + random.randint(-100, 100))
                 self.handler.enemy_sprites.append(enemy)
             self.point.remove_from_sprite_lists()
             self.spawned = True
+
+    def slaughter(self):
+        self.spawned = True
+        self.point.kill()
+        self.num_enemies = 0
 
 
 class Enemy(arcade.Sprite):
@@ -314,6 +343,7 @@ class Enemy(arcade.Sprite):
         # checks if the enemy is in range of player
         self.handler = None
         self.cluster = None
+        self.fix = False
 
         # gravity variables
         self.gravity_handler = None
@@ -409,10 +439,12 @@ class Enemy(arcade.Sprite):
             self.start_time = 0
             self.duration = 0
 
-    def setup(self, handler, x_y_pos: tuple = None):
+    def setup(self, handler, x_y_pos: tuple = None, cluster: Cluster = None):
         """
         sets up the enemy in relation to the player. it also gives the enemy the handler for easier access to variables
         """
+        self.cluster = cluster
+
         if x_y_pos is None:
             x_y_pos = handler.player.center_x, handler.player.center_y
 
@@ -421,9 +453,12 @@ class Enemy(arcade.Sprite):
 
         handler.game_window.gravity_handler.set_gravity_object(self)
 
-        rad_angle = round(random.uniform(0.0, 2*math.pi), 2)
-        self.center_x = x_y_pos[0] + math.cos(rad_angle) + random.randint(320, 600)
-        self.center_y = x_y_pos[1] + math.sin(rad_angle) + random.randint(320, 600)
+        if self.cluster is not None:
+            pass
+        else:
+            rad_angle = round(random.uniform(0.0, 2 * math.pi), 2)
+            self.center_x = x_y_pos[0] + math.cos(rad_angle) + random.randint(320, 600)
+            self.center_y = x_y_pos[1] + math.sin(rad_angle) + random.randint(320, 600)
 
         point = ui.Pointer()
         point.holder = self.handler.player
@@ -600,7 +635,7 @@ class Enemy(arcade.Sprite):
             self.handler.player.last_damage = time.time()
             file = "Music/player_damage.wav"
             sound = arcade.Sound(file)
-            sound.play(volume=0.0)
+            sound.play(volume=0.1)
 
             if self.handler.player.health < 0:
                 self.handler.player.health = 0
@@ -691,6 +726,20 @@ class Enemy(arcade.Sprite):
 
         self.velocity[0] += final[0]
         self.velocity[1] += final[1]
+
+        if vector.find_distance((self.center_x, self.center_y),
+                                (self.handler.player.center_x, self.handler.player.center_y)) > 8000:
+            direction = math.radians(vector.find_angle((self.handler.player.center_x, self.handler.player.center_y),
+                                                       (self.center_x, self.center_y)))
+            self.velocity[0] = math.cos(direction) * 2500
+            self.velocity[1] = math.sin(direction) * 2500
+            self.fix = True
+
+        if self.fix and vector.find_distance((self.center_x, self.center_y),
+                                             (self.handler.player.center_x, self.handler.player.center_y)) < 2000:
+            self.velocity[0] = self.handler.player.velocity[0]
+            self.velocity[1] = self.handler.player.velocity[1]
+            self.fix = False
 
         """speed_limit = self.target_speed + 200
         speed = math.sqrt(self.velocity[0] ** 2 + self.velocity[1] ** 2)
@@ -827,7 +876,7 @@ class Enemy(arcade.Sprite):
         for neighbor in self.handler.enemy_sprites:
             if neighbor != self:
                 distance = vector.find_distance((self.center_x, self.center_y), (neighbor.center_x, neighbor.center_y))
-                if distance < 100:
+                if distance < 250:
                     total += 1
 
                     angle_neighbor = vector.find_angle((self.center_x, self.center_y),
@@ -892,28 +941,29 @@ class Enemy(arcade.Sprite):
 
     def rule5(self):
         """
-        Rule Five: Negate Gravity
+        Rule Five: avoid planets
         """
-        total = len(self.gravity_handler.gravity_influences)
-        distance = 0
-        for influences in self.gravity_handler.gravity_influences:
-            v1 = (self.center_x, self.center_y)
-            v2 = (influences.center_x, influences.center_y)
-            i_distance = vector.find_distance(v1, v2)
-            if i_distance < 2000:
-                distance += i_distance
+        x = 0
+        y = 0
+        total = 0
+        for influence in self.gravity_handler.gravity_influences:
+            distance = vector.find_distance((self.center_x, self.center_y), (influence.center_x, influence.center_y))
+            if distance - (influence.width / 2) < 1000:
 
-        distance /= total
-        distance /= 2000
+                total += 1
+                neg_direction = math.radians(vector.find_angle((self.center_x, self.center_y),
+                                                               (influence.center_x, influence.center_y)))
+                neg_x = math.cos(neg_direction) * (influence.width / 2)
+                neg_y = math.sin(neg_direction) * (influence.width / 2)
 
-        result = [0.0, 0.0]
-        if self.gravity_acceleration[0] != 0.0 or self.gravity_acceleration[1] != 0.0:
-            result[0] = self.gravity_acceleration[0] * -1 * self.rule_5_priority
-            result[1] = self.gravity_acceleration[1] * -1 * self.rule_5_priority
+                x += 1000 / (self.center_x - (influence.center_x + neg_x))
+                y += 1000 / (self.center_y - (influence.center_y + neg_y))
 
-        if distance:
-            result[0] /= (distance + 0.75)
-            result[1] /= (distance + 0.75)
+        if total:
+            x /= total
+            y /= total
+
+        result = [x * self.rule_5_priority * 0.5, y * self.rule_5_priority * 0.5]
         return result
 
     """

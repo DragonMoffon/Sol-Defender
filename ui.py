@@ -8,6 +8,10 @@ SCREEN_WIDTH, SCREEN_HEIGHT = arcade.get_display_size()
 GUN_METAL = 50, 59, 63
 THRUSTER_BLUE = 0, 195, 255
 
+HEALTH_BAR = "Sprites/Player/Ui/health_bar.png"
+HEAT_BAR = "Sprites/Player/Ui/heat_bar.png"
+BAR_FRAME = "Sprites/Player/Ui/bar_frame.png"
+
 
 class Pointer(arcade.Sprite):
 
@@ -62,32 +66,34 @@ class PlayerUi:
 
         self.influence_warnings = None
 
+        self.ui_list = arcade.SpriteList()
+        self.health_bar = arcade.Sprite(HEALTH_BAR)
+        self.ui_list.append(self.health_bar)
+        self.health_frame = arcade.Sprite(BAR_FRAME)
+        self.ui_list.append(self.health_frame)
+
+        self.heat_textures = []
+        self.health_textures = []
+        for y in range(10):
+            for x in range(10):
+                texture = arcade.load_texture(HEAT_BAR, x * 15, y * 100, 15, 100)
+                self.heat_textures.append(texture)
+                texture = arcade.load_texture(HEALTH_BAR, x * 15, y * 100, 15, 100)
+                self.health_textures.append(texture)
+        self.health_textures.append(arcade.load_texture('Sprites/Player/Ui/health_bar_full.png'))
+        self.heat_textures.append(arcade.load_texture("Sprites/Player/Ui/heat_bar_full.png"))
+        self.heat_bar = arcade.Sprite()
+        self.heat_frame = arcade.Sprite(BAR_FRAME)
+        self.ui_list.append(self.heat_bar)
+        self.ui_list.append(self.heat_frame)
+
+        self.transparency = 255
+
+        self.mini_map = None
+
     def draw(self):
-
-        self.influence_warnings = arcade.SpriteList()
-        for influences in self.player.gravity_handler.gravity_influences:
-            inf_x = influences.center_x
-            inf_y = influences.center_y
-
-            distance = vector.find_distance((self.player.center_x, self.player.center_y), (inf_x, inf_y))
-            if distance <= (influences.width/2) + SCREEN_WIDTH + 500:
-
-                if inf_x < self.game_screen.left_view + 48:
-                    inf_x = self.game_screen.left_view + 48
-                elif self.game_screen.left_view + SCREEN_WIDTH - 48 < inf_x:
-                    inf_x = self.game_screen.left_view + SCREEN_WIDTH - 48
-
-                if inf_y < self.game_screen.bottom_view + 48:
-                    inf_y = self.game_screen.bottom_view + 48
-                elif self.game_screen.bottom_view + SCREEN_HEIGHT - 48 < inf_y:
-                    inf_y = self.game_screen.bottom_view + SCREEN_HEIGHT - 48
-
-                    danger = arcade.Sprite("Sprites/Player/Ui/Gravity Influence Warning.png",
-                                           center_x=inf_x, center_y=inf_y, scale=0.2)
-                    self.influence_warnings.append(danger)
-
-        if len(self.influence_warnings) > 0:
-            self.influence_warnings.draw()
+        if self.mini_map is None:
+            self.mini_map = MiniMap(self.player, self.game_screen)
 
         # Players Direction and Thruster Direction Physical background
         direction_center_x = self.game_screen.left_view + SCREEN_WIDTH - 45
@@ -101,9 +107,9 @@ class PlayerUi:
         arcade.draw_rectangle_filled(speed_x, speed_y, 155, 31, GUN_METAL)
 
         health_box_x = direction_center_x + 12
-        health_box_y = direction_center_y - self.player.max_health/2 - 20
+        health_box_y = direction_center_y - self.player.base_max_health/2 - 20
         arcade.draw_rectangle_filled(health_box_x, health_box_y,
-                                     45, self.player.max_health + 15 + 35,
+                                     45, 100 + 15 + 35,
                                      GUN_METAL)
         arcade.draw_point(health_box_x, health_box_y, arcade.color.BLACK, 1)
 
@@ -111,27 +117,30 @@ class PlayerUi:
                                    35, arcade.color.BLACK)
 
         # Player Gun Overheating Bar
-        heat_width = 15
-        heat_height = self.player.heat_level * 100
+        heat_height = round(self.player.heat_level * 100)
+
         heat_x = health_box_x + 10
-        heat_y = direction_center_y - 40 - (50 - (((1 - self.player.heat_level) * 100)/2))
-        arcade.draw_rectangle_filled(heat_x, heat_y, heat_width, heat_height, arcade.color.ORANGE)
+        self.heat_frame.center_x = heat_x
+        self.heat_bar.center_x = heat_x
+
+        heat_y = direction_center_y - 40 - 50
+        self.heat_frame.center_y = heat_y
+        self.heat_bar.center_y = heat_y
+
+        self.heat_bar.texture = self.heat_textures[heat_height]
 
         # Player Health Bar
-        health_height = self.player.health
-        health_width = 15
-        health_x = health_box_x - 10
-        health_y = direction_center_y - 40 - (50 - ((self.player.max_health - self.player.health)/2))
-        arcade.draw_rectangle_filled(health_x, health_y, health_width, health_height,
-                                     arcade.color.RED_DEVIL)
+        health_height = round((self.player.health / self.player.max_health) * 100)
 
-        for y in range(5):
-            if (y * (self.player.max_health / 5)) > self.player.health or not y:
-                continue
-            line_y = direction_center_y - 40 - (y * (self.player.max_health / 5))
-            line_x_1 = health_box_x - 10 + 15/2
-            line_x_2 = health_box_x - 10 - 15/2
-            arcade.draw_line(line_x_1, line_y, line_x_2, line_y, arcade.color.BLACK, 1)
+        health_x = health_box_x - 10
+        self.health_frame.center_x = health_x
+        self.health_bar.center_x = health_x
+
+        health_y = direction_center_y - 40 - 50
+        self.health_frame.center_y = health_y
+        self.health_bar.center_y = health_y
+
+        self.health_bar.texture = self.health_textures[health_height]
 
         # Player Velocity direction and Thrust Direction
         player_pos = self.player.velocity[0], self.player.velocity[1]
@@ -154,13 +163,9 @@ class PlayerUi:
 
         # Player Speed Bar
         speed = math.sqrt(self.player.velocity[0]**2 + self.player.velocity[1]**2) / 25
-        if speed < 100:
-            speed_x = direction_center_x - 69.5 - 70 + speed/2
-            arcade.draw_rectangle_filled(speed_x, speed_y, speed, 15, THRUSTER_BLUE)
-        else:
-            speed_x = direction_center_x - 69.5 - 70 + 50
-            arcade.draw_rectangle_filled(speed_x, speed_y, 100, 15,
-                                         (0 + round(speed), 195 + round(speed), 255 + round(speed)))
+
+        speed_x = direction_center_x - 69.5 - 70 + speed/2
+        arcade.draw_rectangle_filled(speed_x, speed_y, speed, 15, THRUSTER_BLUE)
 
         speed_x_max = direction_center_x - 69.5 - 70 + 100
         speed_x_min = direction_center_x - 69.5 - 70
@@ -169,21 +174,6 @@ class PlayerUi:
         speed_y_2 = speed_y + 15/2
         arcade.draw_line(speed_x_max, speed_y_1, speed_x_max, speed_y_2, arcade.color.WHITE, 2)
         arcade.draw_line(speed_x_min, speed_y_1, speed_x_min, speed_y_2, arcade.color.WHITE, 2)
-
-        # Player Gun Overheating Bar and Health Outline
-        heat_1x = health_box_x + 10 + 15 / 2
-        heat_2x = health_box_x + 10 - 15 / 2
-
-        heat_1y = direction_center_y - 40 - 100
-        heat_2y = direction_center_y - 40
-        arcade.draw_line(heat_1x, heat_1y, heat_2x, heat_1y, arcade.color.WHITE, 2)
-        arcade.draw_line(heat_1x, heat_2y, heat_2x, heat_2y, arcade.color.WHITE, 2)
-
-        heat_1x = health_box_x - 10 + 15 / 2
-        heat_2x = health_box_x - 10 - 15 / 2
-
-        arcade.draw_line(heat_1x, heat_1y, heat_2x, heat_1y, arcade.color.WHITE, 2)
-        arcade.draw_line(heat_1x, heat_2y, heat_2x, heat_2y, arcade.color.WHITE, 2)
 
         # Gravity Lines
         if len(self.player.gravity_influences):
@@ -222,8 +212,35 @@ class PlayerUi:
                 e_y = center_y + (math.sin(direction) * 40)
             arcade.draw_line(center_x, center_y, e_x, e_y, arcade.color.ORANGE)
 
-    def under_draw(self):
+        self.influence_warnings = arcade.SpriteList()
+        for influences in self.player.gravity_handler.gravity_influences:
+            inf_x = influences.center_x
+            inf_y = influences.center_y
 
+            distance = vector.find_distance((self.player.center_x, self.player.center_y), (inf_x, inf_y))
+            if distance <= (influences.width / 2) + SCREEN_WIDTH + 500:
+
+                if inf_x < self.game_screen.left_view + 48:
+                    inf_x = self.game_screen.left_view + 48
+                elif self.game_screen.left_view + SCREEN_WIDTH - 48 < inf_x:
+                    inf_x = self.game_screen.left_view + SCREEN_WIDTH - 48
+
+                if inf_y < self.game_screen.bottom_view + 48:
+                    inf_y = self.game_screen.bottom_view + 48
+                elif self.game_screen.bottom_view + SCREEN_HEIGHT - 48 < inf_y:
+                    inf_y = self.game_screen.bottom_view + SCREEN_HEIGHT - 48
+
+                danger = arcade.Sprite("Sprites/Player/Ui/Gravity Influence Warning.png",
+                                       center_x=inf_x, center_y=inf_y, scale=0.2)
+                self.influence_warnings.append(danger)
+
+        if len(self.influence_warnings) > 0:
+            self.influence_warnings.draw()
+
+        self.ui_list.draw()
+        self.mini_map.draw()
+
+    def under_draw(self):
         # Thruster Visuals
         back_angle = self.player.angle + 180
         rad_back = math.radians(back_angle)
@@ -301,3 +318,110 @@ class BossUi:
             for boss in self.bosses:
                 arcade.draw_rectangle_filled(start_x, start_y, boss.health, 15, arcade.color.RADICAL_RED)
                 start_y += 20
+
+
+class MiniMap(arcade.SpriteList):
+
+    def __init__(self, player, game_screen):
+        super().__init__()
+        self.player = player
+        self.enemy_handler = game_screen.mission.enemy_handler
+        self.gravity_handler = game_screen.gravity_handler
+        self.mission = game_screen.mission
+        self.planet = game_screen.mission.curr_planet
+        print(type(self.planet))
+
+        self.game_view = game_screen
+        self.screen_scale = 1.5
+
+        if self.planet is not None:
+            self.planet_scale = 0.5  # (self.planet.width / (250 / self.screen_scale)) / 64
+            self.divisor = (self.screen_scale * self.planet.width) / (self.planet_scale * 64)
+            print(self.planet_scale)
+        else:
+            self.planet_scale = 1
+        self.screen_frame_x = SCREEN_WIDTH - (self.screen_scale*165/2)
+        self.screen_frame_y = self.screen_scale*135/2
+        self.screen_frame = arcade.Sprite("Sprites/Minimap/map/minimap.png",
+                                          center_x=SCREEN_WIDTH/2, center_y=SCREEN_HEIGHT/2, scale=self.screen_scale)
+        self.append(self.screen_frame)
+
+        self.planet_sprite = arcade.Sprite("Sprites/Minimap/space/planet.png", scale=self.planet_scale)
+        self.append(self.planet_sprite)
+
+        self.player_textures = (arcade.load_texture("Sprites/Minimap/player/location.png"),
+                                arcade.load_texture("Sprites/Minimap/player/off_map.png"))
+        self.player_sprite = arcade.Sprite("Sprites/Minimap/player/location.png", scale=self.planet_scale)
+        self.append(self.player_sprite)
+
+        self.enemy_sprites = None
+        self.satellite_sprites = None
+
+    def draw(self):
+        self.screen_frame.center_x = self.game_view.left_view + self.screen_frame_x
+        self.screen_frame.center_y = self.game_view.bottom_view + self.screen_frame_y
+
+        self.planet_sprite.center_x = self.screen_frame.center_x + (5 * self.screen_scale)
+        self.planet_sprite.center_y = self.screen_frame.center_y - (5 * self.screen_scale)
+
+        player_pos = self.define_pos(self.player)
+        changed = False
+        if player_pos[0] > self.planet_sprite.center_x + ((160 * self.screen_scale) / 2):
+            player_pos[0] = self.planet.center_x + ((160 * self.screen_scale) / 2)
+            changed = True
+        elif player_pos[0] < self.planet_sprite.center_x - ((160 * self.screen_scale) / 2):
+            player_pos[0] = self.planet.center_x - ((160 * self.screen_scale) / 2)
+            changed = True
+
+        if changed:
+            self.player_sprite.texture = self.player_textures[1]
+        else:
+            self.player_sprite.texture = self.player_textures[0]
+        self.player_sprite.center_x = player_pos[0]
+        self.player_sprite.center_y = player_pos[1]
+
+        self.enemy_draw()
+        self.satellite_draw()
+
+        super().draw()
+
+    def enemy_draw(self):
+        self.enemy_sprites = arcade.SpriteList()
+        for cluster in self.enemy_handler.clusters:
+            if not cluster.spawned:
+                pos = self.define_pos(cluster)
+                sprite = arcade.Sprite("Sprites/Minimap/enemy/cluster.png", scale=self.planet_scale + 0.05,
+                                       center_x=pos[0], center_y=pos[1])
+                self.enemy_sprites.append(sprite)
+        if self.enemy_handler.enemy_sprites is not None:
+            for enemy in self.enemy_handler.enemy_sprites:
+                pos = self.define_pos(enemy)
+                if self.planet_sprite.center_x - ((160 * self.screen_scale) / 2) <\
+                            pos[0] < self.planet_sprite.center_x + ((160 * self.screen_scale) / 2):
+                    sprite = arcade.Sprite("Sprites/Minimap/enemy/position.png", scale=self.planet_scale,
+                                           center_x=pos[0], center_y=pos[1])
+                    self.enemy_sprites.append(sprite)
+
+        self.enemy_sprites.draw()
+
+    def satellite_draw(self):
+        self.satellite_sprites = arcade.SpriteList()
+        for satellite in self.planet.satellites:
+            pos = self.define_pos(satellite)
+            if satellite.subset == "moon":
+                sprite = arcade.Sprite("Sprites/Minimap/space/moon.png", scale=self.planet_scale,
+                                       center_x=pos[0], center_y=pos[1])
+            else:
+                sprite = arcade.Sprite("Sprites/Minimap/space/satellite.png", scale=self.planet_scale,
+                                       center_x=pos[0], center_y=pos[1])
+            self.satellite_sprites.append(sprite)
+
+        self.satellite_sprites.draw()
+
+    def define_pos(self, target):
+        x_diff = (target.center_x - self.mission.curr_planet.center_x) / (self.divisor / self.screen_scale)
+        y_diff = (target.center_y - self.mission.curr_planet.center_y) / (self.divisor / self.screen_scale)
+        x_pos = self.planet_sprite.center_x + x_diff
+        y_pos = self.planet_sprite.center_y + y_diff
+
+        return [x_pos, y_pos]

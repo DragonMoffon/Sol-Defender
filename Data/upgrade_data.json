@@ -1,0 +1,67 @@
+{
+  "static_abilities":
+  [
+    {
+      "name": "max_health",
+      "positive": "Shielding",
+      "negative": "Glass"
+    },
+    {
+      "name": "time_heal",
+      "positive": "name",
+      "negative": "name"
+    },
+    {
+      "name": "heal_rate",
+      "positive": "name",
+      "negative": "name"
+    },
+    {
+      "name": "cool_speed",
+      "positive": "name",
+      "negative": "name"
+    },
+    {
+      "name": "heat_speed",
+      "positive": "name",
+      "negative": "name"
+    },
+    {
+      "name": "damage",
+      "positive": "Cannon",
+      "negative": "name"
+    },
+    {
+      "name": "thruster_force",
+      "positive": "Thruster",
+      "negative": "Anti-matter"
+    },
+    {
+      "name": "shoot_delay",
+      "positive": "name",
+      "negative": "name"
+    }
+  ],
+  "base_static":
+  {
+    "name": "",
+    "bonus_name": "",
+    "bonus": 0,
+    "bane_name": "",
+    "bane": 0,
+    "level": 1,
+    "prev_upgrade": {}
+  },
+  "base_active":
+  {
+    "name": "",
+    "bonus_name": "",
+    "bonus": 0,
+    "bane_name": "",
+    "bane": 0,
+    "duration": 0,
+    "level": 1,
+    "prev_upgrade": {},
+    "activate_key": 0
+  }
+}

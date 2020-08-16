@@ -1,12 +1,79 @@
 import json
+import random
+import copy as c
 
-import arcade
-
-import vector
-import player
 import space
-import ui
 import enemy_handler
+
+
+class MissionGenerator:
+
+    def __init__(self):
+        with open('Data/sol_system.json') as planet_file:
+            self.planets = json.load(planet_file)['planets']
+
+        with open("Data/enemy_types.json") as enemy_file:
+            enemy_json = json.load(enemy_file)
+            self.all_enemies = enemy_json['basic_types']
+            self.all_bosses = enemy_json['boss_types']
+
+        with open("Data/mission_data.json") as mission_file:
+            mission_json = json.load(mission_file)
+            self.mission_json = mission_json['planet_x']
+
+        self.missions = []
+        self.selected_missions = {}
+        self.dump_missions = {
+                            "planet_x": self.mission_json
+                            }
+
+        self.generate_selection()
+
+    def generate_selection(self):
+        for gen_num in range(9):
+            self.generate_mission()
+
+        self.select()
+        self.dump()
+
+    def generate_mission(self):
+        mission = c.deepcopy(self.mission_json)
+        mission['stages'] = random.randrange(1, 4)
+        for enemies in self.all_enemies:
+            pick = random.random()
+            if pick > 0.5:
+                mission['possible_enemies'].append(enemies['type'])
+        if len(mission['possible_enemies']) == 0:
+            for enemies in self.all_enemies:
+                mission['possible_enemies'].append(enemies['type'])
+
+        for bosses in self.all_bosses:
+            pick = random.random()
+            if pick > 0.5:
+                mission['possible_bosses'].append(bosses['type'])
+        if len(mission['possible_bosses']) == 0:
+            for bosses in self.all_bosses:
+                mission['possible_bosses'].append(bosses['type'])
+        mission['name'] = "defend "
+        self.missions.append(mission)
+
+    def select(self):
+        picked_planets = random.sample(self.planets, 3)
+        picked_missions = random.sample(self.missions, 3)
+        random.shuffle(picked_missions)
+
+        key = 1
+        for index, planet in enumerate(picked_planets):
+            mission = picked_missions[index]
+            mission['name'] += planet['name']
+            mission['key'] = key
+            key += 1
+            self.selected_missions[f"{planet['name']}"] = mission
+
+    def dump(self):
+        self.dump_missions['missions'] = self.selected_missions
+        with open("Data/mission_data.json", "w") as mission_data:
+            json.dump(self.dump_missions, mission_data, indent=4)
 
 
 class Mission:
@@ -36,19 +103,12 @@ class Mission:
                 basic_enemies = enemy_types['basic_types']
                 boss_enemies = enemy_types['boss_types']
 
-            with open("Data/sol_system.json") as sol_file:
-                sol_system = json.load(sol_file)
-                planets = sol_system['planets']
-
             """
             TO SETUP:
             Asteroid Json file and setup within mission.
             """
-
-            for planet in planets:
-                if planet['name'] == self.level_data['planet']:
-                    self.curr_planet = space.Planet(self.game_window, planet)
-                    break
+            self.curr_planet = space.Planet(self.game_window, self.level_data['planet_data'])
+            self.level_data['planet'] = self.curr_planet
 
             mission_enemies = []
             for enemies in basic_enemies:

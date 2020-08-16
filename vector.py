@@ -19,6 +19,23 @@ def calc_difference(target_angle, start_angle):
     return difference_left, difference_right
 
 
+def calc_small_difference(target_angle, start_angle):
+    """
+    Calculate the Difference between two angles in a clockwise and anti-clockwise direction
+    """
+    difference_left = target_angle - start_angle
+    difference_right = start_angle + (360 - target_angle)
+    if difference_left < 0:
+        difference_left += 360
+    if difference_right > 360:
+        difference_right -= 360
+
+    if difference_right > difference_left:
+        return difference_left
+    else:
+        return difference_right
+
+
 def calc_direction(target_angle, start_angle):
     """
     using the difference calculate which direction (clockwise[-1], anti-clockwise[1]) is closest
