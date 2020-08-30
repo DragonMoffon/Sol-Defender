@@ -6,6 +6,9 @@ import arcade
 
 import sol_system_generator
 import mission
+import font
+import stars
+
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.get_display_size()
 GUN_METAL = 50, 59, 63
 
@@ -206,9 +209,9 @@ class Map(arcade.View):
             cursor_over = arcade.get_sprites_at_point(cxy, self.planet_symbols)
             if len(cursor_over) > 0:
                 if self.selected_planet == cursor_over[0] and self.selected_planet != self.current_planet:
-                    self.game_view.current_mission = cursor_over[0].current_mission['key']
                     self.current_planet = cursor_over[0]
                     self.current_mission = self.current_planet.current_mission
+                    self.game_view.current_mission = self.current_mission
                     self.close_up()
                 elif self.selected_planet == cursor_over[0]:
                     self.save_map_pos()
@@ -231,6 +234,7 @@ class Map(arcade.View):
 
     def close_up(self):
         self.save_map_pos()
+        self.game_view.setup()
         self.window.show_view(self.game_view)
 
     def launch(self):
@@ -274,7 +278,6 @@ class UpgradeMenu(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
-        self.game_view.on_draw()
         self.game_view.map.draw()
         for index, upgrades in enumerate(self.shown_upgrades):
             x = SCREEN_WIDTH - 150
@@ -376,3 +379,85 @@ class UpgradeMenu(arcade.View):
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
         self.mouse_pos = (x, y)
         self.game_view.cursor_screen_pos = self.mouse_pos
+
+
+class MissionEndCard(arcade.View):
+
+    def __init__(self, game_view):
+        super().__init__()
+        self.mission_stats = None
+        self.base_strings = {
+            'name': '',
+            'planet': 'Planet: ',
+            'reward': 'Reward: ',
+            'enemies_killed': 'Threats Eliminated: ',
+            'total_enemy': 'Total Eliminated: ',
+            'scrap_identify': 'Scrap Identified: ',
+            'scrap_collect': 'Scrap Collected: ',
+            'missions_completed': 'Missions Completed: '
+        }
+
+        self.mission_strings = None
+        self.text_strings = []
+        self.star_field = None
+        self.false_screen_velocity = [0.0, 0.0]
+        self.false_screen_acceleration = [0.0, 0.0]
+        self.direction = 0
+        self.game_view = game_view
+
+    def setup(self, mission_stats):
+        self.mission_stats = mission_stats
+        self.text_strings = []
+
+        s_x = SCREEN_WIDTH/2 - 250
+        s_y = SCREEN_HEIGHT/2 + 140
+
+        self.mission_strings = dict(self.base_strings)
+        for string in self.mission_strings:
+            string = self.mission_strings[string] + str(self.mission_stats[string])
+            text = string.lower()
+            self.text_strings.append(font.gen_letter_list(text, s_x, s_y))
+            s_y -= 90*0.2
+
+    def on_show(self):
+        # view
+        self.game_view.left_view = 0
+        self.game_view.bottom_view = 0
+        arcade.set_viewport(self.game_view.left_view,
+                            SCREEN_WIDTH + self.game_view.left_view,
+                            self.game_view.bottom_view,
+                            SCREEN_HEIGHT + self.game_view.bottom_view)
+
+        self.star_field = stars.StarField(self.game_view, False)
+
+        self.direction = math.radians(random.randrange(0, 360))
+        d_x = math.cos(self.direction) * 5
+        d_y = math.sin(self.direction) * 5
+        self.false_screen_velocity = [d_x, d_y]
+        self.false_screen_acceleration = [d_x, d_y]
+
+    def on_update(self, delta_time: float):
+        if self.false_screen_velocity[0] == 0 or self.false_screen_velocity[1] == 0:
+            self.false_screen_velocity[0] = 0.5
+            self.false_screen_velocity[0] = 0.5
+        if math.sqrt(self.false_screen_velocity[0]**2 + self.false_screen_velocity[1]**2) <= 35:
+            self.false_screen_velocity[0] += self.false_screen_acceleration[0] * delta_time
+            self.false_screen_velocity[1] += self.false_screen_acceleration[1] * delta_time
+        self.star_field.on_update(self.false_screen_velocity)
+
+    def on_draw(self):
+        arcade.start_render()
+        self.star_field.draw()
+        arcade.draw_rectangle_filled(SCREEN_WIDTH/2, SCREEN_HEIGHT/2,
+                                     SCREEN_WIDTH, SCREEN_HEIGHT,
+                                     (90, 90, 90, 90))
+        for text in self.text_strings:
+            text.draw()
+
+    def on_key_press(self, symbol: int, modifiers: int):
+        self.game_view.open_clean_map()
+        self.game_view.open_upgrade()
+
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        self.game_view.open_clean_map()
+        self.game_view.open_upgrade()

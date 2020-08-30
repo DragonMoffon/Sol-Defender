@@ -4,7 +4,7 @@
     {
       "type": "Standard",
       "scale": 0.05,
-      "texture": "Sprites/Enemies/Enemy Bullet.png",
+      "texture": "Sprites/Enemies/basic/Enemy Bullet.png",
       "speed": 420,
       "age": 2,
       "damage": 4,
@@ -14,7 +14,7 @@
     {
       "type": "Rapid",
       "scale": 0.035,
-      "texture": "Sprites/Enemies/Enemy Bullet.png",
+      "texture": "Sprites/Enemies/basic/Enemy Bullet.png",
       "speed": 550,
       "age": 1.75,
       "damage": 2,
@@ -36,7 +36,7 @@
     {
       "type": "Spread",
       "scale": 0.05,
-      "texture": "Sprites/Enemies/Enemy Bullet.png",
+      "texture": "Sprites/Enemies/basic/Enemy Bullet.png",
       "speed": 420,
       "age": 1,
       "damage": 6,
@@ -46,7 +46,7 @@
     {
       "type": "circle",
       "scale": 0.05,
-      "texture": "Sprites/Enemies/Enemy Bullet.png",
+      "texture": "Sprites/Enemies/basic/Enemy Bullet.png",
       "speed": 420,
       "age": 1.75,
       "damage": 2,
@@ -63,7 +63,7 @@
     {
       "type": "Standard",
       "scale": 0.05,
-      "texture": "Sprites/Enemies/Bosses/Boss Bullet.png",
+      "texture": "Sprites/Enemies/Boss/Boss Bullet.png",
       "speed": 420,
       "age": 2,
       "damage": 8,
@@ -73,7 +73,7 @@
     {
       "type": "Rapid",
       "scale": 0.035,
-      "texture": "Sprites/Enemies/Bosses/Boss Bullet.png",
+      "texture": "Sprites/Enemies/Boss/Boss Bullet.png",
       "speed": 550,
       "age": 1.75,
       "damage": 4,
@@ -83,7 +83,7 @@
     {
       "type": "Blast",
       "scale": 0.1,
-      "texture": "Sprites/Enemies/Bosses/Boss Blast.png",
+      "texture": "Sprites/Enemies/Boss/Boss Blast.png",
       "speed": 210,
       "age": 4,
       "damage": 12,
@@ -95,7 +95,7 @@
     {
       "type": "Spread",
       "scale": 0.05,
-      "texture": "Sprites/Enemies/Bosses/Boss Bullet.png",
+      "texture": "Sprites/Enemies/Boss/Boss Bullet.png",
       "speed": 420,
       "age": 1,
       "damage": 12,
@@ -105,7 +105,7 @@
     {
       "type": "circle",
       "scale": 0.05,
-      "texture": "Sprites/Enemies/Bosses/Boss Bullet.png",
+      "texture": "Sprites/Enemies/Boss/Boss Bullet.png",
       "speed": 420,
       "age": 1.75,
       "damage": 4,

@@ -50,7 +50,7 @@ class HitBoxWindow(arcade.Window):
 
         # This is the sprite you wish to edit..
         self.sprite = arcade.Sprite()
-        self.sprite.texture = arcade.load_texture("Sprites/Player/Bullets/standard.png")  # Put the name of the texture in the "".
+        self.sprite.texture = arcade.load_texture("Sprites/Enemies/boss/matriarch_solo.png")  # Put the name of the texture in the "".
         # Make sure the your texture's pixels are 10x.
 
         # This centers the sprite

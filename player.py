@@ -12,7 +12,6 @@ import vector
 class Player(arcade.Sprite):
 
     def __init__(self, holder):
-
         super().__init__()
 
         self.bullet_type = {
@@ -83,7 +82,7 @@ class Player(arcade.Sprite):
         self.gravity_handler = None
         self.gravity_influences = []
         self.gravity_acceleration = [0.0, 0.0]
-        self.gravity_weakener = 0
+        self.gravity_weakener = 1
 
         # Ui
         self.holder = holder
@@ -158,6 +157,87 @@ class Player(arcade.Sprite):
                         (-125, -185), (-145, -185), (-145, -155), (-135, -155), (-135, -135), (-125, -135),
                         (-125, -105), (-85, -105), (-85, -75), (-115, -75), (-115, -55), (-125, -55), (-125, -35),
                         (-135, -35), (-135, -25), (-75, -25), (-75, -15), (-105, -15), (-105, -5))
+
+        self.scrap = 0
+
+    def reset(self):
+        self.pause_delay = 0
+
+        self.start = 1
+
+        self.hit = False
+
+        # Upgrades
+        self.passive_upgrades = []
+        self.activated_upgrades = []
+        self.upgrade_mod = {
+            "max_health": 0,
+            "time_heal": 0,
+            "heal_rate": 0,
+            "cool_speed": 0,
+            "heat_speed": 0,
+            "damage": 0,
+            "thruster_force": 0,
+            "shoot_delay": 0
+        }
+        self.read_upgrades()
+
+        # health Variables
+        self.health = self.max_health
+        self.num_segments = 5
+        self.health_segment = self.max_health / self.num_segments
+        self.current_segment = 5
+        self.last_damage = 0
+        self.dead = False
+
+        # Gravity_variables
+        self.gravity_influences = []
+        self.gravity_acceleration = [0.0, 0.0]
+
+        # Ui
+        self.collision_warning = False
+
+        # variables for gun overheating
+        self.heat_level = 0
+        self.cool_speed = self.base_cool_speed
+        self.heat_speed = 0
+        self.over_heating = False
+        self.heat_damage = 1
+
+        # Variables for movement
+        self.speed_limit = True
+        self.thrusters_output = [0.0, 0.0]
+        self.forward_force = 0
+        self.acceleration = [0.0, 0.0]
+        self.velocity = [0.0, 0.0]
+
+        # Variables for turning
+        self.correcting = False
+        self.turn_key = False
+        self.turning_force = 0
+        self.turning_acceleration = 0
+        self.angle_velocity = 0
+
+        self.target_angle = 0
+        self.mouse_pos_xy = [0.0, 0.0]
+        self.previous_mouse_pos = [0.0, 0.0, 0.0]
+        self.target_distance = 0
+        self.mouse_moved = False
+
+        # shooting variables
+        self.shooting = False
+        self.delay = self.base_delay
+        self.bullets = arcade.SpriteList()
+        self.last_shot = 0
+
+        # Enemy Pointer Variables
+        self.enemy_handler = None
+        self.enemy_pointers = arcade.SpriteList()
+
+        # pos
+        self.center_x = 0
+        self.center_y = 0
+        self.angle = 0
 
     """
     arcade.Sprite Methods
@@ -316,6 +396,9 @@ class Player(arcade.Sprite):
     """
     Other Methods
     """
+    def add_scrap(self):
+        self.holder.player_scrap += 1
+
     def setup_upgrades(self, input_upgrade=None):
         if input_upgrade is not None:
             self.passive_upgrades.append(input_upgrade)
@@ -339,20 +422,21 @@ class Player(arcade.Sprite):
         self.delay = self.base_delay * (1 - self.upgrade_mod['shoot_delay'])
 
     def heal(self, delta_time):
-        if self.health > self.max_health:
-            self.health = self.max_health
-            self.current_segment = 5
-        elif self.health <= 0:
+        if self.health > 0:
+            if self.health > self.max_health:
+                self.health = self.max_health
+                self.current_segment = 5
+            elif self.health <= self.health_segment * (self.current_segment-1):
+                self.current_segment -= 1
+            if time.time() > self.last_damage + self.time_heal and self.health < self.max_health:
+                if self.health < self.current_segment * self.health_segment:
+                    self.health += self.heal_rate * delta_time
+                if self.health > self.health_segment * (self.current_segment+1):
+                    self.health = self.health_segment * (self.current_segment+1)
+        else:
             self.health = 0
             self.dead = True
             self.clear_upgrades()
-        elif self.health <= self.health_segment * (self.current_segment-1):
-            self.current_segment -= 1
-        if time.time() > self.last_damage + self.time_heal and self.health < self.max_health:
-            if self.health < self.current_segment * self.health_segment:
-                self.health += self.heal_rate * delta_time
-            if self.health > self.health_segment * (self.current_segment+1):
-                self.health = self.health_segment * (self.current_segment+1)
 
     def shoot(self):
         self.shot_audio.play(volume=0.1)
@@ -394,64 +478,68 @@ class Player(arcade.Sprite):
     """
 
     def key_down(self, key):
+        if not self.dead:
+            if key == arcade.key.W:
+                self.thrusters_output[1] = 1.0
+            elif key == arcade.key.A:
+                self.thrusters_output[0] = 1.0
+                self.turn_key = True
+                self.correcting = False
+            elif key == arcade.key.D:
+                self.thrusters_output[0] = -1.0
+                self.turn_key = True
+                self.correcting = False
 
-        if key == arcade.key.W:
-            self.thrusters_output[1] = 1.0
-        elif key == arcade.key.A:
-            self.thrusters_output[0] = 1.0
-            self.turn_key = True
-            self.correcting = False
-        elif key == arcade.key.D:
-            self.thrusters_output[0] = -1.0
-            self.turn_key = True
-            self.correcting = False
+            elif key == arcade.key.V:
+                self.angle = 180
+            elif key == arcade.key.B:
+                self.angle = 90
+            elif key == arcade.key.N:
+                self.angle = 45
 
-        elif key == arcade.key.V:
-            self.angle = 180
-        elif key == arcade.key.B:
-            self.angle = 90
-        elif key == arcade.key.N:
-            self.angle = 45
+            elif key == arcade.key.SPACE:
+                self.dead = True
+                # self.shooting = True
 
-        elif key == arcade.key.SPACE:
-            self.shooting = True
+            elif key == arcade.key.TAB and not self.show_hit_box:
+                self.show_hit_box = True
+            elif key == arcade.key.TAB:
+                self.show_hit_box = False
 
-        elif key == arcade.key.TAB and not self.show_hit_box:
-            self.show_hit_box = True
-        elif key == arcade.key.TAB:
-            self.show_hit_box = False
-
-        elif key == arcade.key.LALT and not self.alt:
-            self.alt = True
-        elif key == arcade.key.LALT:
-            self.alt = False
+            elif key == arcade.key.LALT and not self.alt:
+                self.alt = True
+            elif key == arcade.key.LALT:
+                self.alt = False
 
     def key_up(self, key):
-        if key == arcade.key.W:
-            self.thrusters_output[1] = 0.0
-        elif key == arcade.key.A and self.thrusters_output[0] != -1.0:
-            self.thrusters_output[0] = 0.0
-            self.turn_key = False
-        elif key == arcade.key.D and self.thrusters_output[0] != 1.0:
-            self.thrusters_output[0] = 0.0
-            self.turn_key = False
-        elif key == arcade.key.SPACE:
-            self.shooting = False
+        if not self.dead:
+            if key == arcade.key.W:
+                self.thrusters_output[1] = 0.0
+            elif key == arcade.key.A and self.thrusters_output[0] != -1.0:
+                self.thrusters_output[0] = 0.0
+                self.turn_key = False
+            elif key == arcade.key.D and self.thrusters_output[0] != 1.0:
+                self.thrusters_output[0] = 0.0
+                self.turn_key = False
+            elif key == arcade.key.SPACE:
+                self.shooting = False
 
     def on_mouse_movement(self, x, y):
-        if self.alt:
+        if self.alt and not self.dead:
             self.mouse_pos_xy = [x, y]
             self.mouse_angle()
             self.mouse_moved = True
 
     def on_mouse_press(self, button):
-        if button == arcade.MOUSE_BUTTON_LEFT and not self.over_heating:
-            self.shooting = True
-        elif button == arcade.MOUSE_BUTTON_RIGHT:
-            self.thrusters_output[1] = 1.0
+        if not self.dead:
+            if button == arcade.MOUSE_BUTTON_LEFT and not self.over_heating:
+                self.shooting = True
+            elif button == arcade.MOUSE_BUTTON_RIGHT:
+                self.thrusters_output[1] = 1.0
 
     def on_mouse_release(self, button):
-        if button == arcade.MOUSE_BUTTON_LEFT:
-            self.shooting = False
-        elif button == arcade.MOUSE_BUTTON_RIGHT:
-            self.thrusters_output[1] = 0.0
+        if not self.dead:
+            if button == arcade.MOUSE_BUTTON_LEFT:
+                self.shooting = False
+            elif button == arcade.MOUSE_BUTTON_RIGHT:
+                self.thrusters_output[1] = 0.0

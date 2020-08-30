@@ -67,6 +67,7 @@ class MissionGenerator:
             mission = picked_missions[index]
             mission['name'] += planet['name']
             mission['key'] = key
+            mission['reward'] = round(planet['weight']/(5.972 * 10 ** 24) * (mission['stages'] * 4))**2
             key += 1
             self.selected_missions[f"{planet['name']}"] = mission
 
@@ -86,8 +87,25 @@ class Mission:
         self.curr_planet = None
         self.asteroids = None
 
+        self.base_mission_data = {
+            'name': '',
+            'planet': '',
+            'reward': 0,
+            'enemies_killed': 0,
+            'total_enemy': 0,
+            'scrap_identify': 0,
+            'scrap_collect': 0,
+            'missions_completed': 0
+        }
+        self.current_mission_data = None
+
+    def reload(self):
+        if self.enemy_handler is not None:
+            self.enemy_handler.reset()
+
     def mission_setup(self, level_data: dict = None):
         self.level_data = level_data
+        self.current_mission_data = dict(self.base_mission_data)
 
         self.enemy_handler = None
         self.curr_planet = None
@@ -97,43 +115,50 @@ class Mission:
             self.setup()
 
     def setup(self):
-        if self.level_data is not None:
-            with open("Data/enemy_types.json") as enemy_file:
-                enemy_types = json.load(enemy_file)
-                basic_enemies = enemy_types['basic_types']
-                boss_enemies = enemy_types['boss_types']
+        with open("Data/enemy_types.json") as enemy_file:
+            enemy_types = json.load(enemy_file)
+            basic_enemies = enemy_types['basic_types']
+            boss_enemies = enemy_types['boss_types']
 
-            """
-            TO SETUP:
-            Asteroid Json file and setup within mission.
-            """
-            self.curr_planet = space.Planet(self.game_window, self.level_data['planet_data'])
-            self.level_data['planet'] = self.curr_planet
+        """
+        TO SETUP:
+        Asteroid Json file and setup within mission.
+        """
+        if self.game_window.solar_system is None:
+            self.game_window.solar_system = space.SolarSystem(setup=True)
+        else:
+            self.curr_planet = self.game_window.solar_system.get_planet(self.level_data['planet_data'])
+        self.curr_planet = space.Planet(self.game_window, self.level_data['planet_data'])
+        self.level_data['planet'] = self.curr_planet
 
-            mission_enemies = []
-            for enemies in basic_enemies:
-                for pos_enemies in self.level_data['possible_enemies']:
-                    if enemies['type'] == pos_enemies:
-                        mission_enemies.append(enemies)
-                        break
+        mission_enemies = []
+        for enemies in basic_enemies:
+            for pos_enemies in self.level_data['possible_enemies']:
+                if enemies['type'] == pos_enemies:
+                    mission_enemies.append(enemies)
+                    break
 
-            mission_bosses = []
-            for bosses in boss_enemies:
-                for pos_bosses in self.level_data['possible_bosses']:
-                    if bosses['type'] == pos_bosses:
-                        mission_bosses.append(bosses)
-                        break
+        mission_bosses = []
+        for bosses in boss_enemies:
+            for pos_bosses in self.level_data['possible_bosses']:
+                if bosses['type'] == pos_bosses:
+                    mission_bosses.append(bosses)
+                    break
 
-            self.enemy_handler = enemy_handler.EnemyHandler(self.game_window,
-                                                            mission_enemies, mission_bosses,
-                                                            self.level_data)
+        self.enemy_handler = enemy_handler.EnemyHandler(self.game_window, self,
+                                                        mission_enemies, mission_bosses,
+                                                        self.level_data)
 
-            # give the enemy_handler the player
-            self.enemy_handler.player = self.game_window.player
-            self.enemy_handler.assign_player_health()
+        # give the enemy_handler the player
+        self.enemy_handler.player = self.game_window.player
+        self.enemy_handler.assign_player_health()
 
-            # player pointer
-            self.game_window.player.enemy_handler = self.enemy_handler
+        # player pointer
+        self.game_window.player.enemy_handler = self.enemy_handler
+
+        self.current_mission_data['name'] = self.level_data['name']
+        self.current_mission_data['planet'] = self.curr_planet.name
+        self.current_mission_data['reward'] = self.level_data['reward']
 
     def check_setup(self):
         if self.game_window.player.start == 1:
@@ -157,5 +182,12 @@ class Mission:
         if self.curr_planet is not None:
             self.curr_planet.on_update(delta_time)
 
-        if self.enemy_handler is not None and self.enemy_handler.enemy_sprites is not None:
+        if self.enemy_handler is not None and self.enemy_handler.enemy_sprites is not None\
+                and not self.game_window.wormhole:
             self.enemy_handler.on_update(delta_time)
+
+    def add_mission_data(self):
+        self.base_mission_data['total_enemy'] = self.current_mission_data['total_enemy']
+        self.base_mission_data['missions_completed'] += 1
+        self.current_mission_data['missions_completed'] += 1
+        self.game_window.player_credit += self.current_mission_data['reward']

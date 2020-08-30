@@ -31,7 +31,6 @@ class Generator:
             self.sol_data = json.load(sol_file)
             self.basic_planet = self.sol_data['basic_planet']
             self.basic_satellite = self.sol_data['basic_satellite']
-
         self.generate()
         del self
 
@@ -39,7 +38,6 @@ class Generator:
         for cycle in range(1, self.num_sections + 1):
             self.cycle(cycle)
         self.clean_up()
-        self.load()
 
     def cycle(self, curr_position):
         planet = self.generate_planet(curr_position)
@@ -54,6 +52,8 @@ class Generator:
             planet['map_symbol'] = {'orbit_pos': -1}
             planet['type'] = planet_type
             planet['subset'] = subset
+            if planet['type'] in HABITABLE:
+                planet['colonised'] = True
             # print(curr_position, ":", subset, ":", planet_type)
             rand_stats = random.random()
             weight = (planet_data['weight'][0] +
@@ -118,24 +118,35 @@ class Generator:
         return self.generate_planet_data(curr_position, subset, planet_type)
 
     def clean_up(self):
-        habitable_world = False
-        for index, planet in enumerate(self.planets):
-            planet['map_symbol']['orbit'] = index + 1
-            values = (5, 4, 1)
-            symbols = ("V", "IV", "I")
-            value = 0
-            num = index + 1
-            while num > 0:
-                for _ in range(num // values[value]):
-                    planet['name'] += symbols[value]
-                    num -= values[value]
-                value += 1
-            if planet['subset'] == 'exo' and planet['type'] in HABITABLE:
-                habitable_world = True
+        if len(self.planets) < 3:
+            self.generate()
+        else:
+            habitable_worlds = 0
+            for index, planet in enumerate(self.planets):
+                planet['map_symbol']['orbit'] = index + 1
+                values = (5, 4, 1)
+                symbols = ("V", "IV", "I")
+                value = 0
+                num = index + 1
+                while num > 0:
+                    for _ in range(num // values[value]):
+                        planet['name'] += symbols[value]
+                        num -= values[value]
+                    value += 1
+                if planet['subset'] == 'exo' and planet['type'] in HABITABLE:
+                    habitable_worlds += 1
 
-        if not habitable_world:
-            self.planets[1] = self.generate_planet_data(2, 'exo', random.choice(tuple(HABITABLE)))
-            self.planets[1]['name'] = "sol II"
+            if not habitable_worlds:
+                self.planets[1] = self.generate_planet_data(2, 'exo', random.choice(tuple(HABITABLE)))
+                self.planets[1]['name'] = "sol II"
+                habitable_worlds += 1
+
+            for planet in self.planets:
+                if planet['type'] == "silicate":
+                    colonised = random.random
+                    if colonised >= (5 - habitable_worlds) / 10:
+                        planet['colonised'] = True
+            self.load()
 
     def load(self):
         for planet in self.planets:

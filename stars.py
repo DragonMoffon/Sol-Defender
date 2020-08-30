@@ -7,7 +7,7 @@ SCREEN_WIDTH, SCREEN_HEIGHT = arcade.get_display_size()
 
 class StarField:
 
-    def __init__(self, game_view):
+    def __init__(self, game_view, true_move: bool = True):
         self.game_view = game_view
 
         self.LINE_X = [game_view.left_view - 80, game_view.left_view + SCREEN_WIDTH + 80]
@@ -21,6 +21,8 @@ class StarField:
         self.close_list = StarList(0.85, self, game_view)
         self.med_list = StarList(0.9, self, game_view)
         self.far_list = StarList(0.95, self, game_view)
+
+        self.true_move = true_move
 
     def draw(self):
         self.close_list.draw()
@@ -54,6 +56,9 @@ class StarField:
 
         d_x = d_camera[0]
         d_y = d_camera[1]
+        if not self.true_move:
+            d_x *= -1
+            d_y *= -1
         self.close_list.move(d_x, d_y)
         self.med_list.move(d_x, d_y)
         self.far_list.move(d_x, d_y)

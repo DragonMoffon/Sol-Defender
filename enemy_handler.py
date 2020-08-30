@@ -10,6 +10,8 @@ import bullet
 import ui
 import vector
 
+MAX_ENEMIES = 90
+
 
 class EnemyHandler:
     """
@@ -17,7 +19,7 @@ class EnemyHandler:
     creating waves and updating enemies
     """
 
-    def __init__(self, game_window, basic_types: list = None, boss_types: list = None, mission_data: dict = None):
+    def __init__(self, game_window, mission_handler, basic_types: list = None, boss_types: list = None, mission_data: dict = None):
         # Enemy type Json file reading.
         self.basic_types = basic_types
         self.boss_types = boss_types
@@ -34,6 +36,7 @@ class EnemyHandler:
         self.boss_ui = ui.BossUi(game_window)
 
         self.game_window = game_window
+        self.mission_handler = mission_handler
 
         self.level_data = mission_data
         self.planet_data = mission_data['planet']
@@ -50,6 +53,8 @@ class EnemyHandler:
         self.max_count_in_clusters = 10
         self.total_count_in_clusters = 0
         self.cluster_count = 1
+
+        self.scrap_list = arcade.SpriteList()
 
         # the current wave, plus which stage of difficulty
         self.wave = 0
@@ -74,13 +79,50 @@ class EnemyHandler:
         # player health for enemy waves
         self.last_player_health = 0
 
-    def slaughter(self):
-        safe_copy = self.enemy_sprites
-        for enemy in safe_copy:
-            enemy.kill()
+    def reset(self):
+        self.slaughter()
 
-        for clusters in self.clusters:
-            clusters.slaughter()
+        # The sprite list that holds all of the enemy sprites
+        self.enemy_sprites = None
+
+        # The SpriteList that holds all the scrap
+        self.scrap_list = arcade.SpriteList()
+
+        # clusters for when there are more than 10 enemies
+        self.clusters = []
+        self.total_count_in_clusters = 0
+        self.cluster_count = 1
+
+        # the current wave, plus which stage of difficulty
+        self.wave = 0
+        self.stage = 1
+        self.boss_wave = False
+
+        # The number of enemies and the starting number.
+        self.starting_num_enemies = 2
+        self.num_enemies = 0
+
+        # the difficulty and whether the difficulty changes
+        self.difficulty = 0
+        self.average_difficulty = 0
+
+        # the wave times for difficulties
+        self.wave_times = []
+        self.average_time = 0
+        self.current_wave_time = 0
+
+        # player health for enemy waves
+        self.last_player_health = 0
+
+    def slaughter(self):
+        if self.enemy_sprites is not None:
+            safe_copy = self.enemy_sprites
+            for enemy in safe_copy:
+                enemy.kill()
+
+        if self.clusters is not None:
+            for clusters in self.clusters:
+                clusters.slaughter()
 
     def assign_player_health(self):
         """
@@ -126,6 +168,9 @@ class EnemyHandler:
         prev_num_enemies = self.num_enemies
         self.num_enemies = round(self.starting_num_enemies * ((self.difficulty + self.average_difficulty) ** self.wave))
 
+        if self.num_enemies > MAX_ENEMIES:
+            self.num_enemies = MAX_ENEMIES
+
         if self.num_enemies < self.starting_num_enemies:
             self.num_enemies = self.starting_num_enemies
 
@@ -162,9 +207,8 @@ class EnemyHandler:
             self.boss_wave = False
         else:
             if self.stage > self.num_stages:
-                self.game_window.current_mission = -1
-                self.game_window.open_clean_map()
-                self.game_window.open_upgrade()
+                self.mission_handler.add_mission_data()
+                self.game_window.wormhole_update(0)
             else:
                 self.wave += 1
                 self.do_wave_time()
@@ -236,6 +280,8 @@ class EnemyHandler:
         """
         draws all of the enemy sprites
         """
+        self.scrap_list.draw()
+
         for enemy in self.enemy_sprites:
             enemy.draw()
 
@@ -251,6 +297,7 @@ class EnemyHandler:
         """
         updates all of the enemies
         """
+        self.scrap_list.update()
         self.enemy_sprites.on_update(delta_time)
         if len(self.clusters) != 0:
             for clusters in self.clusters:
@@ -269,6 +316,16 @@ class EnemyHandler:
             for bodies in self.enemy_sprites:
                 for shots in bodies.bullets:
                     shots.pause_delay += pause_delay
+
+    def count_enemy_death(self):
+        self.mission_handler.current_mission_data['enemies_killed'] += 1
+        self.mission_handler.current_mission_data['total_enemy'] += 1
+
+    def count_dropped_scrap(self, scrap_count):
+        self.mission_handler.current_mission_data['scrap_identify'] += scrap_count
+
+    def count_collect_scrap(self):
+        self.mission_handler.current_mission_data['scrap_collect'] += 1
 
 
 class Cluster(arcade.Sprite):
@@ -378,7 +435,10 @@ class Enemy(arcade.Sprite):
         self.get_sprites(type_data['image_file'])
         self.health = type_data['health']
         self.full_health = self.health
-        self.health_segment = self.health / (len(self.textures) - 1)
+        if len(self.textures) - 1:
+            self.health_segment = self.health / (len(self.textures) - 1)
+        else:
+            self.health_segment = 1
         self.frame = 1
 
         # hit box
@@ -439,7 +499,7 @@ class Enemy(arcade.Sprite):
             self.start_time = 0
             self.duration = 0
 
-    def setup(self, handler, x_y_pos: tuple = None, cluster: Cluster = None):
+    def setup(self, handler: EnemyHandler, x_y_pos: tuple = None, cluster: Cluster = None):
         """
         sets up the enemy in relation to the player. it also gives the enemy the handler for easier access to variables
         """
@@ -587,7 +647,18 @@ class Enemy(arcade.Sprite):
 
         self.radians = math.radians(self.angle)
 
+    def drop_scrap(self):
+        num = random.randrange(0, 4)
+        for scrap in range(num):
+            x_y = (self.center_x + random.randrange(-15, 16), self.center_y + random.randrange(-15, 16))
+            drop = vector.Scrap(self.handler.player, self.handler, x_y)
+            self.handler.scrap_list.append(drop)
+        self.handler.count_dropped_scrap(num)
+
     def kill(self):
+
+        self.handler.count_enemy_death()
+        self.drop_scrap()
 
         for point in self.handler.player.enemy_pointers:
             if point.target == self:
@@ -609,7 +680,7 @@ class Enemy(arcade.Sprite):
         """
         hits = arcade.check_for_collision_with_list(self, self.handler.player.bullets)
         for enemy in self.handler.enemy_sprites:
-            if enemy != self:
+            if enemy != self and type(enemy) != vector.AnimatedTempSprite:
                 e_hits = arcade.check_for_collision_with_list(self, enemy.bullets)
                 if len(e_hits) > 0:
                     for hit in e_hits:
@@ -623,6 +694,9 @@ class Enemy(arcade.Sprite):
                     self.texture = self.textures[self.frame]
                     self.frame += 1
                 if self.health <= 0:
+                    death = vector.AnimatedTempSprite("Sprites/Enemies/enemy explosions.png",
+                                                      (self.center_x, self.center_y))
+                    self.handler.enemy_sprites.append(death)
                     self.kill()
 
     def if_hit_player(self):
@@ -750,12 +824,18 @@ class Enemy(arcade.Sprite):
     def ability_rules(self):
         if self.active_ability is None:
             for frames, ability in enumerate(self.abilities):
-                if self.active_ability is None:
-                    if ability == 'invisibility':
-                        self.invisibility_rule(frames)
+                if ability == 'invisibility':
+                    self.invisibility_rule(frames)
+                elif ability == 'mob':
+                    self.mob_rule(frames)
+
+                if self.active_ability is not None:
+                    break
 
         if self.active_ability == 'invisibility':
             self.invisibility_rule()
+        elif self.active_ability == 'mob':
+            self.mob_rule()
 
     """
     The Shooting Rules
@@ -802,7 +882,7 @@ class Enemy(arcade.Sprite):
                     distance_to_neighbor = vector.find_distance((self.center_x, self.center_y),
                                                                 (neighbor.center_x, neighbor.center_y))
                     if neighbor != self:
-                        if distance_to_neighbor < self.target_distance:
+                        if distance_to_neighbor < self.target_distance + 200:
                             angle_to_neighbor = vector.find_angle((neighbor.center_x, neighbor.center_y),
                                                                   (self.center_x, self.center_y))
                             difference = vector.calc_difference(angle_to_neighbor, self.angle)
@@ -825,7 +905,21 @@ class Enemy(arcade.Sprite):
                 self.shoot_delay = random.randrange(self.shoot_delay_range[0], self.shoot_delay_range[1])
 
     def blast_rule(self):
-        pass
+        if self.difference[0] < 20 or self.difference[1] < 20 and self.target_distance < 500:
+            self.shooting = True
+            for neighbor in self.handler.enemy_sprites:
+                distance_to_neighbor = vector.find_distance((self.center_x, self.center_y),
+                                                            (neighbor.center_x, neighbor.center_y))
+                if neighbor != self:
+                    if distance_to_neighbor < self.target_distance + 200:
+                        angle_to_neighbor = vector.find_angle((neighbor.center_x, neighbor.center_y),
+                                                              (self.center_x, self.center_y))
+                        difference = vector.calc_difference(angle_to_neighbor, self.angle)
+                        if difference[0] < 25 or difference[1] < 25:
+                            self.shooting = False
+
+                    if self.shooting is False:
+                        break
 
     def spread_rule(self):
         pass
@@ -995,23 +1089,28 @@ class Enemy(arcade.Sprite):
                     if point.target == self:
                         point.remove_from_sprite_lists()
                         del point
-        else:
-            if time.time() > self.start_time + self.duration:
-                self.active_ability = None
-                self.active_frames = []
+        elif time.time() > self.start_time + self.duration:
+            self.active_ability = None
+            self.active_frames = []
 
-                self.texture = self.textures[self.frame]
-                self.rule_4_priority = self.type_data['rules'][3]
+            self.texture = self.textures[self.frame]
+            self.rule_4_priority = self.type_data['rules'][3]
 
-                self.start_time = 0
-                self.duration = 0
+            self.start_time = 0
+            self.duration = 0
 
-                self.cool_down = time.time() + self.cool_down_delay
+            self.cool_down = time.time() + self.cool_down_delay
 
-                point = ui.Pointer()
-                point.holder = self.handler.player
-                point.target = self
-                self.handler.player.enemy_pointers.append(point)
+            point = ui.Pointer()
+            point.holder = self.handler.player
+            point.target = self
+            self.handler.player.enemy_pointers.append(point)
+
+    def mob_rule(self, frames=None):
+        if self.active_ability is None:
+            pass
+        elif time.time() > self.start_time + self.duration:
+            pass
 
 
 if __name__ == "__main__":

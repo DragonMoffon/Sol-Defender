@@ -3,6 +3,7 @@
         "key": 0,
         "name": "",
         "stages": 0,
+        "reward": 0,
         "possible_enemies": [],
         "possible_bosses": [],
         "planet_symbol": {},
@@ -10,56 +11,29 @@
         "asteroids": []
     },
     "missions": {
-        "sol II": {
-            "key": 1,
-            "name": "defend sol II",
-            "stages": 2,
-            "possible_enemies": [
-                "blitz"
-            ],
-            "possible_bosses": [
-                "predator"
-            ],
-            "planet_symbol": {},
-            "planet_data": {
-                "name": "sol II",
-                "type": "desert",
-                "subset": "exo",
-                "weight": 1.8633040367049995e+25,
-                "x_pos": 4503,
-                "y_pos": 7123,
-                "texture": "Sprites/Planets/exo/desert.png",
-                "radius": 18720402.24,
-                "satellites": [],
-                "map_symbol": {
-                    "orbit_pos": -1,
-                    "orbit": 2,
-                    "speed": 1.067628943814928
-                }
-            },
-            "asteroids": []
-        },
         "sol III": {
-            "key": 2,
+            "key": 1,
             "name": "defend sol III",
             "stages": 1,
+            "reward": 25,
             "possible_enemies": [
                 "hunter",
                 "blitz"
             ],
             "possible_bosses": [
-                "predator"
+                "predator",
+                "matriarch"
             ],
             "planet_symbol": {},
             "planet_data": {
                 "name": "sol III",
-                "type": "giant",
-                "subset": "gas",
-                "weight": 1.399944662478619e+27,
-                "x_pos": 5596,
-                "y_pos": 5043,
-                "texture": "Sprites/Planets/gas/giant.png",
-                "radius": 69790733.01,
+                "type": "silicate",
+                "subset": "exo",
+                "weight": 7.834539902501e+24,
+                "x_pos": 6188,
+                "y_pos": 4609,
+                "texture": "Sprites/Planets/exo/silicate.png",
+                "radius": 7871272.51,
                 "satellites": [
                     {
                         "orbit": 1200,
@@ -68,58 +42,100 @@
                         "weight": 0,
                         "subset": "station",
                         "type": "research",
-                        "speed": 3.26,
+                        "speed": 1.46,
                         "texture": "Sprites/Satellites/station/research.png"
                     },
                     {
-                        "orbit": 2835,
+                        "orbit": 2813,
                         "gravity": 1,
-                        "radius": 8268596.0,
-                        "weight": 4.608449999999999e+23,
+                        "radius": 7400046.0,
+                        "weight": 4.09395e+23,
                         "subset": "moon",
-                        "type": "red",
-                        "speed": 2.28,
-                        "texture": "Sprites/Satellites/moon/red.png"
+                        "type": "green",
+                        "speed": 3.15,
+                        "texture": "Sprites/Satellites/moon/green.png"
                     },
                     {
-                        "orbit": 4803,
+                        "orbit": 4855,
+                        "gravity": 0,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "research",
+                        "speed": 1.86,
+                        "texture": "Sprites/Satellites/station/research.png"
+                    },
+                    {
+                        "orbit": 7135,
                         "gravity": 1,
-                        "radius": 8320709.0,
-                        "weight": 4.637849999999999e+23,
+                        "radius": 4238524.0,
+                        "weight": 2.2343999999999998e+23,
                         "subset": "moon",
                         "type": "white",
-                        "speed": 0.78,
+                        "speed": 0.51,
                         "texture": "Sprites/Satellites/moon/white.png"
                     }
                 ],
                 "map_symbol": {
-                    "orbit_pos": -1,
+                    "orbit_pos": 352.88810080833156,
                     "orbit": 3,
-                    "speed": 2.1090553375829595
+                    "speed": 2.195996787760672
                 }
             },
             "asteroids": []
         },
-        "sol V": {
-            "key": 3,
-            "name": "defend sol V",
-            "stages": 2,
+        "sol I": {
+            "key": 2,
+            "name": "defend sol I",
+            "stages": 3,
+            "reward": 121,
             "possible_enemies": [
-                "hunter"
+                "blitz"
             ],
             "possible_bosses": [
                 "predator"
             ],
             "planet_symbol": {},
             "planet_data": {
-                "name": "sol V",
-                "type": "iron",
+                "name": "sol I",
+                "type": "lava",
                 "subset": "exo",
-                "weight": 4.5941318605653505e+25,
-                "x_pos": 5130,
-                "y_pos": 4832,
-                "texture": "Sprites/Planets/exo/iron.png",
-                "radius": 3077114.44,
+                "weight": 5.497958460859214e+24,
+                "x_pos": 5517,
+                "y_pos": 3137,
+                "texture": "Sprites/Planets/exo/lava.png",
+                "radius": 5523735.9,
+                "satellites": [],
+                "map_symbol": {
+                    "orbit_pos": 105.73875768525482,
+                    "orbit": 1,
+                    "speed": 1.1253100402264926
+                }
+            },
+            "asteroids": []
+        },
+        "sol IV": {
+            "key": 3,
+            "name": "defend sol IV",
+            "stages": 3,
+            "reward": 169,
+            "possible_enemies": [
+                "hunter",
+                "blitz"
+            ],
+            "possible_bosses": [
+                "matriarch"
+            ],
+            "planet_symbol": {},
+            "planet_data": {
+                "name": "sol IV",
+                "type": "silicate",
+                "subset": "exo",
+                "weight": 6.682925561257002e+24,
+                "x_pos": 6647,
+                "y_pos": 4279,
+                "texture": "Sprites/Planets/exo/silicate.png",
+                "radius": 6714258.77,
                 "satellites": [
                     {
                         "orbit": 1200,
@@ -128,74 +144,54 @@
                         "weight": 0,
                         "subset": "station",
                         "type": "research",
-                        "speed": 0.64,
+                        "speed": 0.61,
                         "texture": "Sprites/Satellites/station/research.png"
                     },
                     {
-                        "orbit": 2822,
+                        "orbit": 2818,
+                        "gravity": 0,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "research",
+                        "speed": 0.39,
+                        "texture": "Sprites/Satellites/station/research.png"
+                    },
+                    {
+                        "orbit": 4844,
                         "gravity": 1,
-                        "radius": 9745131.0,
-                        "weight": 5.4831e+23,
+                        "radius": 2814102.0,
+                        "weight": 1.3891499999999997e+23,
                         "subset": "moon",
-                        "type": "white",
-                        "speed": 3.36,
-                        "texture": "Sprites/Satellites/moon/white.png"
+                        "type": "green",
+                        "speed": 0.32,
+                        "texture": "Sprites/Satellites/moon/green.png"
                     },
                     {
-                        "orbit": 4742,
-                        "gravity": 1,
-                        "radius": 2240859.0,
-                        "weight": 1.0510499999999999e+23,
-                        "subset": "moon",
-                        "type": "white",
-                        "speed": 1.45,
-                        "texture": "Sprites/Satellites/moon/white.png"
-                    },
-                    {
-                        "orbit": 7055,
+                        "orbit": 7373,
                         "gravity": 0,
                         "radius": 0,
                         "weight": 0,
                         "subset": "station",
                         "type": "research",
-                        "speed": 2.71,
+                        "speed": 2.69,
                         "texture": "Sprites/Satellites/station/research.png"
                     },
                     {
-                        "orbit": 9839,
+                        "orbit": 10129,
                         "gravity": 0,
                         "radius": 0,
                         "weight": 0,
                         "subset": "station",
                         "type": "research",
-                        "speed": 3.3,
-                        "texture": "Sprites/Satellites/station/research.png"
-                    },
-                    {
-                        "orbit": 12864,
-                        "gravity": 0,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
-                        "type": "research",
-                        "speed": 3.02,
-                        "texture": "Sprites/Satellites/station/research.png"
-                    },
-                    {
-                        "orbit": 16176,
-                        "gravity": 0,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
-                        "type": "research",
-                        "speed": 1.8,
+                        "speed": 3.43,
                         "texture": "Sprites/Satellites/station/research.png"
                     }
                 ],
                 "map_symbol": {
-                    "orbit_pos": -1,
-                    "orbit": 5,
-                    "speed": 0.6912966025345131
+                    "orbit_pos": 346.5786946790471,
+                    "orbit": 4,
+                    "speed": 0.6455146379532928
                 }
             },
             "asteroids": []

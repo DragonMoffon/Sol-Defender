@@ -161,3 +161,17 @@ class Satellite(arcade.Sprite):
     def kill(self):
         self.remove_from_sprite_lists()
         del self
+
+
+class SolarSystem(arcade.SpriteList):
+
+    def __init__(self, setup: bool = False):
+        super().__init__()
+        if setup:
+            self.generate_solar_system()
+
+    def generate_solar_system(self):
+        pass
+
+    def get_planet(self, planet_data):
+        pass

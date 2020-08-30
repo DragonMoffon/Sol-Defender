@@ -8,28 +8,28 @@
     },
     {
       "name": "time_heal",
-      "positive": "name",
-      "negative": "name"
+      "positive": "Electro-Ceramics",
+      "negative": "Electro-Ceramic"
     },
     {
       "name": "heal_rate",
-      "positive": "name",
-      "negative": "name"
+      "positive": "Nanites",
+      "negative": "Nanite"
     },
     {
       "name": "cool_speed",
-      "positive": "name",
-      "negative": "name"
+      "positive": "Heat-Sink",
+      "negative": "Para-Hydrogen"
     },
     {
       "name": "heat_speed",
-      "positive": "name",
-      "negative": "name"
+      "positive": "Fire-Suppressant",
+      "negative": "Thermal"
     },
     {
       "name": "damage",
       "positive": "Cannon",
-      "negative": "name"
+      "negative": "Ballistic"
     },
     {
       "name": "thruster_force",
@@ -38,8 +38,8 @@
     },
     {
       "name": "shoot_delay",
-      "positive": "name",
-      "negative": "name"
+      "positive": "Recoiling",
+      "negative": "Auxiliary"
     }
   ],
   "base_static":
