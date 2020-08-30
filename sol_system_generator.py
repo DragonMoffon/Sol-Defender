@@ -143,7 +143,7 @@ class Generator:
 
             for planet in self.planets:
                 if planet['type'] == "silicate":
-                    colonised = random.random
+                    colonised = random.random()
                     if colonised >= (5 - habitable_worlds) / 10:
                         planet['colonised'] = True
             self.load()

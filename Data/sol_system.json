@@ -2,45 +2,42 @@
     "planets": [
         {
             "name": "sol I",
-            "type": "lava",
-            "subset": "exo",
-            "weight": 5.497958460859214e+24,
-            "x_pos": 5517,
-            "y_pos": 3137,
-            "texture": "Sprites/Planets/exo/lava.png",
-            "radius": 5523735.9,
-            "satellites": [],
+            "type": "hot",
+            "subset": "gas",
+            "colonised": false,
+            "weight": 7.213333501262783e+26,
+            "x_pos": 5632,
+            "y_pos": 7001,
+            "texture": "Sprites/Planets/gas/hot.png",
+            "radius": 37669641.89,
+            "satellites": [
+                {
+                    "orbit": 1200,
+                    "gravity": 1,
+                    "radius": 6409899.0,
+                    "weight": 3.5133e+23,
+                    "subset": "moon",
+                    "type": "white",
+                    "speed": 1.04,
+                    "texture": "Sprites/Satellites/moon/white.png"
+                }
+            ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 1,
-                "speed": 1.1253100402264926
+                "speed": 1.296974092692013
             }
         },
         {
             "name": "sol II",
-            "type": "desert",
+            "type": "ocean",
             "subset": "exo",
-            "weight": 1.490181001827985e+25,
-            "x_pos": 3262,
-            "y_pos": 6846,
-            "texture": "Sprites/Planets/exo/desert.png",
-            "radius": 14971677.85,
-            "satellites": [],
-            "map_symbol": {
-                "orbit_pos": -1,
-                "orbit": 2,
-                "speed": 2.5858514966479547
-            }
-        },
-        {
-            "name": "sol III",
-            "type": "silicate",
-            "subset": "exo",
-            "weight": 7.834539902501e+24,
-            "x_pos": 6188,
-            "y_pos": 4609,
-            "texture": "Sprites/Planets/exo/silicate.png",
-            "radius": 7871272.51,
+            "colonised": true,
+            "weight": 2.234387147503887e+25,
+            "x_pos": 4408,
+            "y_pos": 7107,
+            "texture": "Sprites/Planets/exo/ocean.png",
+            "radius": 24942924.17,
             "satellites": [
                 {
                     "orbit": 1200,
@@ -49,122 +46,122 @@
                     "weight": 0,
                     "subset": "station",
                     "type": "research",
-                    "speed": 1.46,
+                    "speed": 0.48,
                     "texture": "Sprites/Satellites/station/research.png"
-                },
+                }
+            ],
+            "map_symbol": {
+                "orbit_pos": -1,
+                "orbit": 2,
+                "speed": 1.9632235768356465
+            }
+        },
+        {
+            "name": "sol III",
+            "type": "helium",
+            "subset": "gas",
+            "colonised": false,
+            "weight": 8.26667913798602e+26,
+            "x_pos": 5290,
+            "y_pos": 6343,
+            "texture": "Sprites/Planets/gas/helium.png",
+            "radius": 46524659.17,
+            "satellites": [
                 {
-                    "orbit": 2813,
-                    "gravity": 1,
-                    "radius": 7400046.0,
-                    "weight": 4.09395e+23,
-                    "subset": "moon",
-                    "type": "green",
-                    "speed": 3.15,
-                    "texture": "Sprites/Satellites/moon/green.png"
-                },
-                {
-                    "orbit": 4855,
+                    "orbit": 1200,
                     "gravity": 0,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "research",
-                    "speed": 1.86,
+                    "speed": 1.68,
                     "texture": "Sprites/Satellites/station/research.png"
                 },
                 {
-                    "orbit": 7135,
-                    "gravity": 1,
-                    "radius": 4238524.0,
-                    "weight": 2.2343999999999998e+23,
-                    "subset": "moon",
-                    "type": "white",
-                    "speed": 0.51,
-                    "texture": "Sprites/Satellites/moon/white.png"
+                    "orbit": 2777,
+                    "gravity": 0,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "research",
+                    "speed": 2.65,
+                    "texture": "Sprites/Satellites/station/research.png"
+                },
+                {
+                    "orbit": 4849,
+                    "gravity": 0,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "research",
+                    "speed": 3.48,
+                    "texture": "Sprites/Satellites/station/research.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 3,
-                "speed": 2.195996787760672
+                "speed": 2.1786938451838513
             }
         },
         {
             "name": "sol IV",
-            "type": "silicate",
-            "subset": "exo",
-            "weight": 6.682925561257002e+24,
-            "x_pos": 6647,
-            "y_pos": 4279,
-            "texture": "Sprites/Planets/exo/silicate.png",
-            "radius": 6714258.77,
+            "type": "ice",
+            "subset": "gas",
+            "colonised": false,
+            "weight": 8.787885882237243e+25,
+            "x_pos": 7040,
+            "y_pos": 6468,
+            "texture": "Sprites/Planets/gas/ice.png",
+            "radius": 18132862.1,
             "satellites": [
                 {
                     "orbit": 1200,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 0.61,
-                    "texture": "Sprites/Satellites/station/research.png"
-                },
-                {
-                    "orbit": 2818,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 0.39,
-                    "texture": "Sprites/Satellites/station/research.png"
-                },
-                {
-                    "orbit": 4844,
                     "gravity": 1,
-                    "radius": 2814102.0,
-                    "weight": 1.3891499999999997e+23,
+                    "radius": 2275601.0,
+                    "weight": 1.0730999999999998e+23,
+                    "subset": "moon",
+                    "type": "white",
+                    "speed": 0.57,
+                    "texture": "Sprites/Satellites/moon/white.png"
+                },
+                {
+                    "orbit": 2772,
+                    "gravity": 0,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "research",
+                    "speed": 1.5,
+                    "texture": "Sprites/Satellites/station/research.png"
+                },
+                {
+                    "orbit": 4678,
+                    "gravity": 1,
+                    "radius": 2327714.0,
+                    "weight": 1.1098499999999999e+23,
                     "subset": "moon",
                     "type": "green",
-                    "speed": 0.32,
+                    "speed": 1.65,
                     "texture": "Sprites/Satellites/moon/green.png"
-                },
-                {
-                    "orbit": 7373,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 2.69,
-                    "texture": "Sprites/Satellites/station/research.png"
-                },
-                {
-                    "orbit": 10129,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 3.43,
-                    "texture": "Sprites/Satellites/station/research.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 4,
-                "speed": 0.6455146379532928
+                "speed": 1.992449825825113
             }
         },
         {
             "name": "sol V",
-            "type": "ice",
-            "subset": "gas",
-            "weight": 1.0240535790723675e+26,
-            "x_pos": 7314,
-            "y_pos": 7038,
-            "texture": "Sprites/Planets/gas/ice.png",
-            "radius": 20939517.35,
+            "type": "silicate",
+            "subset": "exo",
+            "colonised": false,
+            "weight": 1.0858198773609226e+25,
+            "x_pos": 7333,
+            "y_pos": 3793,
+            "texture": "Sprites/Planets/exo/silicate.png",
+            "radius": 10909107.94,
             "satellites": [
                 {
                     "orbit": 1200,
@@ -173,85 +170,36 @@
                     "weight": 0,
                     "subset": "station",
                     "type": "research",
-                    "speed": 2.09,
+                    "speed": 1.34,
                     "texture": "Sprites/Satellites/station/research.png"
                 },
                 {
-                    "orbit": 2809,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 0.56,
-                    "texture": "Sprites/Satellites/station/research.png"
-                },
-                {
-                    "orbit": 4737,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 1.96,
-                    "texture": "Sprites/Satellites/station/research.png"
-                },
-                {
-                    "orbit": 7185,
+                    "orbit": 2845,
                     "gravity": 1,
-                    "radius": 3977959.0,
-                    "weight": 2.0726999999999995e+23,
+                    "radius": 5089703.0,
+                    "weight": 2.7342e+23,
                     "subset": "moon",
                     "type": "white",
-                    "speed": 1.66,
+                    "speed": 2.48,
                     "texture": "Sprites/Satellites/moon/white.png"
-                },
-                {
-                    "orbit": 10053,
-                    "gravity": 1,
-                    "radius": 4134298.0,
-                    "weight": 2.1755999999999996e+23,
-                    "subset": "moon",
-                    "type": "green",
-                    "speed": 1.83,
-                    "texture": "Sprites/Satellites/moon/green.png"
-                },
-                {
-                    "orbit": 13218,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 0.3,
-                    "texture": "Sprites/Satellites/station/research.png"
-                },
-                {
-                    "orbit": 16632,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 3.2,
-                    "texture": "Sprites/Satellites/station/research.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 5,
-                "speed": 1.3190017167380448
+                "speed": 1.9756736216107798
             }
         },
         {
             "name": "sol VI",
-            "type": "giant",
-            "subset": "gas",
-            "weight": 1.710297355206552e+27,
-            "x_pos": 4960,
-            "y_pos": 8556,
-            "texture": "Sprites/Planets/gas/giant.png",
-            "radius": 82386200.52,
+            "type": "silicate",
+            "subset": "exo",
+            "colonised": true,
+            "weight": 5.473612305811225e+24,
+            "x_pos": 7171,
+            "y_pos": 6525,
+            "texture": "Sprites/Planets/exo/silicate.png",
+            "radius": 5499275.59,
             "satellites": [
                 {
                     "orbit": 1200,
@@ -260,54 +208,24 @@
                     "weight": 0,
                     "subset": "station",
                     "type": "research",
-                    "speed": 0.52,
+                    "speed": 3.21,
                     "texture": "Sprites/Satellites/station/research.png"
                 },
                 {
-                    "orbit": 2778,
-                    "gravity": 1,
-                    "radius": 7816950.0,
-                    "weight": 4.34385e+23,
-                    "subset": "moon",
-                    "type": "red",
-                    "speed": 1.53,
-                    "texture": "Sprites/Satellites/moon/red.png"
-                },
-                {
-                    "orbit": 4758,
+                    "orbit": 2755,
                     "gravity": 0,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "research",
-                    "speed": 1.36,
-                    "texture": "Sprites/Satellites/station/research.png"
-                },
-                {
-                    "orbit": 7293,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 2.71,
-                    "texture": "Sprites/Satellites/station/research.png"
-                },
-                {
-                    "orbit": 10265,
-                    "gravity": 0,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "research",
-                    "speed": 3.45,
+                    "speed": 3.09,
                     "texture": "Sprites/Satellites/station/research.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 6,
-                "speed": 1.2295242023455564
+                "speed": 0.910237143326319
             }
         }
     ]

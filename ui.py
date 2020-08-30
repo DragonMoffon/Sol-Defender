@@ -68,6 +68,14 @@ class PlayerUi:
         self.influence_warnings = None
 
         self.ui_list = arcade.SpriteList()
+
+        self.top_left_sprite = arcade.Sprite("Sprites/Player/Ui/ui_top_left.png")
+        self.ui_list.append(self.top_left_sprite)
+        self.top_right_sprite = arcade.Sprite("Sprites/Player/Ui/ui_top_right.png")
+        self.ui_list.append(self.top_right_sprite)
+        self.bottom_left_sprite = arcade.Sprite("Sprites/Player/Ui/ui_bottom_left.png")
+        self.bottom_right_sprite = None
+
         self.health_bar = arcade.Sprite(HEALTH_BAR)
         self.ui_list.append(self.health_bar)
         self.health_frame = arcade.Sprite(BAR_FRAME)
@@ -98,9 +106,6 @@ class PlayerUi:
         self.overheat_volume = 0
         self.overheating_sound.play(self.overheat_volume)
 
-        self.top_left_sprite = arcade.Sprite("Sprites/Player/Ui/ui_top_left.png")
-        self.top_right_sprite = arcade.Sprite("Sprites/Player/Ui/ui_top_right.png")
-
     def draw(self):
         if self.mini_map is None:
             self.mini_map = MiniMap(self.player, self.game_screen)
@@ -130,43 +135,6 @@ class PlayerUi:
         self.health_bar.center_x, self.health_bar.center_y = health_pos
         self.health_frame.center_x, self.health_frame.center_y = health_pos
 
-        # Gravity Lines
-        if len(self.player.gravity_influences):
-            point_list = (
-                         (self.game_screen.left_view, self.game_screen.bottom_view),
-                         (self.game_screen.left_view, self.game_screen.bottom_view + 125),
-                         (self.game_screen.left_view + 50, self.game_screen.bottom_view + 125),
-                         (self.game_screen.left_view + 125, self.game_screen.bottom_view + 50),
-                         (self.game_screen.left_view + 125, self.game_screen.bottom_view)
-                         )
-            arcade.draw_polygon_filled(point_list, GUN_METAL)
-
-            center_x = self.game_screen.left_view + 50
-            center_y = self.game_screen.bottom_view + 50
-            arcade.draw_circle_filled(center_x, center_y, 45, GUN_METAL)
-            arcade.draw_circle_outline(center_x, center_y, 45, arcade.color.BLACK)
-            for influences in self.player.gravity_influences:
-                direction = math.radians(vector.find_angle(influences, (0.0, 0.0)))
-                mag = math.sqrt(influences[0]**2 + influences[1]**2)
-                if mag < 40 / 25:
-                    e_x = center_x + (math.cos(direction) * mag * 25)
-                    e_y = center_y + (math.sin(direction) * mag * 25)
-                else:
-                    e_x = center_x + (math.cos(direction) * 40)
-                    e_y = center_y + (math.sin(direction) * 40)
-
-                arcade.draw_line(center_x, center_y, e_x, e_y, THRUSTER_BLUE)
-
-            direction = math.radians(vector.find_angle(self.player.gravity_acceleration, (0.0, 0.0)))
-            mag = math.sqrt(self.player.gravity_acceleration[0] ** 2 + self.player.gravity_acceleration[1] ** 2)
-            if mag < 40 / 25:
-                e_x = center_x + (math.cos(direction) * mag * 25)
-                e_y = center_y + (math.sin(direction) * mag * 25)
-            else:
-                e_x = center_x + (math.cos(direction) * 40)
-                e_y = center_y + (math.sin(direction) * 40)
-            arcade.draw_line(center_x, center_y, e_x, e_y, arcade.color.ORANGE)
-
         top_right_corner = (SCREEN_WIDTH - 105, SCREEN_HEIGHT - 105)
         self.top_right_sprite.center_x = self.game_screen.left_view + top_right_corner[0]
         self.top_right_sprite.center_y = self.game_screen.bottom_view + top_right_corner[1]
@@ -194,12 +162,44 @@ class PlayerUi:
         self.top_left_sprite.center_x = self.game_screen.left_view + top_left_corner[0]
         self.top_left_sprite.center_y = self.game_screen.bottom_view + top_left_corner[1]
 
-        self.top_left_sprite.draw()
-        self.top_right_sprite.draw()
+        if len(self.player.gravity_influences):
+            bottom_left_corner = (self.game_screen.left_view + 86, self.game_screen.bottom_view + 86)
+            circle_center = (self.game_screen.left_view+58, self.game_screen.bottom_view + 58)
+
+            self.bottom_left_sprite.center_x, self.bottom_left_sprite.center_y = bottom_left_corner
+            self.bottom_left_sprite.draw()
+
+            for _ in self.player.gravity_influences:
+                maximum = 54
+                force = [_[0] * maximum * 1.4, _[1] * maximum * 1.4]
+                magnitude = math.sqrt(force[0] ** 2 + force[1] ** 2)
+                if magnitude > maximum:
+                    force[0] = (force[0] / magnitude) * maximum
+                    force[1] = (force[1] / magnitude) * maximum
+
+                arcade.draw_line(circle_center[0], circle_center[1],
+                                 circle_center[0] + force[0], circle_center[1] + force[1], arcade.color.RADICAL_RED)
+
+            arcade.draw_point(circle_center[0], circle_center[1], arcade.color.RADICAL_RED, 4)
+
+        self.ui_list.draw()
+
+        velocity_circle = self.game_screen.left_view + SCREEN_WIDTH - 35, self.game_screen.bottom_view + SCREEN_HEIGHT - 35
+        if self.player.velocity[0] or self.player.velocity[1]:
+            velocity_pointer = arcade.Sprite("Sprites/Player/Ui/velocity_direction.png",
+                                                 center_x=velocity_circle[0], center_y=velocity_circle[1])
+            velocity_pointer.angle = vector.find_angle(self.player.velocity, (0, 0))
+            velocity_pointer.draw()
+
+        if self.player.acceleration[0] or self.player.acceleration[0]:
+            acceleration_pointer = arcade.Sprite("Sprites/Player/Ui/acceleration_direction.png",
+                                                 center_x=velocity_circle[0], center_y=velocity_circle[1])
+            acceleration_pointer.angle = vector.find_angle(self.player.acceleration, (0, 0))
+            acceleration_pointer.draw()
+
         credit_text.draw()
         scrap_text.draw()
 
-        self.ui_list.draw()
         self.mini_map.draw()
 
         self.influence_warnings = arcade.SpriteList()
