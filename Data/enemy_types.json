@@ -2,7 +2,6 @@
    "basic_types": [
       {
          "type": "hunter",
-         "difficulty_value": 1,
          "rules": [
             1,
             1,
@@ -37,7 +36,6 @@
       },
       {
          "type": "blitz",
-         "difficulty_value": 1.75,
          "rules": [
             1,
             1,
@@ -61,7 +59,6 @@
    ],
    "boss_types": [
       {"type": "predator",
-         "difficulty_value": 1,
          "rules": [
             1,
             1,
@@ -88,7 +85,6 @@
                         [-170.0, 200.0], [-70.0, 200.0]]
       },
        {"type": "matriarch",
-         "difficulty_value": 1,
          "rules": [
             1.5,
             2,

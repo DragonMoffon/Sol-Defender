@@ -1,9 +1,28 @@
 import math
+import time
+import json
+import copy as c
+import random
+
+from dataclasses import dataclass
+from array import array
+import arcade.gl as gl
 
 import arcade
 
 import vector
 import font
+
+COMPANY_TAB = arcade.load_texture("Sprites/Ui/Company Slide.png")
+COMPANY_DIM = arcade.load_texture("Sprites/UI/Company Slide Dim.png")
+
+UPGRADE_TAB = arcade.load_texture("Sprites/Ui/Upgrade Tab.png")
+UPGRADE_TAB_2 = arcade.load_texture("Sprites/Ui/Upgrade Tab 2.png")
+UPGRADE_TAB_3 = arcade.load_texture("Sprites/Ui/Upgrade Tab 3.png")
+UPGRADE_SLIDE = arcade.load_texture("Sprites/Ui/Upgrade Slide.png")
+
+ACTIVE_UPGRADE = arcade.load_texture("Sprites/Ui/Active Upgrade Tab.png")
+ACTIVE_UPGRADE_TAB = arcade.load_texture("Sprites/Ui/active upgrade.png")
 
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.get_display_size()
 GUN_METAL = 50, 59, 63
@@ -13,6 +32,23 @@ HEALTH_BAR = "Sprites/Player/Ui/health_bar.png"
 HEAT_BAR = "Sprites/Player/Ui/heat_bar.png"
 BAR_FRAME = "Sprites/Player/Ui/bar_frame.png"
 
+REP_BAR_TEXTURES = []
+for b_y in range(10):
+    for b_x in range(25):
+        b_texture = arcade.load_texture("Sprites/Ui/reputation_bar.png", 840 - (b_x * 35), 2250 - (b_y * 250), 35, 250)
+        REP_BAR_TEXTURES.append(b_texture)
+REP_BAR_TEXTURES.append(arcade.load_texture("Sprites/Ui/reputation_full.png"))
+
+
+#   -- In Game UI --
+#
+# Pointer - Is used to point the player towards enemies and the wormhole.
+#
+# PlayerUI - All the ui elements around the corners of the screen.
+#
+# BossUI - The Bosses health bar.
+#
+# MiniMap - The mini map.
 
 class Pointer(arcade.Sprite):
 
@@ -64,6 +100,8 @@ class PlayerUi:
     def __init__(self, player, game_screen):
         self.player = player
         self.game_screen = game_screen
+
+        self.thrusters = ThrusterExhaust(game_screen.window, player)
 
         self.influence_warnings = None
 
@@ -156,15 +194,15 @@ class PlayerUi:
             for z in range(3 - len(scrap)):
                 scrap = "0" + scrap
 
-        credit_text = font.gen_letter_list(credit, credit_text[0], credit_text[1])
-        scrap_text = font.gen_letter_list(scrap, scrap_text[0], scrap_text[1])
+        credit_text = font.LetterList(credit, credit_text[0], credit_text[1])
+        scrap_text = font.LetterList(scrap, scrap_text[0], scrap_text[1])
 
         self.top_left_sprite.center_x = self.game_screen.left_view + top_left_corner[0]
         self.top_left_sprite.center_y = self.game_screen.bottom_view + top_left_corner[1]
 
         if len(self.player.gravity_influences):
             bottom_left_corner = (self.game_screen.left_view + 86, self.game_screen.bottom_view + 86)
-            circle_center = (self.game_screen.left_view+58, self.game_screen.bottom_view + 58)
+            circle_center = (self.game_screen.left_view + 58, self.game_screen.bottom_view + 58)
 
             self.bottom_left_sprite.center_x, self.bottom_left_sprite.center_y = bottom_left_corner
             self.bottom_left_sprite.draw()
@@ -184,10 +222,11 @@ class PlayerUi:
 
         self.ui_list.draw()
 
-        velocity_circle = self.game_screen.left_view + SCREEN_WIDTH - 35, self.game_screen.bottom_view + SCREEN_HEIGHT - 35
+        velocity_circle = self.game_screen.left_view + SCREEN_WIDTH - 35, \
+                          self.game_screen.bottom_view + SCREEN_HEIGHT - 35
         if self.player.velocity[0] or self.player.velocity[1]:
             velocity_pointer = arcade.Sprite("Sprites/Player/Ui/velocity_direction.png",
-                                                 center_x=velocity_circle[0], center_y=velocity_circle[1])
+                                             center_x=velocity_circle[0], center_y=velocity_circle[1])
             velocity_pointer.angle = vector.find_angle(self.player.velocity, (0, 0))
             velocity_pointer.draw()
 
@@ -228,60 +267,281 @@ class PlayerUi:
             self.influence_warnings.draw()
 
     def under_draw(self):
-        # Thruster Visuals
-        back_angle = self.player.angle + 180
-        rad_back = math.radians(back_angle)
+        self.thrusters.on_draw()
 
-        width_1 = self.player.thrusters_output[0] * 15
-        height_1 = 3
-        d_1 = 20.81
 
-        if self.player.thrusters_output[0] > 0:
-            a_1 = rad_back + math.radians(54.78)
-            x_1 = self.player.center_x + math.cos(a_1) * d_1 + (math.cos(rad_back) * (width_1 / 2))
-            y_1 = self.player.center_y + math.sin(a_1) * d_1 + (math.sin(rad_back) * (width_1 / 2))
-            arcade.draw_rectangle_filled(x_1, y_1, width_1, height_1, arcade.color.ORANGE, 360 - back_angle)
-        elif self.player.thrusters_output[0] < 0:
-            a_1 = rad_back - math.radians(54.78)
-            x_1 = self.player.center_x + math.cos(a_1) * d_1 - (math.cos(rad_back) * (width_1 / 2))
-            y_1 = self.player.center_y + math.sin(a_1) * d_1 - (math.sin(rad_back) * (width_1 / 2))
-            arcade.draw_rectangle_filled(x_1, y_1, width_1, height_1, arcade.color.ORANGE, 360 - back_angle)
-        else:
-            a_1 = rad_back + math.radians(54.78)
-            x_1 = self.player.center_x + math.cos(a_1) * d_1
-            y_1 = self.player.center_y + math.sin(a_1) * d_1
-            arcade.draw_point(x_1, y_1, arcade.color.RADICAL_RED, 2)
-            a_1 = rad_back - math.radians(54.78)
-            x_1 = self.player.center_x + math.cos(a_1) * d_1
-            y_1 = self.player.center_y + math.sin(a_1) * d_1
-            arcade.draw_point(x_1, y_1, arcade.color.RADICAL_RED, 2)
+MIN_FADE_TIME = 0.25
+MAX_FADE_TIME = 0.75
 
-        width_1 = self.player.thrusters_output[1] * 10
 
-        if self.player.thrusters_output[1]:
-            a_2 = rad_back + math.radians(49.76)
-            d_2 = 17.03
-            x_2 = self.player.center_x + math.cos(a_2) * d_2 + (math.cos(rad_back) * (width_1 / 2))
-            y_2 = self.player.center_y + math.sin(a_2) * d_2 + (math.sin(rad_back) * (width_1 / 2))
-            arcade.draw_rectangle_filled(x_2, y_2, width_1, height_1, THRUSTER_BLUE, 360 - back_angle)
+@dataclass
+class Burst:
+    buffer: gl.Buffer
+    vao: gl.Geometry
+    start_time: float
 
-            a_2 = rad_back - math.radians(49.76)
-            d_2 = 17.03
-            x_2 = self.player.center_x + math.cos(a_2) * d_2 + (math.cos(rad_back) * (width_1 / 2))
-            y_2 = self.player.center_y + math.sin(a_2) * d_2 + (math.sin(rad_back) * (width_1 / 2))
-            arcade.draw_rectangle_filled(x_2, y_2, width_1, height_1, THRUSTER_BLUE, 360 - back_angle)
 
-            a_3 = rad_back + math.radians(30.96)
-            d_3 = 11.66
-            x_3 = self.player.center_x + math.cos(a_3) * d_3 + (math.cos(rad_back) * (width_1 / 2))
-            y_3 = self.player.center_y + math.sin(a_3) * d_3 + (math.sin(rad_back) * (width_1 / 2))
-            arcade.draw_rectangle_filled(x_3, y_3, width_1, height_1, THRUSTER_BLUE, 360 - back_angle)
+xxxclass ThrusterExhaust:
 
-            a_3 = rad_back - math.radians(30.96)
-            d_3 = 11.66
-            x_3 = self.player.center_x + math.cos(a_3) * d_3 + (math.cos(rad_back) * (width_1 / 2))
-            y_3 = self.player.center_y + math.sin(a_3) * d_3 + (math.sin(rad_back) * (width_1 / 2))
-            arcade.draw_rectangle_filled(x_3, y_3, width_1, height_1, THRUSTER_BLUE, 360 - back_angle)
+    def __init__(self, window, craft, thruster_array=((128.23, 42.80, 3, -1), (231.77, 42.80, 3, 1),
+                                                      (131.35, 34.06, 2, 0), (153.43, 25.06, 3, 0),
+                                                      (206.57, 25.06, 3, 0), (228.65, 34.06, 2, 0))):
+        self.forward_thrusters = []
+        self.forward_bursts = []
+        self.forward_start = 0
+        self.burn = True
+
+        self.turning_thrusters = []
+        self.turning_bursts = []
+        self.turning_start = 0
+        self.turning = 0
+
+        self.max_particles = 25
+        self.num_particles = 25
+
+        self.craft = craft
+        self.window = window
+
+        self.thruster_array = thruster_array
+        for thruster in thruster_array:
+            if thruster[3] == 0:
+                self.forward_bursts.append([])
+                self.forward_thrusters.append(thruster)
+            else:
+                self.turning_bursts.append([])
+                self.turning_thrusters.append(thruster)
+
+        self.duration = 1250
+        self.time = 0
+
+        self.program = self.window.ctx.load_program(
+            vertex_shader="glsl/vertex_shader.glsl",
+            fragment_shader="glsl/fragment_shader.glsl"
+        )
+
+        self.window.ctx.enable_only(self.window.ctx.BLEND)
+
+    def on_draw(self):
+        if self.craft.thrusters_output[1] > 0 and not self.burn:
+            self.forward_start = time.time() * 1000
+            self.burn = True
+        elif not self.craft.thrusters_output[1] and self.burn:
+            self.forward_start = 0
+            self.burn = False
+
+        if self.craft.thrusters_output[0] != 0 and self.craft.thrusters_output[0] != self.turning:
+            self.turning_start = time.time() * 1000
+            self.turning = self.craft.thrusters_output[0]
+        if self.craft.thrusters_output[0] == 0:
+            self.turning_start = 0
+            self.turning = 0
+
+        temp_list = self.forward_bursts.copy()
+        for index, burst_list in enumerate(temp_list):
+            temp_burst = burst_list.copy()
+            for burst in temp_burst:
+                if time.time() - burst.start_time > MAX_FADE_TIME:
+                    burst_list.remove(burst)
+                else:
+                    self.window.ctx.point_size = self.forward_thrusters[index][2] * self.window.get_pixel_ratio()
+
+                    self.program['time'] = time.time() - burst.start_time
+                    """self.program['mod_pos'] = ((burst.s_x - self.craft.center_x)/SCREEN_WIDTH * 0.5,
+                                               (burst.s_y - self.craft.center_y)/SCREEN_HEIGHT * 0.5)"""
+
+                    burst.vao.render(self.program, mode=self.window.ctx.POINTS)
+
+        temp_list = self.turning_bursts.copy()
+        for index, burst_list in enumerate(temp_list):
+            temp_burst = burst_list.copy()
+            for burst in temp_burst:
+                if time.time() - burst.start_time > MAX_FADE_TIME:
+                    burst_list.remove(burst)
+                else:
+                    self.window.ctx.point_size = self.turning_thrusters[index][2] * self.window.get_pixel_ratio()
+
+                    self.program['time'] = time.time() - burst.start_time
+                    """self.program['mod_pos'] = ((burst.s_x - self.craft.center_x) / SCREEN_WIDTH * 0.5,
+                                               (burst.s_y - self.craft.center_y) / SCREEN_HEIGHT * 0.5)"""
+
+                    burst.vao.render(self.program, mode=self.window.ctx.POINTS)
+
+        def _gen_initial_data(initial_x, initial_y):
+            for i in range(self.num_particles):
+                angle = math.radians(self.craft.angle + 180 + random.uniform(-10, 10))
+                speed = 60 + random.uniform(-30, 30)
+                dx = (math.cos(angle) * speed) / SCREEN_WIDTH
+                dy = (math.sin(angle) * speed) / SCREEN_HEIGHT
+                fade_rate = random.uniform(1 / MIN_FADE_TIME, 1 / MAX_FADE_TIME)
+
+                yield initial_x
+                yield initial_y
+                yield dx
+                yield dy
+                yield fade_rate
+
+        def _gen_initial_data_turn(initial_x, initial_y):
+            angle = math.radians(self.craft.angle + 180 + random.uniform(-8, 8))
+            speed = 100 + random.uniform(-50, 50)
+            dx = (math.cos(angle) * speed) / SCREEN_WIDTH
+            dy = (math.sin(angle) * speed) / SCREEN_HEIGHT
+            fade_rate = random.uniform(1 / MIN_FADE_TIME, 1 / MAX_FADE_TIME)
+
+            yield initial_x
+            yield initial_y
+            yield dx
+            yield dy
+            yield fade_rate
+
+        def _find_count(start):
+            if (time.time() * 1000) - start:
+                self.time = ((time.time() * 1000) - start) / self.duration
+            else:
+                self.time = 0
+
+            if self.time >= 1:
+                self.num_particles = self.max_particles
+            else:
+                count = 1
+
+                adj_t = self.time / 1
+                count = adj_t ** 3
+
+                self.num_particles = round(count * self.max_particles)
+                if self.num_particles < 1:
+                    self.num_particles = 1
+
+        if self.burn:
+            _find_count(self.forward_start)
+
+            for index, thruster in enumerate(self.forward_thrusters):
+                start_x = (math.cos(math.radians(self.craft.angle + thruster[0])) * thruster[1])
+                start_y = (math.sin(math.radians(self.craft.angle + thruster[0])) * thruster[1])
+
+                s_x = self.craft.center_x + start_x
+                s_y = self.craft.center_y + start_y
+
+                x2 = start_x / SCREEN_WIDTH
+                y2 = start_y / SCREEN_HEIGHT
+
+                initial_data = _gen_initial_data(x2, y2)
+
+                buffer = self.window.ctx.buffer(data=array('f', initial_data))
+
+                buffer_description = gl.BufferDescription(buffer,
+                                                          '2f 2f f',
+                                                          ['in_pos', 'in_vel', 'in_fade'])
+
+                vao = self.window.ctx.geometry([buffer_description])
+
+                burst = Burst(buffer=buffer, vao=vao, start_time=time.time())
+                self.forward_bursts[index].append(burst)
+
+        if self.turning != 0:
+            _find_count(self.turning_start)
+            self.num_particles = math.ceil(self.num_particles * abs(self.craft.thrusters_output[0]))
+
+            for index, thruster in enumerate(self.turning_thrusters):
+                start_x = (math.cos(math.radians(self.craft.angle + thruster[0])) * thruster[1])
+                start_y = (math.sin(math.radians(self.craft.angle + thruster[0])) * thruster[1])
+
+                s_x = self.craft.center_x + start_x
+                s_y = self.craft.center_y + start_y
+
+                x2 = start_x / SCREEN_WIDTH
+                y2 = start_y / SCREEN_HEIGHT
+
+                initial_data = _gen_initial_data(x2, y2)
+
+                buffer = self.window.ctx.buffer(data=array('f', initial_data))
+
+                buffer_description = gl.BufferDescription(buffer,
+                                                          '2f 2f f',
+                                                          ['in_pos', 'in_vel', 'in_fade'])
+
+                vao = self.window.ctx.geometry([buffer_description])
+
+                burst = Burst(buffer=buffer, vao=vao, start_time=time.time())
+                if thruster[3] < 0 and self.turning < 0:
+                    self.turning_bursts[index].append(burst)
+                elif thruster[3] > 0 and self.turning > 0:
+                    self.turning_bursts[index].append(burst)
+
+
+class EnemyExhaust:
+
+    def __init__(self, window, craft):
+
+        self.rule_bursts = []
+
+        self.window = window.window
+        self.game_window = window
+        self.craft = craft
+        self.craft_effects = craft.rule_effects
+        for output in craft.rule_effects:
+            self.rule_bursts.append([])
+
+        self.particle_count = 25
+        self.base_count = 25
+        self.peak = 4.5
+
+        self.program = self.window.ctx.load_program(
+            vertex_shader="glsl/vertex_shader_enemy.glsl",
+            fragment_shader="glsl/fragment_shader.glsl"
+        )
+
+        self.window.ctx.enable_only(self.window.ctx.BLEND)
+
+    def on_draw(self):
+
+        for burst_list in self.rule_bursts:
+            temp_list = burst_list.copy()
+            for burst in temp_list:
+                if time.time() - burst.start_time > MAX_FADE_TIME:
+                    burst_list.remove(burst)
+                else:
+                    self.window.ctx.point_size = 3 * self.window.get_pixel_ratio()
+
+                    self.program['time'] = time.time() - burst.start_time
+                    pos_x = (self.craft.center_x - self.game_window.left_view) / SCREEN_WIDTH * 2 - 1
+                    pos_y = (self.craft.center_y - self.game_window.bottom_view) / SCREEN_HEIGHT * 2 - 1
+
+                    self.program['pos'] = (pos_x, pos_y)
+
+                    burst.vao.render(self.program, mode=self.window.ctx.POINTS)
+
+        def _gen_initial_data(initial_x, initial_y, velocity):
+            self.particle_count = math.ceil(self.base_count * (vector.find_distance(velocity, (0, 0)) / self.peak))
+            for i in range(self.particle_count):
+                angle = math.radians(vector.find_angle(velocity, (0, 0))+ random.uniform(-10, 10))
+                speed = 200 + random.uniform(-50, 50)
+                dx = (math.cos(angle) * speed) / SCREEN_WIDTH
+                dy = (math.sin(angle) * speed) / SCREEN_HEIGHT
+                fade_rate = random.uniform(1 / MIN_FADE_TIME, 1 / MAX_FADE_TIME)
+
+                yield initial_x
+                yield initial_y
+                yield dx
+                yield dy
+                yield fade_rate
+
+        for index, effect in enumerate(self.rule_bursts):
+            if self.craft.rule_effects[index][0] > 0 or self.craft.rule_effects[index][1] > 0:
+                x2 = (self.craft.center_x - self.game_window.left_view) / SCREEN_WIDTH * 2 - 1
+                y2 = (self.craft.center_y - self.game_window.bottom_view) / SCREEN_HEIGHT * 2 - 1
+
+                initial_data = _gen_initial_data(x2, y2, self.craft.rule_effects[index])
+
+                buffer = self.window.ctx.buffer(data=array('f', initial_data))
+
+                buffer_description = gl.BufferDescription(buffer,
+                                                          '2f 2f f',
+                                                          ['in_pos', 'in_vel', 'in_fade'])
+
+                vao = self.window.ctx.geometry([buffer_description])
+
+                burst = Burst(buffer=buffer, vao=vao, start_time=time.time())
+                effect.append(burst)
 
 
 class BossUi:
@@ -399,8 +659,8 @@ class MiniMap(arcade.SpriteList):
         if self.enemy_handler.enemy_sprites is not None:
             for enemy in self.enemy_handler.enemy_sprites:
                 pos = self.define_pos(enemy)
-                if self.planet_sprite.center_x - ((160 * self.screen_scale) / 2) <\
-                            pos[0] < self.planet_sprite.center_x + ((160 * self.screen_scale) / 2):
+                if self.planet_sprite.center_x - ((160 * self.screen_scale) / 2) < \
+                        pos[0] < self.planet_sprite.center_x + ((160 * self.screen_scale) / 2):
                     sprite = arcade.Sprite("Sprites/Minimap/enemy/position.png", scale=self.planet_scale,
                                            center_x=pos[0], center_y=pos[1])
                     self.enemy_sprites.append(sprite)
@@ -428,3 +688,905 @@ class MiniMap(arcade.SpriteList):
         y_pos = self.planet_sprite.center_y + y_diff
 
         return [x_pos, y_pos]
+
+
+#   -- Map Ui --
+#
+#   Company Tab - Used for each company
+#
+#   Upgrade Tab - Used for buying upgrades
+#       Upgrade Slide - One for each upgrade
+#
+#   Active Upgrade - Used for active upgrades
+#       Active Upgrade Tab - Used for hit boxes and storage of the text for each active upgrade
+#       Active Select - holds which key 1, 2, or 3 the active upgrade will go into.
+#
+
+
+class CompanyTab(arcade.Sprite):
+
+    def __init__(self, x, y, data, m_data, map_menu):
+        super().__init__()
+        # parent class variables
+        self.texture = COMPANY_DIM
+        self.scale = 0.5
+        self.center_x = x + 145
+        self.center_y = y
+
+        self.map = map_menu
+
+        # relative position from the center of the screen.
+        self.rel_x = self.center_x - (self.map.game_view.left_view + SCREEN_WIDTH / 2)
+        self.rel_y = self.center_y - (self.map.game_view.bottom_view + SCREEN_HEIGHT / 2)
+
+        # Company Data
+        self.company_data = data
+        self.mission_data = m_data
+        if m_data is not None:
+            self.planet_data = m_data['planet_data']
+        else:
+            self.planet_data = None
+
+        # hit box calculator
+        self.points = [(-421, 242), (-368, 344), (-161, 421), (419, 421),
+                       (420, -419), (-163, -420), (-368, -340), (-368, 137)]
+
+        # the slide position. -1 - Coming In, 0 - In, 1 - Coming Out, 2 - Out
+        self.slide = 0
+        self.selected = False
+
+        # start - In position, stop - out position.
+        self.start = x + 145
+        self.stop = x - 145
+
+        # the 4 variables for animating the slide
+        self.t = 0
+        self.b = 0
+        self.c = 290
+        self.d = 1500
+        self.cd = 1250
+
+        # the starting time of the animation.
+        self.start_t = 0
+
+        # The contents of the slide.
+        self.contents_list = arcade.SpriteList()
+
+        # The contents greyed out
+        self.grey_list = arcade.SpriteList()
+
+        # all lists
+        self.all_list = []
+        self.all_text = []
+
+        # The text on the slide
+        self.text = [
+            {'rel_x': -100, 'rel_y': 134, 'text': f"{data['name']}", 'scale': 1},
+            {'rel_x': -95, 'rel_y': 120, 'text': f"Home Planet: {data['home_planet']}", 'scale': 0.75},
+            {'rel_x': -95, 'rel_y': 100, 'text': f"Planets:", 'scale': 0.75},
+        ]
+        for planets in data['planets']:
+            p_dict = {'rel_x': self.text[2]['rel_x'] + 14, 'rel_y': self.text[-1]['rel_y'] - 14,
+                      'text': f"{planets}", 'scale': 0.75}
+            self.text.append(p_dict)
+
+        # The items on the slide
+        self.items = [
+            {'rel_x': -145, 'rel_y': 120, 'tex': arcade.load_texture(f"Sprites/Ui/Company Symbols/{data['type']}.png"),
+             "scale": 0.4, "type": 'all'},
+            {'rel_x': -110, 'rel_y': -35, 'tex': REP_BAR_TEXTURES[data['reputation']],
+             "scale": 1, "type": 'slide'},
+            {'rel_x': -110, 'rel_y': -35, 'tex': arcade.load_texture("Sprites/Ui/reputation_frame.png"),
+             "scale": 1, "type": 'all'},
+        ]
+
+        if m_data is not None:
+            self.items.append({'rel_x': -65, 'rel_y': 15,
+                               'tex': arcade.load_texture(f"Sprites/Planets/symbol/{self.planet_data['subset']}/"
+                                                          f"{self.planet_data['type']}.png"),
+                               "scale": 0.3, "type": 'content'})
+            self.text.append({'rel_x': -32, 'rel_y': 32, 'text': f"{self.planet_data['name']}", 'scale': 0.75})
+            self.text.append({'rel_x': -32, 'rel_y': 18, 'text': f"{self.planet_data['subset']}", 'scale': 0.75})
+            self.text.append({'rel_x': -32, 'rel_y': 4, 'text': f"{self.planet_data['type']}", 'scale': 0.75})
+            self.text.append({'rel_x': -82, 'rel_y': -18, 'text': f"Mission:", 'scale': 0.75})
+            self.text.append({'rel_x': -82, 'rel_y': -32, 'text': f"{self.mission_data['name']}", 'scale': 0.75})
+        else:
+            self.items.append({'rel_x': -65, 'rel_y': 15,
+                               'tex': arcade.load_texture(f"Sprites/Planets/symbol/none.png"),
+                               "scale": 0.3, "type": 'content'})
+            self.text.append({'rel_x': -32, 'rel_y': 32, 'text': f"No Mission", 'scale': 0.75})
+            self.text.append({'rel_x': -82, 'rel_y': -18, 'text': f"Missions:", 'scale': 0.75})
+            for missions in self.company_data['missions']:
+                self.text.append({'rel_x': -68, 'rel_y': self.text[-1]['rel_y'] - 14,
+                                  'text': f"{missions}", 'scale': 0.75})
+
+        for text in self.text:
+            text_list = font.LetterList(text['text'], self.center_x + text['rel_x'], self.center_y + text['rel_y'],
+                                        scale=text['scale'])
+            self.all_text.append(text_list)
+            self.contents_list.extend(text_list)
+
+        for items in self.items:
+            sprite = arcade.Sprite(scale=items['scale'],
+                                   center_x=self.center_x + items['rel_x'], center_y=self.center_y + items['rel_y'])
+            sprite.texture = items['tex']
+            if items['type'] == 'all':
+                self.grey_list.append(sprite)
+                self.contents_list.append(sprite)
+            elif items['type'] == 'grey':
+                self.grey_list.append(sprite)
+            else:
+                self.contents_list.append(sprite)
+
+            self.all_list.append(sprite)
+
+    def update_animation(self, delta_time: float = 1 / 60):
+        if self.start_t:
+            if (time.time() * 1000) - self.start_t:
+                if self.slide == 1:
+                    self.t = ((time.time() * 1000) - self.start_t) / self.d
+                else:
+                    self.t = ((time.time() * 1000) - self.start_t) / self.cd
+            else:
+                self.t = 0
+
+            if self.t + self.b >= 1:
+                self.start_t = 0
+                self.t = 0
+                self.b = 0
+                if self.slide == -1:
+                    self.center_x = self.start
+                    self.slide = 0
+                    if self.map.current_slide == self:
+                        self.map.current_slide = None
+                elif self.slide == 1:
+                    self.center_x = self.stop
+                    self.slide = 2
+
+            adj_t = self.t / 0.5
+            if adj_t < 1:
+                move = 1 / 2 * adj_t * adj_t * adj_t + self.b
+            else:
+                adj_t -= 2
+                move = 1 / 2 * (adj_t * adj_t * adj_t + 2) + self.b
+
+            if self.slide == 1:
+                self.center_x = self.start - (self.c * move)
+            elif self.slide == -1:
+                self.center_x = self.stop + (self.c * move)
+
+            for index, item in enumerate(self.all_list):
+                item.center_x = self.center_x + self.items[index]['rel_x']
+
+            for index, item in enumerate(self.all_text):
+                item.x = self.center_x + self.text[index]['rel_x']
+
+    def mouse_over(self, check):
+        if not check and not self.selected and self.slide == 2:
+            self.slide = -1
+            self.start_t = time.time() * 1000
+            self.b = 0
+        elif check or self.selected:
+            if not self.slide:
+                if self.mission_data is not None:
+                    self.selected = True
+                    self.map.current_slide = self
+                self.slide = 1
+                self.start_t = time.time() * 1000
+                self.b = 0
+
+    def update_position(self):
+        self.center_x = self.map.game_view.left_view + SCREEN_WIDTH / 2 + self.rel_x
+        self.center_y = self.map.game_view.bottom_view + SCREEN_HEIGHT / 2 + self.rel_y
+        self.start = self.center_x
+        self.stop = self.center_x - 290
+        for index, item in enumerate(self.all_list):
+            item.center_x = self.center_x + self.items[index]['rel_x']
+            item.center_y = self.center_y + self.items[index]['rel_y']
+
+        for index, item in enumerate(self.all_text):
+            item.x = self.center_x + self.text[index]['rel_x']
+            item.y = self.center_y + self.text[index]['rel_y']
+
+    def draw(self):
+        super().draw()
+        if self.slide != 0:
+            if self.texture != COMPANY_TAB:
+                self.texture = COMPANY_TAB
+            self.contents_list.draw()
+        else:
+            if self.texture != COMPANY_DIM:
+                self.texture = COMPANY_DIM
+            self.grey_list.draw()
+
+
+class UpgradeTab(arcade.Sprite):
+
+    def __init__(self, map_menu, upgrade_data):
+        super().__init__()
+        # parent variable
+        self.scale = 0.5
+        self.texture = UPGRADE_TAB
+
+        self.map = map_menu
+        self.upgrade_data = upgrade_data
+
+        self.center_x = map_menu.game_view.left_view - 77
+        self.center_y = map_menu.game_view.bottom_view + SCREEN_HEIGHT / 2
+
+        self.rel_x = self.center_x - (self.map.game_view.left_view + SCREEN_WIDTH / 2)
+        self.rel_y = self.center_y - (self.map.game_view.bottom_view + SCREEN_HEIGHT / 2)
+
+        self.hit_box = ((-301, 348), (41, 348), (248, 272), (300, 166), (252, 70), (228, 61), (214, 25),
+                        (218, -21), (231, -42), (246, -46), (246, -57), (224, -70), (214, -100), (218, -147),
+                        (231, -168), (246, -172), (246, -184), (224, -197), (214, -227), (218, -274), (238, -300),
+                        (145, -348), (-301, -348))
+
+        self.selected_upgrade = None
+        self.current_credits = self.map.game_view.player_credit
+        self.current_scrap = self.map.game_view.player_scrap
+        self.slide_back = 0
+
+        self.start_x = map_menu.game_view.left_view - 77
+        self.end_x = map_menu.game_view.left_view + 150
+
+        self.t = 0
+        self.b = 0
+        self.c = 227
+        self.d = 1500
+
+        self.slide = 0
+        self.selected = False
+
+        self.slides = arcade.SpriteList()
+        self.text = []
+        self.slide_data = []
+        self.text_data = [
+            {'rel_x': -135, 'rel_y': 125, 'text': f"Credits: +{self.current_credits}", 'scale': 1},
+            {'rel_x': -135, 'rel_y': 105, 'text': f"Scrap: {self.current_scrap}", 'scale': 1}
+        ]
+
+        # Create Upgrade Slides
+        s_x = -43
+        s_y = 6
+        for data in self.upgrade_data:
+            slide_dict = {'rel_x': s_x, 'rel_y': s_y, 'upgrade': data}
+            s_y -= 63
+            if data is None:
+                slide_dict['back'] = True
+                self.selected = False
+            else:
+                slide_dict['back'] = False
+                self.selected = True
+
+            self.slide_data.append(slide_dict)
+
+        for slides in self.slide_data:
+            slide = UpgradeSlide(self, slides)
+            self.slides.append(slide)
+
+        # Create Text
+        s_y = 6
+        s_x = -120
+        for data in self.upgrade_data:
+            if data is not None:
+                t_s_y = s_y + 14
+                text = data['name'].split(" ")
+                for word in text:
+                    text_dict = {'rel_x': s_x, 'rel_y': t_s_y, 'text': f"{word}", 'scale': 0.75}
+                    t_s_y -= 14
+                    self.text_data.append(text_dict)
+
+            s_y -= 63
+
+        for text in self.text_data:
+            text_list = font.LetterList(text['text'], self.center_x + text['rel_x'], self.center_y + text['rel_y'],
+                                        scale=text['scale'])
+            self.text.append(text_list)
+
+    def draw(self):
+        for slides in self.slides:
+            slides.draw()
+        super().draw()
+
+        for text in self.text:
+            text.draw()
+
+    def update_animation(self, delta_time: float = 1 / 60):
+        if self.current_credits > self.map.game_view.player_credit:
+            self.current_credits -= 1
+            self.update_text()
+        if self.slide_back >= len(self.slides):
+            self.selected = False
+        self.slides.update_animation(delta_time)
+        if self.b:
+            if (time.time() * 1000) - self.b:
+                self.t = ((time.time() * 1000) - self.b) / self.d
+            else:
+                self.t = 0
+            if self.t >= 1:
+                self.t = 0
+                self.b = 0
+                if self.slide == -1:
+                    self.center_x = self.start_x
+                    self.slide = 0
+                elif self.slide == 1:
+                    self.center_x = self.end_x
+                    self.slide = 2
+
+            adj_t = self.t / 0.5
+            if adj_t < 1:
+                move = 1 / 2 * adj_t * adj_t * adj_t
+            else:
+                adj_t -= 2
+                move = 1 / 2 * (adj_t * adj_t * adj_t + 2)
+
+            if self.slide == 1:
+                self.center_x = self.start_x + (move * self.c)
+            elif self.slide == -1:
+                self.center_x = self.end_x - (move * self.c)
+
+            for slides in self.slides:
+                slides.update_pos()
+
+            for index, item in enumerate(self.text):
+                item.x = self.center_x + self.text_data[index]['rel_x']
+
+    def check(self, check):
+        if self.selected:
+            cxy = self.map.game_view.cursor.center_x, self.map.game_view.cursor.center_y
+            for slides in self.slides:
+                slides.check(slides.collides_with_point(cxy))
+        if check or self.selected:
+            if not self.slide:
+                self.slide = 1
+                self.b = time.time() * 1000
+        elif not check and not self.selected and self.slide == 2:
+            self.slide = -1
+            self.b = time.time() * 1000
+
+    def update_position(self):
+        self.center_x = self.map.game_view.left_view + SCREEN_WIDTH / 2 + self.rel_x
+        self.center_y = self.map.game_view.bottom_view + SCREEN_HEIGHT / 2 + self.rel_y
+        self.start_x = self.center_x
+        self.end_x = self.center_x + 227
+
+        for index, item in enumerate(self.text):
+            item.x = self.center_x + self.text_data[index]['rel_x']
+            item.y = self.center_y + self.text_data[index]['rel_y']
+
+    def update_text(self):
+        self.text_data = [
+            {'rel_x': -135, 'rel_y': 125, 'text': f"Credits: +{self.current_credits}", 'scale': 1},
+            {'rel_x': -135, 'rel_y': 105, 'text': f"Scrap: {self.current_scrap}", 'scale': 1}
+        ]
+        self.text = []
+
+        # Create Text
+        s_y = 6
+        s_x = -120
+        for data in self.upgrade_data:
+            if data is not None:
+                t_s_y = s_y + 14
+                text = data['name'].split(" ")
+                for word in text:
+                    text_dict = {'rel_x': s_x, 'rel_y': t_s_y, 'text': f"{word}", 'scale': 0.75}
+                    t_s_y -= 14
+                    self.text_data.append(text_dict)
+
+            s_y -= 63
+
+        for text in self.text_data:
+            text_list = font.LetterList(text['text'], self.center_x + text['rel_x'], self.center_y + text['rel_y'],
+                                        scale=text['scale'])
+            self.text.append(text_list)
+
+    def on_mouse_press(self):
+        if self.selected_upgrade is not None \
+                and self.selected_upgrade['cost'] <= self.map.game_view.player_credit:
+            self.map.game_view.player_credit -= self.selected_upgrade['cost']
+            if self.selected_upgrade['prev_upgrade'] != {}:
+                self.update_text()
+                self.map.game_view.player.passive_upgrades.remove(self.selected_upgrade['prev_upgrade'])
+            self.map.game_view.player.setup_upgrades(self.selected_upgrade)
+            self.map.game_view.player.dump_upgrades()
+            self.selected_upgrade = None
+            for slide in self.slides:
+                slide.go_back()
+                self.slide_back = 0
+
+
+class UpgradeSlide(arcade.Sprite):
+
+    def __init__(self, tab, data):
+        super().__init__()
+        self.texture = UPGRADE_SLIDE
+        self.scale = 0.5
+
+        self.tab = tab
+        self.data = data
+        self.upgrade = data['upgrade']
+
+        self.center_x = tab.center_x + data['rel_x']
+        self.center_y = tab.center_y + data['rel_y']
+
+        self.back_x = tab.center_x + data['rel_x'] - 18
+        self.start_x = tab.center_x + data['rel_x']
+        self.end_x = tab.center_x + data['rel_x'] + 300
+
+        if self.data['back']:
+            self.center_x = self.back_x
+            self.back = True
+        else:
+            self.back = False
+
+        self.t = 0
+        self.b = 0
+        self.c = 300
+        self.d = 1500
+
+        self.selected = False
+        self.slide = 0
+
+        point_list = [(-351, 59), (324, 60), (347, 33), (350, -14), (341, -45), (324, -59), (-350, -59)]
+        self.set_hit_box(point_list)
+
+        self.text = []
+        if self.upgrade is not None:
+            self.text_data = [
+                {'rel_x': -100, 'rel_y': 14, 'text': f"Cost: +{self.upgrade['cost']}"},
+                {'rel_x': -100, 'rel_y': 0, 'text': f"Bonus: {self.upgrade['bonus_name']}"
+                                                    f" {int(self.upgrade['bonus'] * 100)}%"},
+                {'rel_x': -100, 'rel_y': -14, 'text': f"Bane: {self.upgrade['bane_name']}"
+                                                      f" {int(self.upgrade['bane'] * 100)}%"}
+            ]
+        else:
+            self.text_data = []
+
+        for text in self.text_data:
+            text_list = font.LetterList(text['text'], self.center_x + text['rel_x'], self.center_y + text['rel_y'],
+                                        scale=0.666)
+            self.text.append(text_list)
+
+    def check(self, check):
+        if not self.back:
+            if check:
+                if not self.slide and self.tab.selected_upgrade is None:
+                    self.slide = 1
+                    self.b = time.time() * 1000
+                    self.tab.selected_upgrade = self.upgrade
+            elif not check and not self.selected and self.slide == 2:
+                self.slide = -1
+                self.b = time.time() * 1000
+                if self.tab.selected_upgrade == self.upgrade:
+                    self.tab.selected_upgrade = None
+
+    def update_pos(self):
+        self.center_x = self.tab.center_x + self.data['rel_x']
+        self.start_x = self.center_x
+        self.end_x = self.center_x + 300
+        self.back_x = self.center_x - 18
+        if self.back:
+            self.center_x = self.back_x
+
+    def update_animation(self, delta_time: float = 1 / 60):
+        if self.b:
+            if (time.time() * 1000) - self.b:
+                self.t = ((time.time() * 1000) - self.b) / self.d
+            else:
+                self.t = 0
+            if self.t >= 1:
+                self.t = 0
+                self.b = 0
+                if self.slide == -1:
+                    self.center_x = self.start_x
+                    self.slide = 0
+                    if self.back:
+                        self.tab.slide_back += 1
+                elif self.slide == 1:
+                    self.center_x = self.end_x
+                    self.slide = 2
+                    self.tab.selected_upgrade = self.upgrade
+
+            adj_t = self.t / 0.5
+            if adj_t < 1:
+                move = 1 / 2 * adj_t * adj_t * adj_t
+            else:
+                adj_t -= 2
+                move = 1 / 2 * (adj_t * adj_t * adj_t + 2)
+
+            if self.slide == 1:
+                self.center_x = self.start_x + (move * self.c)
+            elif self.slide == -1:
+                self.center_x = self.end_x - (move * self.c)
+
+            for index, text in enumerate(self.text):
+                text.x = self.center_x + self.text_data[index]['rel_x']
+
+    def draw(self):
+        super().draw()
+        if not self.back and self.slide != 0:
+            for text in self.text:
+                text.draw()
+
+    def go_back(self):
+        self.back = True
+        self.b = time.time() * 1000
+        if self.slide == 2:
+            self.start_x = self.back_x
+        else:
+            self.end_x = self.start_x
+            self.start_x = self.back_x
+
+        self.c = self.end_x - self.start_x
+
+        self.slide = -1
+
+
+class ActiveUpgrade(arcade.Sprite):
+
+    def __init__(self, company, map_menu):
+        super().__init__()
+        self.texture = ACTIVE_UPGRADE
+        self.scale = 0.5
+
+        self.center_x = (SCREEN_WIDTH / 2)
+        self.center_y = SCREEN_HEIGHT + 205
+
+        self.rel_x = self.center_x - (map_menu.game_view.left_view + SCREEN_WIDTH / 2)
+        self.rel_y = self.center_y - (map_menu.game_view.bottom_view + SCREEN_HEIGHT / 2)
+
+        self.company = company
+        self.map = map_menu
+        self.upgrade_tab = None
+
+        self.start_y = SCREEN_HEIGHT + 305
+        self.end_y = self.start_y - 500
+
+        self.slide = 0
+
+        self.t = 0
+        self.c = 500
+        self.d = 3000
+
+        self.start_t = 0
+
+        self.text_data = [
+            {'text': f"Active Upgrade Reward", 'rel_x': -280, 'rel_y': -25, 'scale': 0.7, 'mid': False},
+            {'text': f"Reputation: {company['reputation']}", 'rel_x': -280, 'rel_y': -45, 'scale': 0.7, 'mid': False},
+            {'text': f"{company['name']}", 'rel_x': 0, 'rel_y': -160, 'scale': 1, 'mid': True}
+        ]
+        self.text = []
+
+        for text in self.text_data:
+            text_list = font.LetterList(text['text'], self.center_x + text['rel_x'], self.center_y + text['rel_y'],
+                                        scale=text['scale'], mid_x=text['mid'])
+            self.text.append(text_list)
+
+        self.item_data = [
+            {'tex': arcade.load_texture(f"Sprites/Ui/Company Symbols/{company['type']}.png"),
+             'rel_x': -220, 'rel_y': -160, 'scale': 0.41}
+        ]
+        self.items = arcade.SpriteList()
+        for items in self.item_data:
+            item = arcade.Sprite(scale=items['scale'],
+                                 center_x=self.center_x + items['rel_x'], center_y=self.center_y + items['rel_y'])
+            item.texture = items['tex']
+            self.items.append(item)
+
+        self.icons = arcade.SpriteList()
+        self.icon_data = [
+            {'rel_x': 264.5, 'rel_y': 167.5},
+            {'rel_x': 264.5, 'rel_y': 122.5},
+            {'rel_x': 264.5, 'rel_y': 78.5}
+        ]
+
+        for icon in self.icon_data:
+            sprite = arcade.Sprite("Sprites/Ui/ability  case.png", 0.5,
+                                   center_x=self.center_x + icon['rel_x'],
+                                   center_y=self.center_y + icon['rel_y'])
+            self.icons.append(sprite)
+
+        self.select = ActiveSelect(self)
+
+        self.upgrade_ranges = ((5.50, 7.00), (7.50, 9.50))
+        self.upgrade_banes = ((0.55, 0.70), (0.75, 0.95))
+        self.upgrade_durations = ((9, 4.5), (14, 9.5))
+
+        self.upgrades = []
+        self.upgrade_list = arcade.SpriteList()
+        self.upgrade_data = []
+        self.setup_upgrades()
+        s_x = self.center_x - 156
+        s_y = self.center_y + 160
+
+        for upgrade in self.upgrades:
+            self.upgrade_data.append({'rel_x': -155, 'rel_y': s_y - self.center_y, 'upgrade': upgrade})
+            tab = ActiveUpgradeTab(upgrade, s_x, s_y, self)
+            self.upgrade_list.append(tab)
+
+            s_y -= 70
+
+    def update_animation(self, delta_time: float = 1 / 60):
+        self.upgrade_list.update_animation()
+        if self.start_t:
+            if (time.time() * 1000) - self.start_t:
+                self.t = ((time.time() * 1000) - self.start_t) / self.d
+            else:
+                self.t = 0
+
+            if self.t >= 1:
+                self.t = 0
+                self.start_t = 0
+                if self.slide == -1:
+                    self.center_y = self.start_y
+                    self.slide = 0
+                    self.map.do_active = False
+                elif self.slide == 1:
+                    self.center_y = self.end_y
+                    self.slide = 2
+
+            adj_t = self.t / 0.5
+            if adj_t < 1:
+                move = 1 / 2 * adj_t * adj_t * adj_t
+            else:
+                adj_t -= 2
+                move = 1 / 2 * (adj_t * adj_t * adj_t + 2)
+
+            if self.slide == 1:
+                self.center_y = self.start_y - (move * self.c)
+            elif self.slide == -1:
+                self.center_y = self.end_y + (move * self.c)
+
+            for index, item in enumerate(self.text):
+                item.y = self.center_y + self.text_data[index]['rel_y']
+
+            for index, item in enumerate(self.items):
+                item.center_y = self.center_y + self.item_data[index]['rel_y']
+
+            for index, item in enumerate(self.icons):
+                item.center_y = self.center_y + self.icon_data[index]['rel_y']
+            self.select.update_pos()
+
+            for index, item in enumerate(self.upgrade_list):
+                item.center_y = self.center_y + self.upgrade_data[index]['rel_y']
+                item.fix()
+
+    def update_position(self):
+        self.center_x = self.map.game_view.left_view + SCREEN_WIDTH / 2 + self.rel_x
+        self.center_y = self.map.game_view.bottom_view + SCREEN_HEIGHT / 2 + self.rel_y
+        self.start_y = self.center_y
+        self.end_y = self.center_y - 400
+
+        for index, item in enumerate(self.text):
+            item.x = self.center_x + self.text_data[index]['rel_x']
+            item.y = self.center_y + self.text_data[index]['rel_y']
+
+        for index, item in enumerate(self.items):
+            item.center_x = self.center_y + self.item_data[index]['rel_x']
+            item.center_y = self.center_y + self.item_data[index]['rel_y']
+
+        for index, item in enumerate(self.icons):
+            item.center_x = self.center_y + self.icon_data[index]['rel_x']
+            item.center_y = self.center_y + self.icon_data[index]['rel_y']
+        self.select.update_pos()
+
+        for index, item in enumerate(self.upgrade_list):
+            item.center_x = self.center_x + self.upgrade_data[index]['rel_y']
+            item.center_y = self.center_y + self.upgrade_data[index]['rel_y']
+            item.fix()
+
+    def draw(self):
+        super().draw()
+        self.items.draw()
+        for text in self.text:
+            text.draw()
+
+        for upgrade in self.upgrade_list:
+            upgrade.draw()
+
+        self.select.draw()
+        self.icons.draw()
+        arcade.draw_point(self.center_x, self.center_y, arcade.color.RADICAL_RED, 5)
+
+    def check(self, cxy):
+        hover = arcade.get_sprites_at_point(cxy, self.upgrade_list)
+        if len(hover):
+            self.upgrade_tab = hover[-1]
+        else:
+            self.upgrade_tab = None
+
+        hover = arcade.get_sprites_at_point(cxy, self.icons)
+        if len(hover):
+            self.select.selected = self.icons.index(hover[-1]) + 1
+            self.select.update_pos()
+
+    def setup_upgrades(self):
+        upgrades = []
+        with open("Data/upgrade_data.json") as upgrade_file:
+            upgrade_json = json.load(upgrade_file)
+            abilities = upgrade_json['static_abilities']
+            base_upgrade = upgrade_json['base_active']
+            prefixes = upgrade_json['active_name_prefix']
+
+        base_upgrade['company'] = self.company['name']
+
+        for prev_upgrade in self.map.game_view.player.activated_upgrades:
+            if prev_upgrade is not None and prev_upgrade['company'] == self.company['name']:
+                upgrade = c.deepcopy(base_upgrade)
+                upgrade['prev_upgrade'] = prev_upgrade
+                upgrade['level'] = 2
+                upgrade['bonus_name'] = prev_upgrade['bonus_name']
+                upgrade['bane_name'] = prev_upgrade['bane_name']
+
+                prev_modifier = ((prev_upgrade['bonus'] - self.upgrade_ranges[0][0]) /
+                                 (self.upgrade_ranges[0][1] - self.upgrade_ranges[0][0]))
+
+                bonus = self.upgrade_ranges[1]
+                bane = self.upgrade_banes[1]
+                duration = self.upgrade_durations[1]
+                upgrade['bonus'] = round(bonus[0] + (bonus[1] - bonus[0]) * prev_modifier, 2)
+                upgrade['bane'] = round(bane[0] + (bane[1] - bane[0]) * prev_modifier, 2)
+                upgrade['duration'] = round(duration[0] + (duration[1] - duration[0]) * prev_modifier, 1)
+
+                split = prev_upgrade['name'].split(" ")
+                name_words = split[:-1]
+                name_words.append("MK_II")
+                upgrade['name'] = " ".join(map(str, name_words))
+                print(upgrade['name'])
+
+                upgrades.append(upgrade)
+                break
+
+        pick = None
+        for picks in abilities:
+            if picks['name'] == self.company['upgrade']:
+                pick = picks
+                break
+
+        bane_list = c.copy(abilities)
+        safe_copy = bane_list
+        for bane in safe_copy:
+            if bane['name'] == "max_health":
+                bane_list.remove(bane)
+                break
+
+        while len(upgrades) < 3:
+            upgrade = c.deepcopy(base_upgrade)
+            temp_bane = c.copy(bane_list)
+            if pick is None:
+                raise TypeError("\nWHY IS IT NONE \nWHAT HAVE YOU DONE!")
+            temp_bane.remove(pick)
+
+            bane_pick = random.choice(temp_bane)
+            bane_list.remove(bane_pick)
+            upgrade['bonus_name'] = pick['name']
+            upgrade['bane_name'] = bane_pick['name']
+
+            random_value = random.random()
+            bonus = self.upgrade_ranges[0]
+            bane = self.upgrade_banes[0]
+            duration = self.upgrade_durations[0]
+            upgrade['bonus'] = round(bonus[0] + (bonus[1] - bonus[0]) * random_value, 2)
+            upgrade['bane'] = round(bane[0] + (bane[1] - bane[0]) * random_value, 2)
+            upgrade['duration'] = round(duration[0] + (duration[1] - duration[0]) * random_value, 1)
+
+            upgrade['name'] = f"{random.choice(prefixes)} {bane_pick['negative']} {pick['positive']} MK_I"
+
+            upgrades.append(upgrade)
+
+        self.upgrades = upgrades
+
+    def trigger(self):
+        if self.upgrade_tab is not None and self.slide == 2:
+            wanted_pos = self.map.game_view.player.activated_upgrades[self.select.selected - 1]
+            if wanted_pos is None:
+                self.upgrade_tab.upgrade['activate_key'] = self.select.selected
+                self.map.game_view.player.activated_upgrades[self.select.selected - 1] = self.upgrade_tab.upgrade
+                self.map.game_view.player.dump_upgrades()
+                self.start_t = time.time() * 1000
+                self.t = 0
+                self.slide = -1
+            elif wanted_pos == self.upgrade_tab.upgrade['prev_upgrade']:
+                self.map.game_view.player.activated_upgrades[self.select.selected - 1] = self.upgrade_tab.upgrade
+                self.map.game_view.player.dump_upgrades()
+                self.start_t = time.time() * 1000
+                self.t = 0
+                self.slide = -1
+            else:
+                arcade.close_window()
+                raise ValueError("I'm too lazy so you're just going to have to suffer bitch")
+
+
+class ActiveUpgradeTab(arcade.Sprite):
+
+    def __init__(self, upgrade, s_x, s_y, active_tab: ActiveUpgrade):
+        super().__init__()
+        self.scale = 0.5
+        self.texture = ACTIVE_UPGRADE_TAB
+
+        self.hit_box = ((-288, -59), (-288, 59), (288, 59), (288, -59))
+
+        self.upgrade = upgrade
+        self.active_tab = active_tab
+        self.hover = False
+
+        self.center_x = s_x
+        self.center_y = s_y
+
+        self.rel_x = self.center_x - active_tab.center_x
+        self.rel_y = self.center_y - active_tab.center_y
+
+        name_split = upgrade['name'].split(" ")
+        self.text = []
+        self.hover_text = []
+        self.all_text = []
+        s_x = - self.rel_x
+        s_y = - self.rel_y
+        self.text_data = [
+            {'rel_x': -115, 'rel_y': 8, 'text': f"{name_split[0]} {name_split[1]}",
+             'scale': 0.65, "hover": False, 'mid': False},
+            {'rel_x': -115, 'rel_y': -8, 'text': f"{name_split[2]} {name_split[3]}",
+             'scale': 0.65, "hover": False, 'mid': False},
+            {'rel_x': s_x + 25, 'rel_y': s_y + 150, 'text': f"Duration: {upgrade['duration']}s",
+             'scale': 0.65, "hover": True, 'mid': False},
+            {'rel_x': s_x + 25, 'rel_y': s_y + 125, 'text': f"Bonus: {upgrade['bonus_name']}",
+             'scale': 0.65, "hover": True, 'mid': False},
+            {'rel_x': s_x + 75, 'rel_y': s_y + 100, 'text': f"{round(upgrade['bonus'] * 100)}%",
+             'scale': 1, "hover": True, 'mid': True},
+            {'rel_x': s_x + 25, 'rel_y': s_y + 75, 'text': f"Bane: {upgrade['bane_name']}",
+             'scale': 0.65, "hover": True, 'mid': False},
+            {'rel_x': s_x + 75, 'rel_y': s_y + 50, 'text': f"{round(upgrade['bane'] * 100)}%",
+             'scale': 1, "hover": True, 'mid': True},
+            {'rel_x': s_x + 25, 'rel_y': s_y + 25, 'text': f"Symbol:",
+             'scale': 0.65, "hover": True, 'mid': False},
+        ]
+
+        for text in self.text_data:
+            text_list = font.LetterList(text['text'],
+                                        self.center_x + text['rel_x'], self.center_y + text['rel_y'],
+                                        text['scale'], mid_x=text['mid'])
+
+            self.all_text.append(text_list)
+            if text['hover']:
+                self.hover_text.append(text_list)
+            else:
+                self.text.append(text_list)
+
+    def update_animation(self, delta_time: float = 1 / 60):
+        if self.active_tab.upgrade_tab == self:
+            self.hover = True
+        else:
+            self.hover = False
+
+    def fix(self):
+        for index, text in enumerate(self.all_text):
+            text.x = self.center_x + self.text_data[index]['rel_x']
+            text.y = self.center_y + self.text_data[index]['rel_y']
+
+    def draw(self):
+        for text in self.text:
+            text.draw()
+
+        if self.hover:
+            for text in self.hover_text:
+                text.draw()
+            arcade.draw_text("HOVER!!!!!", self.center_x, self.center_y, arcade.color.WHITE)
+
+
+class ActiveSelect(arcade.Sprite):
+
+    def __init__(self, map_menu):
+        super().__init__()
+        self.texture = arcade.load_texture("Sprites/Ui/Select.png")
+        self.scale = 0.5
+
+        self.map = map_menu
+        self.selected = 1
+
+        self.center_x = map_menu.center_x + map_menu.icon_data[self.selected - 1]['rel_x']
+        self.center_y = map_menu.center_y + map_menu.icon_data[self.selected - 1]['rel_y']
+
+    def update_pos(self):
+        self.center_x = self.map.center_x + self.map.icon_data[self.selected - 1]['rel_x']
+        self.center_y = self.map.center_y + self.map.icon_data[self.selected - 1]['rel_y']

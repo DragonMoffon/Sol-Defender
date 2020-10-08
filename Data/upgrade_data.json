@@ -1,67 +1,72 @@
 {
-  "static_abilities":
-  [
+    "static_abilities":
+    [
+        {
+            "name": "max_health",
+            "positive": "Shielding",
+            "negative": "Glass"
+        },
+        {
+            "name": "time_heal",
+            "positive": "Electro-Ceramics",
+            "negative": "Electro-Ceramic"
+        },
+        {
+            "name": "heal_rate",
+            "positive": "Nanites",
+            "negative": "Nanite"
+        },
+        {
+            "name": "cool_speed",
+            "positive": "Heat-Sink",
+            "negative": "Para-Hydrogen"
+        },
+        {
+            "name": "heat_speed",
+            "positive": "Fire-Suppressant",
+            "negative": "Thermal"
+        },
+        {
+            "name": "damage",
+            "positive": "Cannon",
+            "negative": "Ballistic"
+        },
+        {
+            "name": "thruster_force",
+            "positive": "Thruster",
+            "negative": "Anti-matter"
+        },
+        {
+            "name": "shoot_delay",
+            "positive": "Recoiling",
+            "negative": "Rigid"
+        }
+    ],
+    "active_name_prefix": ["auxiliary", "advanced", "temporary",
+                           "reserve", "back-up", "emergency",
+                           "support", "fall-back", "redirected"],
+    "base_static":
     {
-      "name": "max_health",
-      "positive": "Shielding",
-      "negative": "Glass"
+        "name": "",
+        "bonus_name": "",
+        "bonus": 0,
+        "bane_name": "",
+        "bane": 0,
+        "level": 1,
+        "cost": 0,
+        "prev_upgrade": {}
     },
+    "base_active":
     {
-      "name": "time_heal",
-      "positive": "Electro-Ceramics",
-      "negative": "Electro-Ceramic"
-    },
-    {
-      "name": "heal_rate",
-      "positive": "Nanites",
-      "negative": "Nanite"
-    },
-    {
-      "name": "cool_speed",
-      "positive": "Heat-Sink",
-      "negative": "Para-Hydrogen"
-    },
-    {
-      "name": "heat_speed",
-      "positive": "Fire-Suppressant",
-      "negative": "Thermal"
-    },
-    {
-      "name": "damage",
-      "positive": "Cannon",
-      "negative": "Ballistic"
-    },
-    {
-      "name": "thruster_force",
-      "positive": "Thruster",
-      "negative": "Anti-matter"
-    },
-    {
-      "name": "shoot_delay",
-      "positive": "Recoiling",
-      "negative": "Auxiliary"
+        "name": "",
+        "bonus_name": "",
+        "bonus": 0,
+        "bane_name": "",
+        "bane": 0,
+        "duration": 0,
+        "level": 1,
+        "company": "",
+        "prev_upgrade": {},
+        "activate_key": 0
     }
-  ],
-  "base_static":
-  {
-    "name": "",
-    "bonus_name": "",
-    "bonus": 0,
-    "bane_name": "",
-    "bane": 0,
-    "level": 1,
-    "prev_upgrade": {}
-  },
-  "base_active":
-  {
-    "name": "",
-    "bonus_name": "",
-    "bonus": 0,
-    "bane_name": "",
-    "bane": 0,
-    "duration": 0,
-    "level": 1,
-    "prev_upgrade": {},
-    "activate_key": 0
-  }
 }

@@ -1,0 +1,34 @@
+Company Special Abilities
+
+Cheaper Upgrades - Ship Builders, Scientists
+More Available missions - Logistics, Government, Communications
+More Available Upgrades - Ship Builders, Government, Weapons
+More Scrap Value - Scrappers
+More reputation Gained - Communications, Government
+Better Overall Upgrades (but worse negatives) } Mutually - Weapons, Scrappers, Government, Ship Builders
+Better Overall Negatives		              } Exclusive - Weapons, Government, Ship Builders
+Weaker Enemies - Government, Weapons, Scientists
+Max Speed - Logistics, Scientists, Ship Builders
+Less Gravity - Scientists
+Static Upgrades More } Mutually - Weapons, Scientists, Logistics
+Active Upgrades More } Exclusive - Weapons, Scientists, Scrappers
+
+Companies and their Specialities
+
+Max Health - Government, Scrappers, Logistics, Ship Builders
+Time Heal - Government, Scientists, Ship Builders, Communications
+Heal Rate - Government, Scientists, Scrappers,
+Cool Speed - Government, Scientists, Communications
+Heat Speed - Government, Weapons, Ship Builders
+Damage - Government, Weapons,
+Thruster Force - Government, Logistics, Scrappers, Ship Builders
+Shoot Delay - Government, Weapons,
+
+
+Ship Builders
+Scientists
+logistics
+Government
+Communications
+Weapons
+Scrappers

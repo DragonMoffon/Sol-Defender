@@ -40,8 +40,18 @@ class Player(arcade.Sprite):
         self.hit = False
 
         # Upgrades
+        self.activated_upgrades = [None, None, None]
+        self.start_time = 0
+        self.ability_active = False
+        self.stored_data = {
+            "bonus": "",
+            "prev_bonus_value": 0,
+            "bane": "",
+            "prev_bane_value": 0,
+            "duration": 0
+        }
+
         self.passive_upgrades = []
-        self.activated_upgrades = []
         self.upgrade_mod = {
             "max_health": 0,
             "time_heal": 0,
@@ -144,7 +154,7 @@ class Player(arcade.Sprite):
         self.enemy_pointers = arcade.SpriteList()
 
         # hit box
-        self.hit_box = ((-145, -5), (-145, 5), (-105, 5), (-105, 15), (-75, 15), (-75, 25), (-135, 25), (-135, 35),
+        point_list = ((-145, -5), (-145, 5), (-105, 5), (-105, 15), (-75, 15), (-75, 25), (-135, 25), (-135, 35),
                         (-125, 35), (-125, 55), (-115, 55), (-115, 75), (-85, 75), (-85, 105), (-125, 105), (-125, 135),
                         (-135, 135), (-135, 155), (-145, 155), (-145, 185), (-125, 185), (-125, 195), (-165, 195),
                         (-165, 205), (-135, 205), (-135, 215), (-35, 215), (-35, 205), (25, 205), (25, 195), (85, 195),
@@ -157,7 +167,7 @@ class Player(arcade.Sprite):
                         (-125, -185), (-145, -185), (-145, -155), (-135, -155), (-135, -135), (-125, -135),
                         (-125, -105), (-85, -105), (-85, -75), (-115, -75), (-115, -55), (-125, -55), (-125, -35),
                         (-135, -35), (-135, -25), (-75, -25), (-75, -15), (-105, -15), (-105, -5))
-
+        self.set_hit_box(point_list)
         self.scrap = 0
 
     def reset(self):
@@ -183,10 +193,8 @@ class Player(arcade.Sprite):
         self.read_upgrades()
 
         # health Variables
-        self.health = self.max_health
         self.num_segments = 5
         self.health_segment = self.max_health / self.num_segments
-        self.current_segment = 5
         self.last_damage = 0
         self.dead = False
 
@@ -244,12 +252,17 @@ class Player(arcade.Sprite):
     """
 
     def on_update(self, delta_time: float = 1 / 60):
+        if self.ability_active and self.start_time:
+            if self.start_time + self.stored_data['duration'] < time.time():
+                self.resolve_active()
+
         self.heal(delta_time)
         self.apply_correction()
         self.calculate_thruster_force()
         self.calculate_turning_acceleration()
         self.calculate_acceleration()
         self.apply_acceleration()
+
         self.move(delta_time)
 
         if self.over_heating:
@@ -297,12 +310,7 @@ class Player(arcade.Sprite):
                              self.center_x, self.center_y + 60,
                              arcade.color.WHITE)
 
-            arcade.draw_circle_outline(self.center_x, self.center_y, 480, arcade.color.GREEN)
-            arcade.draw_circle_outline(self.center_x, self.center_y, 330, arcade.color.GREEN)
-            arcade.draw_circle_outline(self.center_x, self.center_y, 285, arcade.color.ORANGE)
-            arcade.draw_circle_outline(self.center_x, self.center_y, 75, arcade.color.RADICAL_RED)
-
-            self.draw_hit_box()
+            self.draw_hit_box(arcade.color.RADICAL_RED)
             for shot in self.bullets:
                 arcade.draw_line(shot.center_x, shot.center_y,
                                  shot.velocity[0] + shot.center_x, shot.velocity[1] + shot.center_y,
@@ -322,27 +330,16 @@ class Player(arcade.Sprite):
 
     def apply_correction(self):
         if not self.turn_key:
-            if self.angle_velocity > self.correction:
+            correction_acceleration = (((self.turning_thruster_force * self.correction) * self.distance_to_turning)
+                                       / self.angular_inertia)
+
+            if self.angle_velocity > correction_acceleration + 1:
                 self.thrusters_output[0] = -self.correction
-            elif self.angle_velocity < -self.correction:
+            elif self.angle_velocity < -correction_acceleration - 1:
                 self.thrusters_output[0] = self.correction
             else:
                 self.angle_velocity = 0
                 self.thrusters_output[0] = 0
-
-        """if not self.turn_key and 0 < self.angle_velocity <= self.turning_acceleration\
-                or self.turning_acceleration < self.angle_velocity < 0:
-            self.thrusters_output[0] = 0
-            self.angle_velocity = 0
-        elif not self.turn_key and not self.correcting:
-            needed_acceleration = math.radians((-self.angle_velocity)/250)
-            self.thrusters_output[0] = self.calculate_thruster_output(needed_acceleration)
-            self.correcting = True"""
-
-    def calculate_thruster_output(self, needed_acceleration):
-        turning_torque = needed_acceleration * self.angular_inertia
-        turning_force = turning_torque / self.distance_to_turning
-        return turning_force / self.turning_thruster_force
 
     def calculate_thruster_force(self):
         self.turning_force = self.turning_thruster_force * self.thrusters_output[0]
@@ -399,16 +396,7 @@ class Player(arcade.Sprite):
     def add_scrap(self):
         self.holder.player_scrap += 1
 
-    def setup_upgrades(self, input_upgrade=None):
-        if input_upgrade is not None:
-            self.passive_upgrades.append(input_upgrade)
-        for mods in self.upgrade_mod:
-            self.upgrade_mod[mods] = 0
-
-        for upgrades in self.passive_upgrades:
-            self.upgrade_mod[upgrades["bonus_name"]] += upgrades['bonus']
-            self.upgrade_mod[upgrades['bane_name']] -= upgrades['bane']
-
+    def apply_upgrades(self):
         self.max_health = self.base_max_health * (1 + self.upgrade_mod['max_health'])
         gain = self.max_health - self.base_max_health
         self.health_segment = self.max_health / self.num_segments
@@ -420,6 +408,48 @@ class Player(arcade.Sprite):
         self.cool_speed = self.base_cool_speed * (1 + self.upgrade_mod['cool_speed'])
         self.thruster_force = self.base_thruster_force * (1 + self.upgrade_mod['thruster_force'])
         self.delay = self.base_delay * (1 - self.upgrade_mod['shoot_delay'])
+
+    def clean_upgrades(self):
+        for mods in self.upgrade_mod:
+            self.upgrade_mod[mods] = 0
+
+        for upgrades in self.passive_upgrades:
+            self.upgrade_mod[upgrades["bonus_name"]] += upgrades['bonus']
+            self.upgrade_mod[upgrades['bane_name']] -= upgrades['bane']
+
+    def setup_upgrades(self, input_upgrade=None):
+        if input_upgrade is not None:
+            self.passive_upgrades.append(input_upgrade)
+
+        self.clean_upgrades()
+        self.apply_upgrades()
+
+    def do_active(self, key):
+        if self.activated_upgrades[key] is not None:
+            ability = self.activated_upgrades[key]
+            self.stored_data['bonus'] = ability['bonus_name']
+            self.stored_data['prev_bonus_value'] = self.upgrade_mod[ability['bonus_name']]
+            self.stored_data['bane'] = ability['bane_name']
+            self.stored_data['prev_bane_value'] = self.upgrade_mod[ability['bane_name']]
+            self.stored_data['duration'] = ability['duration']
+
+            self.upgrade_mod[ability['bonus_name']] = ability['bonus']
+            self.upgrade_mod[ability['bane_name']] = - ability['bane']
+
+            self.apply_upgrades()
+
+            self.start_time = time.time()
+            self.ability_active = True
+            print(self.activated_upgrades[key])
+
+    def resolve_active(self):
+        self.start_time = 0
+        self.ability_active = False
+
+        self.upgrade_mod[self.stored_data['bonus']] = self.stored_data['prev_bonus_value']
+        self.upgrade_mod[self.stored_data['bane']] = self.stored_data['prev_bane_value']
+
+        self.apply_upgrades()
 
     def heal(self, delta_time):
         if self.health > 0:
@@ -442,18 +472,26 @@ class Player(arcade.Sprite):
         self.shot_audio.play(volume=0.1)
         self.bullet_type['damage'] = self.total_damage
         shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity, self.bullet_type)
-        self.gravity_handler.set_gravity_object(shot)
         self.bullets.append(shot)
 
     def clear_upgrades(self):
         with open('Data/current_upgrade_data.json', 'w') as file:
             self.passive_upgrades = []
-            json.dump(self.passive_upgrades, file)
+            self.activated_upgrades = [None, None, None]
+            final = {'passive': self.passive_upgrades, 'active': self.activated_upgrades}
+            json.dump(final, file, indent=4)
 
     def read_upgrades(self):
         with open('Data/current_upgrade_data.json') as upgrade_file:
-            self.passive_upgrades = json.load(upgrade_file)
+            upgrade_json = json.load(upgrade_file)
+            self.passive_upgrades = upgrade_json['passive']
+            self.activated_upgrades = upgrade_json['active']
         self.setup_upgrades()
+
+    def dump_upgrades(self):
+        with open('Data/current_upgrade_data.json', 'w') as file:
+            final = {'passive': self.passive_upgrades, 'active': self.activated_upgrades}
+            json.dump(final, file, indent=4)
 
     def mouse_angle(self):
         mouse_pos = (self.holder.left_view + self.mouse_pos_xy[0],
@@ -490,16 +528,11 @@ class Player(arcade.Sprite):
                 self.turn_key = True
                 self.correcting = False
 
-            elif key == arcade.key.V:
-                self.angle = 180
-            elif key == arcade.key.B:
-                self.angle = 90
-            elif key == arcade.key.N:
-                self.angle = 45
+            if arcade.key.KEY_1 <= key <= arcade.key.KEY_3 and not self.ability_active:
+                self.do_active(key-arcade.key.KEY_1)
 
             elif key == arcade.key.SPACE:
-                self.dead = True
-                # self.shooting = True
+                self.shooting = True
 
             elif key == arcade.key.TAB and not self.show_hit_box:
                 self.show_hit_box = True

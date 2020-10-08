@@ -1,6 +1,7 @@
 import json
 import random
 import math
+import time
 
 import arcade
 
@@ -8,6 +9,7 @@ import sol_system_generator
 import mission
 import font
 import stars
+import ui
 
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.get_display_size()
 GUN_METAL = 50, 59, 63
@@ -43,16 +45,11 @@ class MapSymbol(arcade.Sprite):
         self.sun_y = y
 
     def draw_mission(self):
-        self.draw_hit_box(arcade.color.BLIZZARD_BLUE, 2)
-        x = self.center_x
-        y = self.center_y + 30
-        arcade.draw_text(str(self.name), x, y, arcade.color.WHITE)
-        y -= 15
-        arcade.draw_text(self.current_mission['name'], x, y, arcade.color.WHITE)
+        pass
 
 
 class Map(arcade.View):
-    def __init__(self, game_view):
+    def __init__(self, game_view, upgrades_todo=False):
         super().__init__()
         self.game_view = game_view
         self.game_view.map = self
@@ -61,21 +58,45 @@ class Map(arcade.View):
         self.current_mission = None
         self.current_planet = None
         self.planet_symbols = None
+        self.companies = None
         self.sun = None
         self.planet_data = None
+        self.sol_data = None
         self.mission_generator = None
         self.mission_json = {}
 
         self.alert_symbols = None
         self.alert_texture = arcade.load_texture("Sprites/Planets/symbol/mission_alert.png")
+        self.mission_sprite = arcade.Sprite("Sprites/Ui/current_mission.png", 0.15)
+        self.selected_sprite = arcade.Sprite("Sprites/Ui/selected_planet.png", 0.15)
+        self.launch_sprite = arcade.Sprite("Sprites/Player/Ui/launch.png", 0.2)
+
+        self.company_slides = None
+        self.company_slide_dict = None
+        self.current_slide = None
+        self.company_rep = {}
+
+        self.upgrade_tab = None
+        self.upgrades = []
+        self.current_upgrade = None
+        self.upgrades_todo = upgrades_todo
+        self.upgrade_generator = UpgradesGenerator(self.game_view)
+
+        self.active_upgrade = None
+        self.do_active = False
 
         self.setup()
 
-    def setup(self):
+    def setup(self, upgrades=False):
         self.current_mission = None
         self.selected_planet = None
         self.current_planet = None
-        self.mission_generator = mission.MissionGenerator()
+        # generator = sol_system_generator.Generator(self.game_view)
+        if self.mission_generator is None:
+            self.mission_generator = mission.MissionGenerator()
+        else:
+            self.mission_generator.reload_dictionaries()
+            self.mission_generator.generate()
 
         self.planet_symbols = arcade.SpriteList()
         self.sun = arcade.Sprite("Sprites/Planets/symbol/sun.png",
@@ -84,11 +105,13 @@ class Map(arcade.View):
                                  scale=0.15)
         with open("Data/sol_system.json") as sol_data:
             sol_json = json.load(sol_data)
-            self.planet_data = sol_json
-            base_orbit = self.max_orbit / len(sol_json['planets'])
-            for planet_d in sol_json['planets']:
-                x = self.sun.center_x
-                y = self.sun.center_y
+            self.sol_data = sol_json
+            self.planet_data = sol_json['planets']
+            self.companies = sol_json['companies']
+            base_orbit = self.max_orbit / len(self.planet_data)
+            x = self.sun.center_x
+            y = self.sun.center_y
+            for planet_d in self.planet_data.values():
                 data = dict(planet_d['map_symbol'])
                 data['name'] = planet_d['name']
                 data['type'] = planet_d['type']
@@ -105,11 +128,48 @@ class Map(arcade.View):
                     json.dump(self.mission_json, mission_dump, indent=4)
                 self.planet_symbols.append(planet)
 
+        self.company_slides = arcade.SpriteList()
+        self.company_slide_dict = {}
+        self.company_rep = {}
+        s_x = self.game_view.left_view + SCREEN_WIDTH - 65
+        s_y = self.game_view.bottom_view + SCREEN_HEIGHT - 210
+        for companies in self.companies.values():
+            m_data = None
+            for missions in self.mission_json['missions'].values():
+                if missions['company'] == companies['name']:
+                    m_data = missions
+            slide = ui.CompanyTab(s_x, s_y, companies, m_data, self)
+            self.company_slides.append(slide)
+            self.company_slide_dict[companies['name']] = slide
+            s_y -= 100
+
+            rep = (companies['reputation'] - (companies['reputation'] % 50))/50
+            self.company_rep[companies['name']] = rep
+
+        if upgrades:
+            self.upgrades = self.upgrade_generator.setup_upgrades()
+        else:
+            self.upgrades = (None, None, None)
+        self.upgrade_tab = ui.UpgradeTab(self, self.upgrades)
+
+        self.launch_sprite.center_x = self.game_view.left_view + (SCREEN_WIDTH / 2)
+        self.launch_sprite.center_y = self.game_view.bottom_view + 60
+
     def on_show(self):
         self.sun.center_x, self.sun.center_y = self.game_view.left_view+SCREEN_WIDTH/2,\
                                                self.game_view.bottom_view+SCREEN_HEIGHT/2
         for planet in self.planet_symbols:
             planet.fix(self.sun.center_x, self.sun.center_y)
+
+        for slides in self.company_slides:
+            slides.update_position()
+
+        self.upgrade_tab.update_position()
+
+        if self.current_slide is not None:
+            self.current_slide.slide = 1
+            self.current_slide.start_t = time.time() * 1000
+            self.current_slide.b = 0
 
     def on_update(self, delta_time: float):
         self.planet_symbols.on_update(delta_time)
@@ -117,6 +177,31 @@ class Map(arcade.View):
                self.game_view.bottom_view + self.game_view.cursor_screen_pos[1])
         self.game_view.cursor.center_x = cxy[0]
         self.game_view.cursor.center_y = cxy[1]
+
+        if not self.do_active:
+            check = arcade.get_sprites_at_point(cxy, self.company_slides)
+            for slides in self.company_slides:
+                if len(check) and check[-1] == slides:
+                    if self.current_slide is None or self.current_slide == slides:
+                        slides.mouse_over(True)
+                        self.current_slide = slides
+                        if slides.mission_data is not None:
+                            for planets in self.planet_symbols:
+                                if planets.name == slides.planet_data['name']:
+                                    self.selected_planet = planets
+                                    break
+                else:
+                    slides.mouse_over(False)
+                    if self.selected_planet is not None and slides.mission_data is not None and not slides.selected:
+                        if slides.planet_data['name'] == self.selected_planet.name:
+                            self.selected_planet = None
+
+            self.upgrade_tab.check(self.upgrade_tab.collides_with_point(cxy))
+
+            self.company_slides.update_animation(delta_time)
+            self.upgrade_tab.update_animation(delta_time)
+        else:
+            self.active_upgrade.check(cxy)
 
     def draw_text(self):
         if self.game_view.current_mission is not None:
@@ -137,26 +222,15 @@ class Map(arcade.View):
                                  arcade.color.WHITE)
         else:
             if self.selected_planet is not None:
-                self.selected_planet.draw_mission()
                 arcade.draw_text(f"Enter: Launch for {self.selected_planet.name}",
                                  self.game_view.left_view + 10,
                                  self.game_view.bottom_view + SCREEN_HEIGHT - 50,
                                  arcade.color.WHITE)
 
-        arcade.draw_text(f"Esc: close game",
+        arcade.draw_text(f"X: close game",
                          self.game_view.left_view + 10,
                          self.game_view.bottom_view + SCREEN_HEIGHT - 25,
                          arcade.color.WHITE)
-
-        if self.selected_planet is not None:
-            if self.selected_planet == self.current_planet:
-                self.selected_planet.draw_hit_box(arcade.color.RADICAL_RED, 2)
-            else:
-                self.selected_planet.draw_mission()
-                launch = arcade.Sprite("Sprites/Player/Ui/launch.png", 0.2)
-                launch.center_x = self.game_view.left_view + (SCREEN_WIDTH/2)
-                launch.center_y = self.game_view.bottom_view + 60
-                launch.draw()
 
     def draw(self):
         if self.current_mission is not None:
@@ -168,13 +242,38 @@ class Map(arcade.View):
 
         self.alert_symbols = arcade.SpriteList()
         for planets in self.planet_symbols:
-            if planets.current_mission is not None and self.selected_planet != planets:
+            if planets.current_mission is not None \
+                    and self.selected_planet != planets and self.current_planet != planets:
                 alert = arcade.Sprite(center_x=planets.center_x, center_y=planets.center_y + 28, scale=0.15)
                 alert.texture = self.alert_texture
                 self.alert_symbols.append(alert)
         self.alert_symbols.draw()
 
+        if self.selected_planet is not None and self.selected_planet != self.current_planet:
+            self.launch_sprite.draw()
+            self.selected_sprite.center_x = self.selected_planet.center_x
+            self.selected_sprite.center_y = self.selected_planet.center_y
+            self.selected_sprite.draw()
+        if self.current_planet is not None:
+            self.mission_sprite.center_x = self.current_planet.center_x
+            self.mission_sprite.center_y = self.current_planet.center_y
+            self.mission_sprite.draw()
+
+        for slides in self.company_slides:
+            slides.draw()
+
+        self.upgrade_tab.draw()
+
         self.sun.draw()
+
+        if self.do_active and self.active_upgrade is not None:
+            arcade.draw_rectangle_filled(self.game_view.left_view + SCREEN_WIDTH/2,
+                                         self.game_view.bottom_view + SCREEN_HEIGHT/2,
+                                         SCREEN_WIDTH+100, SCREEN_HEIGHT+100, (90, 90, 90, 90))
+            if not self.active_upgrade.start_t:
+                self.active_upgrade.start_t = time.time() * 1000
+            self.active_upgrade.update_animation()
+            self.active_upgrade.draw()
 
     def on_draw(self):
         arcade.start_render()
@@ -184,75 +283,119 @@ class Map(arcade.View):
         self.game_view.cursor.draw()
 
     def on_key_press(self, key: int, modifiers: int):
+        if self.do_active:
+            self.active_upgrade.trigger()
         if key == arcade.key.ENTER and self.selected_planet is not None and self.selected_planet != self.current_planet:
             self.current_mission = self.selected_planet.current_mission
             self.current_planet = self.selected_planet
             self.game_view.current_mission = self.current_mission
             self.close_up()
-        elif key == arcade.key.ESCAPE:
+        elif key == arcade.key.X:
             if self.game_view.player is not None:
                 self.game_view.player.clear_upgrades()
             self.reset_map_pos()
             self.window.close()
         elif key == arcade.key.R:
-            generator = sol_system_generator.Generator()
+            generator = sol_system_generator.Generator(self.game_view)
             self.game_view.current_mission = None
             self.setup()
+        elif key == arcade.key.M:
+            self.current_mission = None
+            self.game_view.current_mission = None
+            self.save_map_pos()
+            self.setup()
+            with open("Data/mission_data.json") as mission_data:
+                self.mission_json = json.load(mission_data)
+                for planet in self.planet_symbols:
+                    if planet.name in self.mission_json['missions']:
+                        self.mission_json['missions'][planet.name]['planet_data'] = \
+                            self.planet_data[planet.name]
+                        planet.current_mission = self.mission_json['missions'][planet.name]
+
+                    else:
+                        planet.current_mission = None
+
         elif self.game_view.current_mission is not None:
             self.save_map_pos()
             self.window.show_view(self.game_view)
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
-        if button == arcade.MOUSE_BUTTON_LEFT:
+        if self.do_active:
+            self.active_upgrade.trigger()
+
+        if button == arcade.MOUSE_BUTTON_LEFT and not self.do_active:
             cxy = (self.game_view.left_view + self.game_view.cursor_screen_pos[0],
                    self.game_view.bottom_view + self.game_view.cursor_screen_pos[1])
-            cursor_over = arcade.get_sprites_at_point(cxy, self.planet_symbols)
-            if len(cursor_over) > 0:
-                if self.selected_planet == cursor_over[0] and self.selected_planet != self.current_planet:
-                    self.current_planet = cursor_over[0]
-                    self.current_mission = self.current_planet.current_mission
-                    self.game_view.current_mission = self.current_mission
-                    self.close_up()
-                elif self.selected_planet == cursor_over[0]:
-                    self.save_map_pos()
-                    self.window.show_view(self.game_view)
-                self.selected_planet = None
-                if cursor_over[0].current_mission is not None:
-                    self.selected_planet = cursor_over[0]
+            if self.upgrade_tab.selected_upgrade:
+                self.upgrade_tab.on_mouse_press()
+            if self.launch_sprite.collides_with_point((cxy[0], cxy[1])) and \
+                    self.selected_planet is not None and self.selected_planet != self.current_planet:
+                self.current_planet = self.selected_planet
+                self.current_mission = self.current_planet.current_mission
+                self.game_view.current_mission = self.current_mission
+                self.close_up()
+            else:
+                cursor_over = arcade.get_sprites_at_point(cxy, self.planet_symbols)
+                if len(cursor_over) > 0:
+                    if self.selected_planet == cursor_over[0] and self.selected_planet != self.current_planet:
+                        self.current_planet = cursor_over[0]
+                        self.current_mission = self.current_planet.current_mission
+                        self.game_view.current_mission = self.current_mission
+                        self.close_up()
+                    elif self.selected_planet == cursor_over[0]:
+                        self.save_map_pos()
+                        self.window.show_view(self.game_view)
+                    if self.selected_planet is not None:
+                        self.company_slide_dict[self.selected_planet.current_mission['company']].selected = False
+                    self.selected_planet = None
+                    if cursor_over[0].current_mission is not None:
+                        self.selected_planet = cursor_over[0]
+                        self.company_slide_dict[self.selected_planet.current_mission['company']].selected = True
+                        self.current_slide = self.company_slide_dict[self.selected_planet.current_mission['company']]
+                else:
+                    self.selected_planet = None
+                    if self.current_slide is not None:
+                        self.current_slide.selected = False
+                        self.current_slide = None
 
     def save_map_pos(self):
-        for index, planets in enumerate(self.planet_symbols):
-            self.planet_data['planets'][index]['map_symbol']['orbit_pos'] = planets.orbit_pos
+        for planets in self.planet_symbols:
+            self.sol_data['planets'][planets.name]['map_symbol']['orbit_pos'] = planets.orbit_pos
         with open("Data/sol_system.json", "w") as file:
-            json.dump(self.planet_data, file, indent=4)
+            json.dump(self.sol_data, file, indent=4)
 
     def reset_map_pos(self):
-        for index, planets in enumerate(self.planet_symbols):
-            self.planet_data['planets'][index]['map_symbol']['orbit_pos'] = -1
+        for planets in self.planet_symbols:
+            self.sol_data['planets'][planets.name]['map_symbol']['orbit_pos'] = -1
         with open("Data/sol_system.json", "w") as file:
-            json.dump(self.planet_data, file, indent=4)
+            json.dump(self.sol_data, file, indent=4)
 
     def close_up(self):
         self.save_map_pos()
         self.game_view.setup()
         self.window.show_view(self.game_view)
 
-    def launch(self):
-        pass
+    def rewards(self, company_name):
+        company = self.companies[company_name]
+        if self.company_rep[company_name] % 2:
+            self.active_upgrade = ui.ActiveUpgrade(self.companies[company_name], self)
+            self.do_active = True
+            self.active_upgrade.slide = 1
+        else:
+            print('not implemented \n'
+                  + font.DONKEY)
 
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
         self.game_view.cursor_screen_pos = [x, y]
 
 
-class UpgradeMenu(arcade.View):
+class UpgradesGenerator:
 
     def __init__(self, game_view):
-        super().__init__()
         with open("Data/upgrade_data.json") as upgrade_file:
             upgrade_json = json.load(upgrade_file)
             self.static_abilities = upgrade_json['static_abilities']
             self.base_static_upgrade = upgrade_json['base_static']
-            self.base_active_upgrade = upgrade_json['base_active']
 
         self.bonus_range = (
             (0.1, 0.15), (0.16, 0.21), (0.22, 0.27)
@@ -260,70 +403,52 @@ class UpgradeMenu(arcade.View):
         self.bane_range = (
             (0.03, 0.08), (0.09, 0.14), (0.15, 0.2)
         )
-        self.game_view = game_view
+        self.cost_range = (
+            (45, 65), (70, 90), (95, 115)
+        )
+
         self.upgrades = []
         self.shown_upgrades = []
-        self.selected_upgrade = None
         self.saved_upgrade = {}
 
-        self.mouse_pos = (0.0, 0.0)
+        self.game_view = game_view
 
-    def on_show(self):
-        self.selected_upgrade = None
-        self.setup_upgrades()
-        self.game_view.left_view = 0
-        self.game_view.bottom_view = 0
-        arcade.set_viewport(self.game_view.left_view, self.game_view.left_view + SCREEN_WIDTH,
-                            self.game_view.bottom_view, self.game_view.bottom_view + SCREEN_HEIGHT)
-
-    def on_draw(self):
-        arcade.start_render()
-        self.game_view.map.draw()
-        for index, upgrades in enumerate(self.shown_upgrades):
-            x = SCREEN_WIDTH - 150
-            y = SCREEN_HEIGHT//2 + index * 100
-            if x - 75 < self.mouse_pos[0] < x + 75 and y - 37.5 < self.mouse_pos[1] < y + 37.5 \
-                    or self.selected_upgrade is upgrades:
-                self.selected_upgrade = upgrades
-                arcade.draw_rectangle_filled(x, y, 150, 75, arcade.color.ALLOY_ORANGE)
-                arcade.draw_text(upgrades['name'], x, y + 20, arcade.color.WHITE, anchor_x="center")
-                arcade.draw_text(f"{upgrades['bonus_name']}: {int(upgrades['bonus'] * 100)}%", x, y,
-                                 arcade.color.WHITE, anchor_x="center")
-                arcade.draw_text(f"{upgrades['bane_name']}: {int(upgrades['bane'] * 100)}%", x, y - 25,
-                                 arcade.color.WHITE, anchor_x="center")
-            else:
-                arcade.draw_rectangle_filled(x, y, 150, 75, GUN_METAL)
-                arcade.draw_text(upgrades['name'], x, y + 20, arcade.color.WHITE, anchor_x="center")
-                arcade.draw_text("bonus: " + upgrades['bonus_name'], x, y, arcade.color.WHITE, anchor_x="center")
-                arcade.draw_text("bane: " + upgrades['bane_name'], x, y - 25, arcade.color.WHITE, anchor_x="center")
-        self.game_view.cursor.center_x = self.game_view.cursor_screen_pos[0]
-        self.game_view.cursor.center_y = self.game_view.cursor_screen_pos[1]
-        self.game_view.cursor.draw()
-
-    def on_update(self, delta_time: float):
-        self.game_view.map.on_update(delta_time)
+        self.bonus_upgrades = {}
 
     def setup_upgrades(self):
+        self.bonus_upgrades = {}
+        for companies in self.game_view.map.companies.values():
+            self.saved_upgrade[companies['upgrade']] = companies['name']
+
         self.upgrades = []
-        self.shown_upgrades = []
+        self.shown_upgrades = ()
         upgrade_variables = list(self.game_view.player.upgrade_mod)
+        print(upgrade_variables)
         for upgrade in self.game_view.player.passive_upgrades:
             if upgrade['level'] < 3:
+                print(upgrade_variables)
+                print(upgrade['bonus_name'])
                 new_upgrade = dict(upgrade)
                 new_upgrade['level'] += 1
                 new_upgrade['prev_upgrade'] = upgrade
                 random_points = random.random()
                 bonus_points = self.bonus_range[upgrade['level']]
                 bane_points = self.bane_range[upgrade['level']]
+                cost_points = self.cost_range[upgrade['level']]
                 new_upgrade['bonus'] = round(bonus_points[0] + (bonus_points[1] - bonus_points[0]) * random_points, 2)
                 new_upgrade['bane'] = round(bane_points[0] + (bane_points[1] - bane_points[0]) * random_points, 2)
+                if new_upgrade['bonus'] in self.bonus_upgrades:
+                    bonus = 1 - (self.bonus_upgrades[new_upgrade['bonus']]['reputation'] / 250) * 0.25
+                else:
+                    bonus = 1
+                new_upgrade['cost'] = round(cost_points[0] + (cost_points[1] - cost_points[0]) * random_points) * bonus
                 broken = new_upgrade['name'].split(" ")
                 first_half = broken[0]
                 second_half = broken[1]
                 if new_upgrade['level'] == 2:
-                    new_upgrade['name'] = first_half + " " + second_half + " MK II"
+                    new_upgrade['name'] = first_half + " " + second_half + " MK_II"
                 else:
-                    new_upgrade['name'] = first_half + " " + second_half + " MK III"
+                    new_upgrade['name'] = first_half + " " + second_half + " MK_III"
 
                 upgrade_variables.remove(new_upgrade['bonus_name'])
                 self.upgrades.append(new_upgrade)
@@ -338,8 +463,10 @@ class UpgradeMenu(arcade.View):
             random_points = random.random()
             bonus_points = self.bonus_range[0]
             bane_points = self.bane_range[0]
+            cost_points = self.cost_range[0]
             new_upgrade['bonus'] = round(bonus_points[0] + (bonus_points[1] - bonus_points[0]) * random_points, 2)
             new_upgrade['bane'] = round(bane_points[0] + (bane_points[1] - bane_points[0]) * random_points, 2)
+            new_upgrade['cost'] = round(cost_points[0] + (cost_points[1] - cost_points[0]) * random_points)
             first_half = ""
             second_half = ""
             for naming in self.static_abilities:
@@ -351,34 +478,11 @@ class UpgradeMenu(arcade.View):
                 if first_half != "" and second_half != "":
                     break
 
-            new_upgrade['name'] = first_half + " " + second_half + " MK I"
+            new_upgrade['name'] = first_half + " " + second_half + " MK_I"
             self.upgrades.append(new_upgrade)
 
-        for i in range(3):
-            pick_i = random.randrange(0, len(self.upgrades))
-            self.shown_upgrades.append(self.upgrades[pick_i])
-            self.upgrades.remove(self.upgrades[pick_i])
-
-    def on_key_press(self, key: int, modifiers: int):
-        if key == arcade.key.ESCAPE:
-            self.game_view.player.clear_upgrades()
-            arcade.close_window()
-        elif key == arcade.key.Z:
-            self.window.show_view(self.game_view)
-        elif arcade.key.KEY_1 <= key <= arcade.key.KEY_3:
-            self.selected_upgrade = self.shown_upgrades[key - 49]
-        elif key == arcade.key.ENTER and self.selected_upgrade is not None:
-            if self.selected_upgrade['prev_upgrade'] != {}:
-                self.game_view.player.passive_upgrades.remove(self.selected_upgrade['prev_upgrade'])
-            self.game_view.player.setup_upgrades(self.selected_upgrade)
-            with open('Data/current_upgrade_data.json', 'w') as upgrade_data:
-                json.dump(self.game_view.player.passive_upgrades, upgrade_data, indent=4)
-            self.game_view.current_mission = -1
-            self.game_view.open_clean_map()
-
-    def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
-        self.mouse_pos = (x, y)
-        self.game_view.cursor_screen_pos = self.mouse_pos
+        self.shown_upgrades = tuple(random.sample(self.upgrades, 3))
+        return self.shown_upgrades
 
 
 class MissionEndCard(arcade.View):
@@ -388,8 +492,10 @@ class MissionEndCard(arcade.View):
         self.mission_stats = None
         self.base_strings = {
             'name': '',
+            'company': '',
             'planet': 'Planet: ',
             'reward': 'Reward: ',
+            'reputation': 'Reputation: ',
             'enemies_killed': 'Threats Eliminated: ',
             'total_enemy': 'Total Eliminated: ',
             'scrap_identify': 'Scrap Identified: ',
@@ -416,8 +522,8 @@ class MissionEndCard(arcade.View):
         for string in self.mission_strings:
             string = self.mission_strings[string] + str(self.mission_stats[string])
             text = string.lower()
-            self.text_strings.append(font.gen_letter_list(text, s_x, s_y))
-            s_y -= 90*0.2
+            self.text_strings.append(font.LetterList(text, s_x, s_y))
+            s_y -= 18
 
     def on_show(self):
         # view
@@ -449,15 +555,13 @@ class MissionEndCard(arcade.View):
         arcade.start_render()
         self.star_field.draw()
         arcade.draw_rectangle_filled(SCREEN_WIDTH/2, SCREEN_HEIGHT/2,
-                                     SCREEN_WIDTH, SCREEN_HEIGHT,
+                                     SCREEN_WIDTH + 150, SCREEN_HEIGHT + 150,
                                      (90, 90, 90, 90))
         for text in self.text_strings:
             text.draw()
 
     def on_key_press(self, symbol: int, modifiers: int):
-        self.game_view.open_clean_map()
-        self.game_view.open_upgrade()
+        self.game_view.open_upgrade_map()
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
-        self.game_view.open_clean_map()
-        self.game_view.open_upgrade()
+        self.game_view.open_upgrade_map()

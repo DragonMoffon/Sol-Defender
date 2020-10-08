@@ -19,7 +19,9 @@ class EnemyHandler:
     creating waves and updating enemies
     """
 
-    def __init__(self, game_window, mission_handler, basic_types: list = None, boss_types: list = None, mission_data: dict = None):
+    def __init__(self, game_window, mission_handler,
+                 basic_types: list = None, boss_types: list = None,
+                 mission_data: dict = None):
         # Enemy type Json file reading.
         self.basic_types = basic_types
         self.boss_types = boss_types
@@ -225,7 +227,7 @@ class EnemyHandler:
 
     def setup_boss(self):
         self.enemy_sprites = arcade.SpriteList()
-        boss_type = self.boss_types[random.randrange(0, len(self.boss_types))]
+        boss_type = random.choice(self.boss_types)
         bullets = boss_type['shoot_type']
         bullet_type = self.boss_bullet_types[bullets]
         enemy = Enemy(boss_type, bullet_type)
@@ -395,7 +397,6 @@ class Enemy(arcade.Sprite):
         # type
         self.type_data = type_data
         self.type = type_data['type']
-        self.difficulty = type_data['difficulty_value']
 
         # checks if the enemy is in range of player
         self.handler = None
@@ -420,6 +421,9 @@ class Enemy(arcade.Sprite):
         self.shoot_delay = 0.1
         self.shoot_delay_range = type_data['shoot_delay']
         self.next_shot = 0
+        self.shot_sound = arcade.Sound("Music/Enemy Shot.wav")
+        self.shot_panning = -1
+        self.shot_volume = 0
 
         # rapid shooting variables
         self.shots_this_firing = 0
@@ -441,9 +445,6 @@ class Enemy(arcade.Sprite):
             self.health_segment = 1
         self.frame = 1
 
-        # hit box
-        self.hit_box = type_data['point_list']
-
         # gravity variables
         self.gravity_handler = None
         self.gravity_acceleration = [0.0, 0.0]
@@ -459,6 +460,8 @@ class Enemy(arcade.Sprite):
         self.direction = 0
         self.difference = [0.0, 0.0]
 
+        self.speed = 0
+
         self.target_distance = 0
 
         # Movement Rules
@@ -467,6 +470,8 @@ class Enemy(arcade.Sprite):
         self.rule_3_effect = [0.0, 0.0]
         self.rule_4_effect = [0.0, 0.0]
         self.rule_5_effect = [0.0, 0.0]
+        self.rule_effects = [self.rule_1_effect, self.rule_2_effect, self.rule_4_effect,
+                             self.rule_5_effect]
 
         self.do_rule = 0
 
@@ -499,17 +504,23 @@ class Enemy(arcade.Sprite):
             self.start_time = 0
             self.duration = 0
 
+        self.thruster = None
+
     def setup(self, handler: EnemyHandler, x_y_pos: tuple = None, cluster: Cluster = None):
         """
         sets up the enemy in relation to the player. it also gives the enemy the handler for easier access to variables
         """
         self.cluster = cluster
 
+        self.thruster = ui.EnemyExhaust(handler.game_window, self)
+
         if x_y_pos is None:
             x_y_pos = handler.player.center_x, handler.player.center_y
 
         self.handler = handler
         self.angle = random.randint(0, 360)
+
+        self.set_hit_box(points=self.type_data['point_list'])
 
         handler.game_window.gravity_handler.set_gravity_object(self)
 
@@ -548,6 +559,8 @@ class Enemy(arcade.Sprite):
         """
         Draws the enemy sprite and bullets, as well as debug information
         """
+        self.thruster.on_draw()
+
         if self.shooting:
             self.draw_hit_box(arcade.color.RADICAL_RED)
 
@@ -587,6 +600,9 @@ class Enemy(arcade.Sprite):
         """
         Every update run different methods for the enemy and its algorithms.
         """
+
+        if self.health <= 0:
+            self.kill()
 
         # check contact
         self.check_contact()
@@ -740,12 +756,26 @@ class Enemy(arcade.Sprite):
 
         self.target_velocity = target.velocity
         self.target_speed = math.sqrt(target.velocity[0] ** 2 + target.velocity[1] ** 2)
-        self.target_acceleration = target.forward_force / target.weight
+        if target.forward_force / target.weight > self.target_acceleration:
+            self.target_acceleration = target.forward_force / target.weight
 
         # distance to player
-        dx = self_pos[0] - target_pos[0]
-        dy = self_pos[1] - target_pos[1]
-        self.target_distance = math.sqrt(dx ** 2 + dy ** 2)
+        self.target_distance = vector.find_distance(self_pos, target_pos)
+
+        # self speed
+        self.speed = vector.find_distance((0.0, 0.0), self.velocity)
+
+        diff_panning = self_pos[0] - target_pos[0]
+        s_width = arcade.get_display_size()[0]
+        if abs(diff_panning) < s_width:
+            self.shot_panning = diff_panning / (s_width * 2)
+        else:
+            self.shot_panning = 0
+
+        if self.target_distance < s_width:
+            self.shot_volume = 0.12 - self.target_distance / (s_width * 12)
+        else:
+            self.shot_volume = 0
 
     def shoot_rule(self):
         if not self.firing:
@@ -786,6 +816,10 @@ class Enemy(arcade.Sprite):
                 self.rule_4_effect = self.rule4()
             if self.rule_5_priority:
                 self.rule_5_effect = self.rule5()
+
+        self.rule_effects = [self.rule_1_effect, self.rule_2_effect, self.rule_3_effect,
+                             self.rule_4_effect, self.rule_5_effect]
+
         final = [0.0, 0.0]
         final[0] = self.rule_1_effect[0] \
                    + self.rule_2_effect[0] \
@@ -801,20 +835,6 @@ class Enemy(arcade.Sprite):
         self.velocity[0] += final[0]
         self.velocity[1] += final[1]
 
-        if vector.find_distance((self.center_x, self.center_y),
-                                (self.handler.player.center_x, self.handler.player.center_y)) > 8000:
-            direction = math.radians(vector.find_angle((self.handler.player.center_x, self.handler.player.center_y),
-                                                       (self.center_x, self.center_y)))
-            self.velocity[0] = math.cos(direction) * 2500
-            self.velocity[1] = math.sin(direction) * 2500
-            self.fix = True
-
-        if self.fix and vector.find_distance((self.center_x, self.center_y),
-                                             (self.handler.player.center_x, self.handler.player.center_y)) < 2000:
-            self.velocity[0] = self.handler.player.velocity[0]
-            self.velocity[1] = self.handler.player.velocity[1]
-            self.fix = False
-
         """speed_limit = self.target_speed + 200
         speed = math.sqrt(self.velocity[0] ** 2 + self.velocity[1] ** 2)
         if speed > speed_limit:
@@ -827,7 +847,7 @@ class Enemy(arcade.Sprite):
                 if ability == 'invisibility':
                     self.invisibility_rule(frames)
                 elif ability == 'mob':
-                    self.mob_rule(frames)
+                    self.mob_rule()
 
                 if self.active_ability is not None:
                     break
@@ -871,8 +891,8 @@ class Enemy(arcade.Sprite):
         shoots a bullets.
         """
         shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity, self.bullet_type)
-        self.gravity_handler.set_gravity_object(shot)
         self.bullets.append(shot)
+        self.shot_sound.play(self.shot_volume, self.shot_panning)
 
     def rapid_rule(self):
         if not self.firing:
@@ -1003,7 +1023,10 @@ class Enemy(arcade.Sprite):
         Rule Three: Attempt to slow down or speed up to match the players velocity
         """
         result = [0.0, 0.0]
-        if self.target_distance < 700:
+        if self.target_distance < 1920 and abs(self.speed - self.target_speed) > 250:
+            result[0] = (self.target_velocity[0] - self.velocity[0]) / 4
+            result[1] = (self.target_velocity[1] - self.velocity[1]) / 4
+        elif self.target_distance < 1920:
             result[0] = (self.target_velocity[0] - self.velocity[0]) / 8
             result[1] = (self.target_velocity[1] - self.velocity[1]) / 8
 
@@ -1041,23 +1064,38 @@ class Enemy(arcade.Sprite):
         y = 0
         total = 0
         for influence in self.gravity_handler.gravity_influences:
-            distance = vector.find_distance((self.center_x, self.center_y), (influence.center_x, influence.center_y))
-            if distance - (influence.width / 2) < 1000:
+            distance = vector.find_distance((self.center_x, self.center_y),
+                                            (influence.center_x, influence.center_y)) - (influence.width / 2)
+            if 0 < distance < 2500:
 
                 total += 1
                 neg_direction = math.radians(vector.find_angle((self.center_x, self.center_y),
                                                                (influence.center_x, influence.center_y)))
-                neg_x = math.cos(neg_direction) * (influence.width / 2)
-                neg_y = math.sin(neg_direction) * (influence.width / 2)
 
-                x += 1000 / (self.center_x - (influence.center_x + neg_x))
-                y += 1000 / (self.center_y - (influence.center_y + neg_y))
+                neg_x = math.cos(neg_direction) * distance
+                neg_y = math.sin(neg_direction) * distance
+
+                x += neg_x/2500
+                y += neg_y/2500
+
+                if x < 0:
+                    x = -1 - x
+                else:
+                    x = 1 - x
+
+                if y < 0:
+                    y = -1 - y
+                else:
+                    y = 1 - y
+
+                x *= 3
+                y *= 3
 
         if total:
             x /= total
             y /= total
 
-        result = [x * self.rule_5_priority * 0.5, y * self.rule_5_priority * 0.5]
+        result = [x * self.rule_5_priority, y * self.rule_5_priority]
         return result
 
     """
@@ -1081,7 +1119,7 @@ class Enemy(arcade.Sprite):
                 self.active_ability = 'invisibility'
                 self.active_frames = self.ability_frames[frames]
                 self.start_time = time.time()
-                self.duration = 3 * (self.difficulty * self.handler.difficulty)
+                self.duration = 3 * self.handler.difficulty
                 self.texture = self.active_frames[0]
                 self.rule_4_priority = 2.0
 
@@ -1106,7 +1144,7 @@ class Enemy(arcade.Sprite):
             point.target = self
             self.handler.player.enemy_pointers.append(point)
 
-    def mob_rule(self, frames=None):
+    def mob_rule(self):
         if self.active_ability is None:
             pass
         elif time.time() > self.start_time + self.duration:

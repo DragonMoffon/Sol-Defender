@@ -41,18 +41,8 @@ class GravityHandler:
                     if base_distance <= influences.width / 2:
                         acceleration = force * 25 / gravity_object.weight
                         direction += math.pi
-                        try:
-                            if not gravity_object.dead:
-                                gravity_object.health -= 1
-                                if gravity_object.health <= 0:
-                                    gravity_object.dead = True
-                        except AttributeError:
-                            try:
-                                gravity_object.health -= 1
-                                if gravity_object.health <= 0:
-                                    gravity_object.kill()
-                            except AttributeError:
-                                pass
+                        if gravity_object.health > 0:
+                            gravity_object.health -= 1
                     a_x = math.cos(direction) * acceleration
                     a_y = math.sin(direction) * acceleration
                     acceleration_vector = (a_x, a_y)
@@ -81,12 +71,21 @@ class Planet(arcade.Sprite):
         if planet_data is not None:
             self.name = planet_data['name']
             self.type = planet_data['type']
+            self.subset = planet_data['subset']
             self.weight = planet_data['weight']
             self.center_x = planet_data['x_pos']
             self.center_y = planet_data['y_pos']
-            self.texture = arcade.load_texture(planet_data['texture'])
             self.planetary_radius = planet_data['radius']
             self.satellites_data = planet_data['satellites']
+            if self.subset == "gas":
+                self.scale = 2.5
+                self.width = 8000
+                self.height = 8000
+            else:
+                self.scale = 1.5
+                self.width = 1920
+                self.height = 1920
+            self.texture = self.game_window.planet_sprites[self.subset][self.type][planet_data['tex']]
 
             self.satellites = arcade.SpriteList()
             for satellites in self.satellites_data:
@@ -94,8 +93,6 @@ class Planet(arcade.Sprite):
                 if satellites['gravity']:
                     self.game_window.gravity_handler.set_gravity_object_influence(satellite)
                 self.satellites.append(satellite)
-
-        self.scale = 1.5
 
     def draw(self):
         if self.satellites is not None:
@@ -143,6 +140,7 @@ class Satellite(arcade.Sprite):
             self.speed = satellite_data['speed']
             self.file_name = satellite_data['texture']
             self.texture = arcade.load_texture(self.file_name)
+            print(parent.width)
             self.orbit = parent.width + self.width + satellite_data['orbit']
 
     def setup(self, gravity_handler=None):

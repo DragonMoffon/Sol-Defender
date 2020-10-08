@@ -10,7 +10,9 @@ class MissionGenerator:
 
     def __init__(self):
         with open('Data/sol_system.json') as planet_file:
-            self.planets = json.load(planet_file)['planets']
+            planet_json = json.load(planet_file)
+            self.planets = planet_json['planets']
+            self.companies = planet_json['companies']
 
         with open("Data/enemy_types.json") as enemy_file:
             enemy_json = json.load(enemy_file)
@@ -21,7 +23,7 @@ class MissionGenerator:
             mission_json = json.load(mission_file)
             self.mission_json = mission_json['planet_x']
 
-        self.missions = []
+        self.missions = {}
         self.selected_missions = {}
         self.dump_missions = {
                             "planet_x": self.mission_json
@@ -29,47 +31,73 @@ class MissionGenerator:
 
         self.generate_selection()
 
+    def reload_dictionaries(self):
+        with open('Data/sol_system.json') as planet_file:
+            planet_json = json.load(planet_file)
+            self.planets = planet_json['planets']
+            self.companies = planet_json['companies']
+
+        with open("Data/enemy_types.json") as enemy_file:
+            enemy_json = json.load(enemy_file)
+            self.all_enemies = enemy_json['basic_types']
+            self.all_bosses = enemy_json['boss_types']
+
+        with open("Data/mission_data.json") as mission_file:
+            mission_json = json.load(mission_file)
+            self.mission_json = mission_json['planet_x']
+
+    def generate(self):
+        self.missions = {}
+        self.selected_missions = {}
+        self.dump_missions = {
+                            "planet_x": self.mission_json
+                            }
+        self.dump()
+
+        self.generate_selection()
+
     def generate_selection(self):
-        for gen_num in range(9):
-            self.generate_mission()
+        for companies in self.companies.values():
+            all_planets = list(companies['planets'])
+            all_planets.append(companies['home_planet'])
+            self.missions[companies['type']] = {}
+            for planet in all_planets:
+                self.generate_mission(companies, planet)
 
         self.select()
         self.dump()
 
-    def generate_mission(self):
+    def generate_mission(self, company, planet):
         mission = c.deepcopy(self.mission_json)
-        mission['stages'] = random.randrange(1, 4)
-        for enemies in self.all_enemies:
-            pick = random.random()
-            if pick > 0.5:
-                mission['possible_enemies'].append(enemies['type'])
-        if len(mission['possible_enemies']) == 0:
-            for enemies in self.all_enemies:
-                mission['possible_enemies'].append(enemies['type'])
+        mission['stages'] = 1
+        mission['types'] = random.choice(company['missions'])
+        mission['company'] = company['name']
+        enemy_picks = random.sample(self.all_enemies, random.randrange(1, len(self.all_enemies)))
+        for enemies in enemy_picks:
+            mission['possible_enemies'].append(enemies['type'])
 
-        for bosses in self.all_bosses:
-            pick = random.random()
-            if pick > 0.5:
-                mission['possible_bosses'].append(bosses['type'])
-        if len(mission['possible_bosses']) == 0:
-            for bosses in self.all_bosses:
-                mission['possible_bosses'].append(bosses['type'])
-        mission['name'] = "defend "
-        self.missions.append(mission)
+        boss_picks = random.sample(self.all_bosses, random.randrange(1, len(self.all_bosses)))
+        for bosses in boss_picks:
+            mission['possible_bosses'].append(bosses['type'])
+
+        mission['name'] = f"{mission['types']} {planet}"
+        mission['planet_data'] = self.planets[planet]
+        mission['reward'] = random.randint(55, 85)
+        self.missions[company['type']][mission['name']] = mission
 
     def select(self):
-        picked_planets = random.sample(self.planets, 3)
-        picked_missions = random.sample(self.missions, 3)
-        random.shuffle(picked_missions)
+        picked_planets = []
+        companies = random.sample(self.companies.keys(), 3)
+        mission = {}
+        for company in companies:
+            picking = True
+            while picking:
+                mission = random.choice(list(self.missions[company].values()))
+                if mission['planet_data']['name'] not in picked_planets:
+                    picked_planets.append(mission['planet_data']['name'])
+                    picking = False
 
-        key = 1
-        for index, planet in enumerate(picked_planets):
-            mission = picked_missions[index]
-            mission['name'] += planet['name']
-            mission['key'] = key
-            mission['reward'] = round(planet['weight']/(5.972 * 10 ** 24) * (mission['stages'] * 4))**2
-            key += 1
-            self.selected_missions[f"{planet['name']}"] = mission
+            self.selected_missions[mission['planet_data']['name']] = mission
 
     def dump(self):
         self.dump_missions['missions'] = self.selected_missions
@@ -89,8 +117,10 @@ class Mission:
 
         self.base_mission_data = {
             'name': '',
+            'company': '',
             'planet': '',
             'reward': 0,
+            'reputation': 0,
             'enemies_killed': 0,
             'total_enemy': 0,
             'scrap_identify': 0,
@@ -120,10 +150,8 @@ class Mission:
             basic_enemies = enemy_types['basic_types']
             boss_enemies = enemy_types['boss_types']
 
-        """
-        TO SETUP:
-        Asteroid Json file and setup within mission.
-        """
+        # TODO: Asteroid Json file and setup within mission.
+
         if self.game_window.solar_system is None:
             self.game_window.solar_system = space.SolarSystem(setup=True)
         else:
@@ -159,6 +187,7 @@ class Mission:
         self.current_mission_data['name'] = self.level_data['name']
         self.current_mission_data['planet'] = self.curr_planet.name
         self.current_mission_data['reward'] = self.level_data['reward']
+        self.current_mission_data['company'] = self.level_data['company']
 
     def check_setup(self):
         if self.game_window.player.start == 1:
@@ -187,7 +216,18 @@ class Mission:
             self.enemy_handler.on_update(delta_time)
 
     def add_mission_data(self):
+        company = self.game_window.map.companies[self.current_mission_data['company']]
+
         self.base_mission_data['total_enemy'] = self.current_mission_data['total_enemy']
         self.base_mission_data['missions_completed'] += 1
         self.current_mission_data['missions_completed'] += 1
+        self.current_mission_data['reputation'] = 55  # random.randrange(25, 35)
         self.game_window.player_credit += self.current_mission_data['reward']
+        company['reputation'] += self.current_mission_data['reputation']
+        if company['reputation'] > 250:
+            company['reputation'] = 250
+        if (company['reputation'] - (company['reputation'] % 50))/50 > \
+                self.game_window.map.company_rep[company['name']]:
+            self.game_window.map.company_rep[company['name']] += 1
+            self.game_window.map.rewards(company['name'])
+        self.game_window.map.save_map_pos()

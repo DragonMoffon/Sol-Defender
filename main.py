@@ -1,6 +1,8 @@
 import time
 import random
 import math
+import os
+from PIL import Image
 
 import arcade
 
@@ -14,27 +16,34 @@ import ui
 import vector
 
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
-TITLE = "Sol Defender - Sprint 4"
+TITLE = "Sol Defender - Sprint 7"
 
 
 class GameWindow(arcade.View):
+    """
+    The Game Window Class.
+    This class is the game,
+    it has the main game loop,
+    and is where the player will spend most of their time.
+    """
 
     def __init__(self):
-
         super().__init__()
         arcade.set_background_color(arcade.color.BLACK)
+
         # audio
         # file_name = "Music/Planetary.wav"
         # self.playback_audio = arcade.Sound(file_name, streaming=True)
         # self.playback_audio.play(volume=0.1)1
 
+        # The Cursor.
         self.cursor = arcade.Sprite("Sprites/Player/Ui/cross_hair_light.png", 0.1, center_x=0, center_y=0)
         self.cursor_screen_pos = [0.0, 0.0]
 
-        # gravity handler
+        # The Gravity Handler
         self.gravity_handler = None
 
-        # missions
+        # The Missions
         self.mission = mission.Mission(self)
         self.current_mission = None
         self.solar_system = None
@@ -48,7 +57,7 @@ class GameWindow(arcade.View):
         self.center_x = SCREEN_WIDTH // 2
         self.center_y = SCREEN_HEIGHT // 2
 
-        # The Player Sprite and Setup
+        # The Player Sprite
         self.player = None
 
         # Viewport Variables
@@ -57,7 +66,6 @@ class GameWindow(arcade.View):
 
         # Menu Screens
         self.map = None
-        self.upgrades = menu.UpgradeMenu(self)
         self.end_card = menu.MissionEndCard(self)
 
         # Enemy Handler Variables
@@ -95,7 +103,7 @@ class GameWindow(arcade.View):
         self.worm_time = 0
         for y in range(3):
             for x in range(3):
-                frame = arcade.load_texture("Sprites/Player/Wormhole Full.png", x * 240, y * 310, 240, 310)
+                frame = arcade.load_texture("Sprites/Player/Wormhole Full.png", x * 320, y * 320, 320, 320)
                 self.wormhole_animation.append(frame)
         self.worm_sprite.texture = self.wormhole_animation[0]
 
@@ -103,48 +111,82 @@ class GameWindow(arcade.View):
         self.player_scrap = 0
         self.player_credit = 0
 
+        # Planet Sprites for protecting memory.
+        self.planet_sprites = {}
+
     def open_map(self):
+        """
+        Opens the map to show the planets
+        """
         self.window.show_view(self.map)
 
-    def open_upgrade(self):
-        self.window.show_view(self.upgrades)
-
     def open_end_card(self, mission_stats):
+        """
+        Opens the mission end card, this shows the stats for the mission
+        :param mission_stats: The stats of the mission.
+        """
         self.end_card.setup(mission_stats)
         self.window.show_view(self.end_card)
 
     def open_clean_map(self):
+        """
+        Creates a new map object and opens it.
+        """
         self.current_mission = None
         self.map = menu.Map(self)
+        self.open_map()
+
+    def open_upgrade_map(self):
+        """
+        Creates a new map object but creates three upgrades then opens it.
+        """
+        self.current_mission = None
+        self.map.setup(True)
         self.open_map()
 
     def open_dead_map(self):
-        self.current_mission = None
-        generate = sol_system_generator.Generator()
-        self.map = menu.Map(self)
-        self.open_map()
+        """
+        Regenerates the Solar System and opens a new Map.
+        """
+        generator = sol_system_generator.Generator(self)
+        self.open_clean_map()
 
     def wormhole_update(self, delta_time):
+        """
+        Sets up and animates the end of mission wormhole.
+        :param delta_time: The frame time.
+        """
+        # If a wormhole has not been created
         if not self.wormhole:
             self.wormhole = True
+
+            # create a pointer that shows the player to the wormhole.
             point = ui.Pointer()
             point.texture = arcade.load_texture("Sprites/Player/Ui/wormhole direction.png")
             point.holder = self.player
             point.target = self.worm_sprite
             self.player.enemy_pointers.append(point)
+
+            # calculate the position and place the wormhole.
             p_v_angle = vector.find_angle(self.player.velocity, (0, 0))
             self.worm_sprite.angle = p_v_angle + 180
             self.worm_sprite.center_x = self.player.center_x + math.cos(math.radians(p_v_angle)) * SCREEN_WIDTH
             self.worm_sprite.center_y = self.player.center_y + math.sin(math.radians(p_v_angle)) * SCREEN_WIDTH
 
         else:
+            # Shortening variables.
             worm_pos = self.worm_sprite.center_x, self.worm_sprite.center_y
             player_pos = self.player.center_x, self.player.center_y
             distance = vector.find_distance(worm_pos, player_pos)
-            if distance <= 30:
+
+            # If the player is in the wormhole end mission.
+            if distance <= 80:
                 self.open_end_card(self.mission.current_mission_data)
 
+            # angle the wormhole towards the player
             self.worm_sprite.angle = vector.find_angle(worm_pos, player_pos)
+
+            # animate the wormhole.
             self.worm_time += delta_time
             if self.worm_time >= self.worm_step:
                 self.worm_time -= self.worm_step
@@ -155,16 +197,21 @@ class GameWindow(arcade.View):
                 self.worm_sprite.texture = self.wormhole_animation[self.current_worm_frame]
 
     def on_update(self, delta_time: float = 1 / 60):
-
         """
         This method calls 60 times per second roughly and is what is used to update things such as positions,
-        view ports, and scores
+        view ports, and scores. It also updates all features of the game, such as enemy calculations and player actions
         """
         # FPS for debugging
         # print("FPS:",1/delta_time)
+
+        # If player dead, do dead animation.
         if self.player.dead:
             self.dead_text(delta_time)
+
+        # If the main game should be processing, run the main game.
         if self.process and not self.player_dead:
+
+            # if there should be/is a wormhole, update it.
             if self.wormhole:
                 self.wormhole_update(delta_time)
 
@@ -194,24 +241,26 @@ class GameWindow(arcade.View):
     def view_port(self, delta_time):
         """
         Function for cleaning up on_update.
-        Moves the Viewport to keep the player in the center of the screen.
+        Moves the Viewport to keep the player in the center of the screen, and animates the star background.
         """
 
+        # If the viewport has changed, and the previous screen pos.
         self.changed = False
         prev_value = [self.left_view, self.bottom_view]
 
+        # Move the screen pos so the player is in the center.
         self.left_view += self.player.velocity[0] * delta_time
         self.bottom_view += self.player.velocity[1] * delta_time
 
+        # If the screen moved change the viewport.
         if prev_value[0] != self.left_view or prev_value[1] != self.bottom_view:
             self.changed = True
-
-        if self.changed:
             arcade.set_viewport(self.left_view,
                                 SCREEN_WIDTH + self.left_view,
                                 self.bottom_view,
                                 SCREEN_HEIGHT + self.bottom_view)
 
+            # If there are stars move them by the difference.
             if self.star_field.game_view is not None:
                 change = (self.left_view - prev_value[0], self.bottom_view - prev_value[1])
                 self.star_field.on_update(change)
@@ -222,48 +271,71 @@ class GameWindow(arcade.View):
         """
         arcade.start_render()
 
+        # If there are stars draw them.
         if self.star_field.game_view is not None:
             self.star_field.draw()
 
+        # If there is a Mission (which there always should be) run its draw method.
         if self.mission is not None:
             self.mission.draw()
 
+        # If the player is dead and the pause before the death animation has happened, play the death animation
         if self.player.dead and self.player_dead:
             arcade.draw_lrwh_rectangle_textured(self.left_view, self.bottom_view,
                                                 SCREEN_WIDTH, SCREEN_HEIGHT,
                                                 self.screen_glow, alpha=255 * self.screen_shake)
             self.player_death.draw()
 
+        # If there is a wormhole draw it.
         if self.wormhole:
             self.worm_sprite.draw()
 
+        # Draw the player.
         self.player.draw()
 
+        # Draw the cursor.
         self.cursor.draw()
 
+        # If the player is dead but their death animation has not started.
         if self.player.dead:
             arcade.draw_rectangle_filled(self.left_view + SCREEN_WIDTH/2, self.bottom_view + SCREEN_HEIGHT/2,
                                          SCREEN_WIDTH, SCREEN_HEIGHT,
                                          (0, 0, 0, 255*self.blackout))
 
     def dead_text(self, delta_time):
+        """
+        update the death animation, first the blackout then the temporal collapse.
+        Name Should Be Changed.
+        :param delta_time: The frame time
+        """
+
+        # If the player has not yet started dying set the time of their death.
         if self.death_wait == 0:
             self.death_wait = time.time()
+        # once they have been blacking out do the temporal collapse.
         elif time.time() > self.death_wait + 3:
+            # slowly remove the blackout effect.
             if self.blackout > 0:
                 self.blackout -= 0.05
             else:
                 self.blackout = 0
-            self.death_wait = -1
+            # Set death wait to -3 as it is no longer needed.
+            self.death_wait = -3
+
+            # No longer let the main game run, and show the player death animation.
             self.process = False
             self.player_dead = True
             self.player_death.center_x = self.player.center_x
             self.player_death.center_y = self.player.center_y
+
+            # Screen Shake
             direction = random.uniform(0, 2 * 3.1415)
             left_mod = self.left_view + math.cos(direction) * (5 * self.screen_shake)
             bottom_mod = self.bottom_view + math.sin(direction) * (5 * self.screen_shake)
             arcade.set_viewport(left_mod, left_mod + SCREEN_WIDTH,
                                 bottom_mod, bottom_mod + SCREEN_HEIGHT)
+
+            # Update death animation.
             self.frame_time += delta_time
             if self.frame_time >= self.frame_step:
                 self.frame_time -= delta_time
@@ -273,17 +345,19 @@ class GameWindow(arcade.View):
                     self.screen_shake = (self.current_death_frame+1)/36
                 else:
                     self.clean()
-                    self.open_clean_map()
+                    self.open_dead_map()
+        # If the player is dead but is blacking out, keep blacking them out.
         elif self.death_wait > 0:
             self.blackout = (time.time() - self.death_wait) / 3
 
     def clean(self):
         """
-                Resets the game world.
-                Needs to be neatened with setups.
-                """
+        Purges all Data From The Game View for a clean reset
+        """
         self.process = True
         self.changed = False
+
+        # KILL EVERYTHING
         if self.gravity_handler is not None:
             del self.gravity_handler
 
@@ -316,6 +390,8 @@ class GameWindow(arcade.View):
         self.frame_time = 0
         self.current_death_frame = 0
         self.screen_shake = 0
+        self.death_wait = 0
+        self.blackout = 0
         self.player_death = arcade.Sprite()
         self.player_death.texture = self.death_frames[0]
 
@@ -326,7 +402,11 @@ class GameWindow(arcade.View):
         self.worm_time = 0
         self.worm_sprite.texture = self.wormhole_animation[0]
 
-    def setup(self, missions=True, star_field=3):
+    def setup(self, missions=True):
+        """
+        Setups up the Game view and loads in the mission.
+        :param missions: If there should be a mission. Redundant at this point but shhhh
+        """
         self.process = True
         self.changed = False
         if self.gravity_handler is not None:
@@ -356,9 +436,8 @@ class GameWindow(arcade.View):
 
         # mission
         if missions:
-            with open("Data/mission_data.json") as mission_data:
-                self.mission.mission_setup(self.current_mission)
-                self.player.start = 1
+            self.mission.mission_setup(self.current_mission)
+            self.player.start = 1
         else:
             self.mission.mission_setup()
 
@@ -372,7 +451,17 @@ class GameWindow(arcade.View):
         self.worm_time = 0
         self.worm_sprite.texture = self.wormhole_animation[0]
 
+        # dead
+        self.current_death_frame = 0
+        self.screen_shake = 0
+        self.death_wait = 0
+        self.blackout = 0
+        self.player_dead = False
+
     def reset(self):
+        """
+        Resets variables but does not clean all data or destroy thing such as the player. used to restart a mission.
+        """
         self.process = True
         self.changed = False
 
@@ -392,45 +481,45 @@ class GameWindow(arcade.View):
 
         self.star_field = stars.StarField(self)
 
+        # dead
+        self.current_death_frame = 0
+        self.screen_shake = 0
+        self.death_wait = 0
+        self.blackout = 0
+        self.player_dead = False
+
     def on_key_press(self, key, modifiers):
         """
         Method runs each time the user presses a key.
         Each object that requires a key press has its own key down method for neatness
         """
+
+        # If the main game should be running
         if self.process:
+            # Run the player class's key press method.
             self.player.key_down(key)
 
             if key == arcade.key.R:
+                # Reset.
                 self.reset()
-            elif key == arcade.key.P:
-                self.setup(star_field=0)
-            elif key == arcade.key.O:
-                self.setup(missions=False, star_field=0)
-            elif key == arcade.key.I:
-                self.setup(missions=False, star_field=1)
-            elif key == arcade.key.L:
-                self.setup(star_field=1)
-            elif key == arcade.key.SPACE:
-                self.player.dead = True
 
             elif key == arcade.key.F:
+                # Kill all the enemies
                 self.mission.enemy_handler.slaughter()
 
             elif key == arcade.key.ESCAPE:
+                # Open the map
+                # TODO: Implement The Pause Delay Into The Opening Map Method.
+                """
+                self.pause_delay = time.time()
+                //
+                self.pause_delay = time.time() - self.pause_delay
+                for shots in self.player.bullets:
+                    shots.pause_delay += self.pause_delay
+                self.mission.enemy_handler.pause_delay(self.pause_delay)
+                self.pause_delay = 0
+                """
                 self.open_map()
-            elif key == arcade.key.Z:
-                self.open_upgrade()
-
-        if key == arcade.key.LSHIFT and self.process:
-            self.process = False
-            self.pause_delay = time.time()
-        elif key == arcade.key.LSHIFT and not self.process and self.player.start:
-            self.process = True
-            self.pause_delay = time.time() - self.pause_delay
-            for shots in self.player.bullets:
-                shots.pause_delay += self.pause_delay
-            self.mission.enemy_handler.pause_delay(self.pause_delay)
-            self.pause_delay = 0
 
     def on_key_release(self, key, modifier):
         """
@@ -438,43 +527,88 @@ class GameWindow(arcade.View):
         All objects that need a key release have their own method for neatness
         """
         if self.process:
+            # Run the player class's key release method.
             self.player.key_up(key)
 
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
+        # when the mouse moves move the cursor.
         self.cursor_screen_pos = [x, y]
         if self.process:
             self.player.on_mouse_movement(x, y)
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
-        """if button == arcade.MOUSE_BUTTON_RIGHT:
-            if x < SCREEN_WIDTH/2:
-                print(f"self.left_view + {x}")
-            elif x > SCREEN_WIDTH/2:
-                print(f"self.left_view + SCREEN_WIDTH - {SCREEN_WIDTH - x}")
+        """
+        :param x: The X position of the mouse relative to the bottom left corner of the screen
+        :param y: The Y position of the mouse relative to the bottom left corner of the screen
+        :param button: The button pressed
+        :param modifiers: Don't know man
+        """
+        """
+        Code Used Temporarily
+        
+        if button == arcade.MOUSE_BUTTON_RIGHT:
+            print(x - SCREEN_HEIGHT, y - SCREEN_HEIGHT)
+                """
 
-            if y < SCREEN_HEIGHT/2:
-                print(f"self.bottom_view + {y}")
-            elif y > SCREEN_HEIGHT/2:
-                print(f"self.bottom_view + SCREEN_HEIGHT - {SCREEN_HEIGHT - y}")"""
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            tx = self.left_view + x
+            ty = self.bottom_view + y
+            angle = vector.find_angle((tx, ty), (0, 0))
+            distance = vector.find_distance((tx, ty), (self.player.center_x, self.player.center_y))
+            print(angle, distance)
 
+        # If the main game loop is running run the player's on mouse press method.
         if self.process:
             self.player.on_mouse_press(button)
 
     def on_mouse_release(self, x: float, y: float, button: int,
                          modifiers: int):
+        # If the main game loop is running run the player's on mouse release method.
         if self.process:
             self.player.on_mouse_release(button)
 
-    def on_show(self):
-        self.setup(True)
+    def do_planet_sprites(self):
+        """
+        Create a dictionary of all the sprites for every type of planet
+        so memory doesnt get clogged up loading them over and over
+        """
+        exo = {}
+        gas = {}
+
+        # walk through the exo planets.
+        for root, dirs, exo_sprites in os.walk("Sprites/Planets/exo"):
+            # for every sprite create the
+            for names in exo_sprites:
+                textures = []
+                image = Image.open(os.path.join(root, names))
+                image_width, image_height = image.width, image.height
+                frames = image_height//image_width
+                for y in range(frames):
+                    texture = arcade.load_texture(os.path.join(root, names), 0, y * image_width,
+                                                  image_width, image_width)
+                    textures.append(texture)
+                exo[names[:-4]] = textures
+        for root, dirs, exo_sprites in os.walk("Sprites/Planets/gas"):
+            for names in exo_sprites:
+                textures = []
+                image = Image.open(os.path.join(root, names))
+                image_width, image_height = image.width, image.height
+                frames = image_height//image_width
+                for y in range(frames):
+                    texture = arcade.load_texture(os.path.join(root, names), 0, y * image_width,
+                                                  image_width, image_width)
+                    textures.append(texture)
+                gas[names[:-4]] = textures
+        self.planet_sprites['exo'] = exo
+        self.planet_sprites['gas'] = gas
 
 
 def main():
-    game_window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE, fullscreen=False)
+    game_window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE, fullscreen=True)
     game_window.center_window()
     game_window.set_mouse_visible(False)
-    generator = sol_system_generator.Generator
     game = GameWindow()
+    game.do_planet_sprites()
     mini_map = menu.Map(game)
     game_window.show_view(mini_map)
     arcade.run()
