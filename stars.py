@@ -70,7 +70,7 @@ class StarField:
 
 class StarList(arcade.SpriteList):
 
-    def __init__(self, modifier, star_field: StarField = None, game_view: arcade.View = None):
+    def __init__(self, modifier, star_field: StarField = None, game_view=None):
         super().__init__()
         self.modifier = modifier
         self.star_field = star_field
@@ -85,8 +85,10 @@ class StarList(arcade.SpriteList):
 
     def setup(self):
         while len(self) != self.max_stars:
-            x = random.randint(self.star_field.LINE_X[0], self.star_field.LINE_X[1])
-            y = random.randint(self.star_field.LINE_Y[0], self.star_field.LINE_Y[1])
+            x = random.uniform(self.game_view.left_view - 80,
+                               self.game_view.left_view + SCREEN_WIDTH + 80)
+            y = random.uniform(self.game_view.bottom_view - 80,
+                               self.game_view.bottom_view + SCREEN_WIDTH + 80)
             star = Star(x, y)
             self.append(star)
 
@@ -146,7 +148,7 @@ class StarList(arcade.SpriteList):
                 y = random.uniform(chosen_line[0], chosen_line[1])
                 star = Star(x, y)
                 self.append(star)
-            if total > 9:
+            if total > 2:
                 break
 
 

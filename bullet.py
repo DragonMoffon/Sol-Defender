@@ -3,8 +3,6 @@ import time
 
 import arcade
 
-import vector
-
 
 class Bullet(arcade.Sprite):
 
@@ -65,6 +63,3 @@ class Bullet(arcade.Sprite):
     def kill(self):
         self.remove_from_sprite_lists()
         del self
-
-    def draw(self):
-        super().draw()

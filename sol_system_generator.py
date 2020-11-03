@@ -120,7 +120,7 @@ class Generator:
                 max_satellites = planet['map_symbol']['orbit'] - 2
             else:
                 min_satellites = (planet['map_symbol']['orbit'] - 5)
-                max_satellites = planet['map_symbol']['orbit'] + random.randint(-1, 3)
+                max_satellites = planet['map_symbol']['orbit'] + random.randint(-3, 1)
 
             if min_satellites < 0:
                 min_satellites = 0

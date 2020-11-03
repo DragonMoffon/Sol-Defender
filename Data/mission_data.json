@@ -10,167 +10,118 @@
         "asteroids": []
     },
     "missions": {
-        "sol II": {
-            "name": "secure sol II",
-            "company": "government",
+        "sol III": {
+            "name": "protect sol III",
+            "company": "logistics",
             "stages": 1,
-            "reward": 56,
+            "reward": 82,
             "possible_enemies": [
-                "blitz"
+                "hunter"
             ],
             "possible_bosses": [
                 "predator"
             ],
             "planet_data": {
-                "name": "sol II",
-                "type": "silicate",
-                "subset": "exo",
-                "colonised": false,
-                "weight": 6.610169799075357e+24,
-                "x_pos": 4885,
-                "y_pos": 4206,
-                "texture": "Sprites/Planets/exo/silicate.png",
-                "radius": 6641161.89,
-                "satellites": [
-                    {
-                        "orbit": 2000,
-                        "gravity": false,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
-                        "type": "logistics",
-                        "speed": 0.42,
-                        "texture": "Sprites/Satellites/station/logistics.png"
-                    },
-                    {
-                        "orbit": 3609,
-                        "gravity": false,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
-                        "type": "ship_builders",
-                        "speed": 0.16,
-                        "texture": "Sprites/Satellites/station/ship_builders.png"
-                    },
-                    {
-                        "orbit": 5579,
-                        "gravity": false,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
-                        "type": "scrappers",
-                        "speed": 0.28,
-                        "texture": "Sprites/Satellites/station/scrappers.png"
-                    },
-                    {
-                        "orbit": 7841,
-                        "gravity": false,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
-                        "type": "government",
-                        "speed": 0.19,
-                        "texture": "Sprites/Satellites/station/government.png"
-                    }
-                ],
-                "map_symbol": {
-                    "orbit_pos": -1,
-                    "orbit": 2,
-                    "speed": 2.14
-                },
-                "tex": 0
-            },
-            "asteroids": [],
-            "types": "secure"
-        },
-        "sol III": {
-            "name": "destroy sol III",
-            "company": "ship_builders",
-            "stages": 1,
-            "reward": 73,
-            "possible_enemies": [
-                "blitz"
-            ],
-            "possible_bosses": [
-                "matriarch"
-            ],
-            "planet_data": {
                 "name": "sol III",
-                "type": "earth",
-                "subset": "exo",
-                "colonised": true,
-                "weight": 2.300930624510639e+25,
-                "x_pos": 4159,
-                "y_pos": 5211,
-                "texture": "Sprites/Planets/exo/earth.png",
-                "radius": 23117186.45,
+                "type": "helium",
+                "subset": "gas",
+                "colonised": false,
+                "weight": 7.943561646937772e+26,
+                "x_pos": 5517,
+                "y_pos": 4760,
+                "texture": "Sprites/Planets/gas/helium.png",
+                "radius": 45213307.29,
                 "satellites": [
                     {
                         "orbit": 2000,
-                        "gravity": false,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
-                        "type": "ship_builders",
-                        "speed": 0.09,
-                        "texture": "Sprites/Satellites/station/ship_builders.png"
-                    },
-                    {
-                        "orbit": 3555,
-                        "gravity": false,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
-                        "type": "government",
-                        "speed": 0.38,
-                        "texture": "Sprites/Satellites/station/government.png"
-                    },
-                    {
-                        "orbit": 5475,
                         "gravity": true,
-                        "radius": 3925845.9999999995,
-                        "weight": 2.05065e+23,
+                        "radius": 10387858.0,
+                        "weight": 5.8579499999999995e+23,
                         "subset": "moon",
                         "type": "red",
-                        "speed": 0.38,
+                        "speed": 0.11,
                         "texture": "Sprites/Satellites/moon/red.png"
                     },
                     {
-                        "orbit": 7824,
-                        "gravity": false,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
-                        "type": "scrappers",
-                        "speed": 0.1,
-                        "texture": "Sprites/Satellites/station/scrappers.png"
-                    },
-                    {
-                        "orbit": 10584,
+                        "orbit": 3605,
                         "gravity": false,
                         "radius": 0,
                         "weight": 0,
                         "subset": "station",
                         "type": "logistics",
-                        "speed": 0.08,
+                        "speed": 0.33,
                         "texture": "Sprites/Satellites/station/logistics.png"
                     }
                 ],
                 "map_symbol": {
                     "orbit_pos": -1,
                     "orbit": 3,
-                    "speed": 1.01
+                    "speed": 0.72
                 },
                 "tex": 0
             },
             "asteroids": [],
+            "types": "protect"
+        },
+        "sol VI": {
+            "name": "destroy sol VI",
+            "company": "ship_builders",
+            "stages": 1,
+            "reward": 80,
+            "possible_enemies": [
+                "hunter"
+            ],
+            "possible_bosses": [
+                "hunderd",
+                "predator"
+            ],
+            "planet_data": {
+                "name": "sol VI",
+                "type": "ice",
+                "subset": "exo",
+                "colonised": true,
+                "weight": 1.2534958876236293e+25,
+                "x_pos": 7290,
+                "y_pos": 7085,
+                "texture": "Sprites/Planets/exo/ice.png",
+                "radius": 13993032.9,
+                "satellites": [
+                    {
+                        "orbit": 2000,
+                        "gravity": false,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "ship_builders",
+                        "speed": 0.38,
+                        "texture": "Sprites/Satellites/station/ship_builders.png"
+                    },
+                    {
+                        "orbit": 3562,
+                        "gravity": true,
+                        "radius": 10335745.0,
+                        "weight": 5.8285499999999995e+23,
+                        "subset": "moon",
+                        "type": "green",
+                        "speed": 0.23,
+                        "texture": "Sprites/Satellites/moon/green.png"
+                    }
+                ],
+                "map_symbol": {
+                    "orbit_pos": -1,
+                    "orbit": 6,
+                    "speed": 0.82
+                },
+                "tex": 3
+            },
+            "asteroids": [],
             "types": "destroy"
         },
-        "sol I": {
-            "name": "secure sol I",
-            "company": "scrappers",
+        "sol V": {
+            "name": "secure sol V",
+            "company": "government",
             "stages": 1,
-            "reward": 85,
+            "reward": 58,
             "possible_enemies": [
                 "hunter"
             ],
@@ -178,15 +129,15 @@
                 "matriarch"
             ],
             "planet_data": {
-                "name": "sol I",
-                "type": "lava",
+                "name": "sol V",
+                "type": "silicate",
                 "subset": "exo",
-                "colonised": false,
-                "weight": 7.506768626980137e+24,
-                "x_pos": 7154,
-                "y_pos": 3408,
-                "texture": "Sprites/Planets/exo/lava.png",
-                "radius": 7541964.46,
+                "colonised": true,
+                "weight": 2.9557930516688344e+24,
+                "x_pos": 6074,
+                "y_pos": 6335,
+                "texture": "Sprites/Planets/exo/silicate.png",
+                "radius": 2969651.42,
                 "satellites": [
                     {
                         "orbit": 2000,
@@ -194,47 +145,47 @@
                         "radius": 0,
                         "weight": 0,
                         "subset": "station",
-                        "type": "ship_builders",
-                        "speed": 0.16,
-                        "texture": "Sprites/Satellites/station/ship_builders.png"
-                    },
-                    {
-                        "orbit": 3551,
-                        "gravity": false,
-                        "radius": 0,
-                        "weight": 0,
-                        "subset": "station",
                         "type": "government",
-                        "speed": 0.14,
+                        "speed": 0.18,
                         "texture": "Sprites/Satellites/station/government.png"
                     },
                     {
-                        "orbit": 5521,
+                        "orbit": 3639,
                         "gravity": false,
                         "radius": 0,
                         "weight": 0,
                         "subset": "station",
-                        "type": "logistics",
-                        "speed": 0.44,
-                        "texture": "Sprites/Satellites/station/logistics.png"
+                        "type": "ship_builders",
+                        "speed": 0.3,
+                        "texture": "Sprites/Satellites/station/ship_builders.png"
                     },
                     {
-                        "orbit": 7939,
+                        "orbit": 5565,
                         "gravity": false,
                         "radius": 0,
                         "weight": 0,
                         "subset": "station",
-                        "type": "scrappers",
-                        "speed": 0.4,
-                        "texture": "Sprites/Satellites/station/scrappers.png"
+                        "type": "communications",
+                        "speed": 0.2,
+                        "texture": "Sprites/Satellites/station/communications.png"
+                    },
+                    {
+                        "orbit": 8052,
+                        "gravity": true,
+                        "radius": 5767172.0,
+                        "weight": 3.1384499999999995e+23,
+                        "subset": "moon",
+                        "type": "white",
+                        "speed": 0.24,
+                        "texture": "Sprites/Satellites/moon/white.png"
                     }
                 ],
                 "map_symbol": {
                     "orbit_pos": -1,
-                    "orbit": 1,
-                    "speed": 1.21
+                    "orbit": 5,
+                    "speed": 0.8
                 },
-                "tex": 0
+                "tex": 3
             },
             "asteroids": [],
             "types": "secure"

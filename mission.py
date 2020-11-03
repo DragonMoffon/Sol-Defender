@@ -29,7 +29,8 @@ class MissionGenerator:
                             "planet_x": self.mission_json
                             }
 
-        self.generate_selection()
+        self.num_missions = 3
+        self.generate()
 
     def reload_dictionaries(self):
         with open('Data/sol_system.json') as planet_file:
@@ -87,17 +88,29 @@ class MissionGenerator:
 
     def select(self):
         picked_planets = []
-        companies = random.sample(self.companies.keys(), 3)
+        if self.num_missions < 5:
+            companies = random.sample(self.companies.keys(), self.num_missions)
+        else:
+            companies = list(self.companies.keys())
+            companies.append(random.choice(list(self.companies.keys())))
         mission = {}
         for company in companies:
             picking = True
             while picking:
-                mission = random.choice(list(self.missions[company].values()))
-                if mission['planet_data']['name'] not in picked_planets:
+                copy_cat = c.copy(self.missions[company])
+                for missions in copy_cat.values():
+                    if missions['planet_data']['name'] in picked_planets:
+                        self.missions[company].pop(missions['name'])
+                if len(self.missions[company]):
+                    mission = random.choice(list(self.missions[company].values()))
                     picked_planets.append(mission['planet_data']['name'])
                     picking = False
+                else:
+                    print('one less mission')
+                    picking = False
 
-            self.selected_missions[mission['planet_data']['name']] = mission
+            if mission != {}:
+                self.selected_missions[mission['planet_data']['name']] = mission
 
     def dump(self):
         self.dump_missions['missions'] = self.selected_missions
@@ -113,6 +126,7 @@ class Mission:
 
         self.enemy_handler = None
         self.curr_planet = None
+        self.target_object = None
         self.asteroids = None
 
         self.base_mission_data = {
@@ -128,6 +142,8 @@ class Mission:
             'missions_completed': 0
         }
         self.current_mission_data = None
+
+        self.reputation_mod = 1
 
     def reload(self):
         if self.enemy_handler is not None:
@@ -158,6 +174,13 @@ class Mission:
             self.curr_planet = self.game_window.solar_system.get_planet(self.level_data['planet_data'])
         self.curr_planet = space.Planet(self.game_window, self.level_data['planet_data'])
         self.level_data['planet'] = self.curr_planet
+        self.target_object = None
+        for satellite in self.curr_planet.satellites:
+            if satellite.type == self.level_data['company']:
+                self.target_object = satellite
+                break
+        if self.target_object is None:
+            raise TypeError("This Planet Doesn't Have the Satellite Your Looking for")
 
         mission_enemies = []
         for enemies in basic_enemies:
@@ -175,7 +198,7 @@ class Mission:
 
         self.enemy_handler = enemy_handler.EnemyHandler(self.game_window, self,
                                                         mission_enemies, mission_bosses,
-                                                        self.level_data)
+                                                        self.level_data, self.target_object)
 
         # give the enemy_handler the player
         self.enemy_handler.player = self.game_window.player
@@ -210,6 +233,8 @@ class Mission:
 
         if self.curr_planet is not None:
             self.curr_planet.on_update(delta_time)
+            if self.target_object.health <= 0:
+                self.game_window.player.dead = True
 
         if self.enemy_handler is not None and self.enemy_handler.enemy_sprites is not None\
                 and not self.game_window.wormhole:
@@ -221,7 +246,7 @@ class Mission:
         self.base_mission_data['total_enemy'] = self.current_mission_data['total_enemy']
         self.base_mission_data['missions_completed'] += 1
         self.current_mission_data['missions_completed'] += 1
-        self.current_mission_data['reputation'] = 55  # random.randrange(25, 35)
+        self.current_mission_data['reputation'] = round(random.randrange(25, 35) * self.reputation_mod)
         self.game_window.player_credit += self.current_mission_data['reward']
         company['reputation'] += self.current_mission_data['reputation']
         if company['reputation'] > 250:

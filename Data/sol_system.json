@@ -2,253 +2,17 @@
     "planets": {
         "sol I": {
             "name": "sol I",
-            "type": "lava",
-            "subset": "exo",
-            "colonised": false,
-            "weight": 7.506768626980137e+24,
-            "x_pos": 7154,
-            "y_pos": 3408,
-            "texture": "Sprites/Planets/exo/lava.png",
-            "radius": 7541964.46,
-            "satellites": [
-                {
-                    "orbit": 2000,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "ship_builders",
-                    "speed": 0.16,
-                    "texture": "Sprites/Satellites/station/ship_builders.png"
-                },
-                {
-                    "orbit": 3551,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "government",
-                    "speed": 0.14,
-                    "texture": "Sprites/Satellites/station/government.png"
-                },
-                {
-                    "orbit": 5521,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "logistics",
-                    "speed": 0.44,
-                    "texture": "Sprites/Satellites/station/logistics.png"
-                },
-                {
-                    "orbit": 7939,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "scrappers",
-                    "speed": 0.4,
-                    "texture": "Sprites/Satellites/station/scrappers.png"
-                }
-            ],
-            "map_symbol": {
-                "orbit_pos": -1,
-                "orbit": 1,
-                "speed": 1.21
-            },
-            "tex": 0
-        },
-        "sol II": {
-            "name": "sol II",
-            "type": "silicate",
-            "subset": "exo",
-            "colonised": false,
-            "weight": 6.610169799075357e+24,
-            "x_pos": 4885,
-            "y_pos": 4206,
-            "texture": "Sprites/Planets/exo/silicate.png",
-            "radius": 6641161.89,
-            "satellites": [
-                {
-                    "orbit": 2000,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "logistics",
-                    "speed": 0.42,
-                    "texture": "Sprites/Satellites/station/logistics.png"
-                },
-                {
-                    "orbit": 3609,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "ship_builders",
-                    "speed": 0.16,
-                    "texture": "Sprites/Satellites/station/ship_builders.png"
-                },
-                {
-                    "orbit": 5579,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "scrappers",
-                    "speed": 0.28,
-                    "texture": "Sprites/Satellites/station/scrappers.png"
-                },
-                {
-                    "orbit": 7841,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "government",
-                    "speed": 0.19,
-                    "texture": "Sprites/Satellites/station/government.png"
-                }
-            ],
-            "map_symbol": {
-                "orbit_pos": -1,
-                "orbit": 2,
-                "speed": 2.14
-            },
-            "tex": 0
-        },
-        "sol III": {
-            "name": "sol III",
-            "type": "earth",
-            "subset": "exo",
-            "colonised": true,
-            "weight": 2.300930624510639e+25,
-            "x_pos": 4159,
-            "y_pos": 5211,
-            "texture": "Sprites/Planets/exo/earth.png",
-            "radius": 23117186.45,
-            "satellites": [
-                {
-                    "orbit": 2000,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "ship_builders",
-                    "speed": 0.09,
-                    "texture": "Sprites/Satellites/station/ship_builders.png"
-                },
-                {
-                    "orbit": 3555,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "government",
-                    "speed": 0.38,
-                    "texture": "Sprites/Satellites/station/government.png"
-                },
-                {
-                    "orbit": 5475,
-                    "gravity": true,
-                    "radius": 3925845.9999999995,
-                    "weight": 2.05065e+23,
-                    "subset": "moon",
-                    "type": "red",
-                    "speed": 0.38,
-                    "texture": "Sprites/Satellites/moon/red.png"
-                },
-                {
-                    "orbit": 7824,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "scrappers",
-                    "speed": 0.1,
-                    "texture": "Sprites/Satellites/station/scrappers.png"
-                },
-                {
-                    "orbit": 10584,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "logistics",
-                    "speed": 0.08,
-                    "texture": "Sprites/Satellites/station/logistics.png"
-                }
-            ],
-            "map_symbol": {
-                "orbit_pos": -1,
-                "orbit": 3,
-                "speed": 1.01
-            },
-            "tex": 0
-        },
-        "sol IV": {
-            "name": "sol IV",
-            "type": "giant",
+            "type": "dwarf",
             "subset": "gas",
             "colonised": false,
-            "weight": 7.314860434922306e+26,
-            "x_pos": 7394,
-            "y_pos": 5061,
-            "texture": "Sprites/Planets/gas/giant.png",
-            "radius": 42661763.23,
+            "weight": 7.386908817675271e+25,
+            "x_pos": 5802,
+            "y_pos": 6465,
+            "texture": "Sprites/Planets/gas/dwarf.png",
+            "radius": 15069244.34,
             "satellites": [
                 {
                     "orbit": 2000,
-                    "gravity": true,
-                    "radius": 10301003.0,
-                    "weight": 5.8064999999999996e+23,
-                    "subset": "moon",
-                    "type": "red",
-                    "speed": 0.15,
-                    "texture": "Sprites/Satellites/moon/red.png"
-                },
-                {
-                    "orbit": 3596,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "logistics",
-                    "speed": 0.17,
-                    "texture": "Sprites/Satellites/station/logistics.png"
-                }
-            ],
-            "map_symbol": {
-                "orbit_pos": -1,
-                "orbit": 4,
-                "speed": 1.46
-            },
-            "tex": 0
-        },
-        "sol V": {
-            "name": "sol V",
-            "type": "ice",
-            "subset": "gas",
-            "colonised": false,
-            "weight": 1.3384405693136394e+26,
-            "x_pos": 8097,
-            "y_pos": 8183,
-            "texture": "Sprites/Planets/gas/ice.png",
-            "radius": 27013767.5,
-            "satellites": [
-                {
-                    "orbit": 2000,
-                    "gravity": true,
-                    "radius": 9623534.0,
-                    "weight": 5.4096e+23,
-                    "subset": "moon",
-                    "type": "white",
-                    "speed": 0.22,
-                    "texture": "Sprites/Satellites/moon/white.png"
-                },
-                {
-                    "orbit": 3552,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
@@ -258,184 +22,286 @@
                     "texture": "Sprites/Satellites/station/logistics.png"
                 },
                 {
-                    "orbit": 5480,
-                    "gravity": true,
-                    "radius": 3092038.0,
-                    "weight": 1.5581999999999998e+23,
-                    "subset": "moon",
-                    "type": "green",
-                    "speed": 0.2,
-                    "texture": "Sprites/Satellites/moon/green.png"
-                }
-            ],
-            "map_symbol": {
-                "orbit_pos": -1,
-                "orbit": 5,
-                "speed": 2.53
-            },
-            "tex": 0
-        },
-        "sol VI": {
-            "name": "sol VI",
-            "type": "giant",
-            "subset": "gas",
-            "colonised": false,
-            "weight": 1.629950430910144e+27,
-            "x_pos": 8581,
-            "y_pos": 8343,
-            "texture": "Sprites/Planets/gas/giant.png",
-            "radius": 79125371.47,
-            "satellites": [
-                {
-                    "orbit": 2000,
-                    "gravity": true,
-                    "radius": 9866728.0,
-                    "weight": 5.5492499999999996e+23,
-                    "subset": "moon",
-                    "type": "green",
-                    "speed": 0.39,
-                    "texture": "Sprites/Satellites/moon/green.png"
-                },
-                {
-                    "orbit": 3608,
+                    "orbit": 3616,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "government",
-                    "speed": 0.06,
+                    "speed": 0.42,
                     "texture": "Sprites/Satellites/station/government.png"
                 },
                 {
-                    "orbit": 5650,
+                    "orbit": 5712,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "communications",
+                    "speed": 0.27,
+                    "texture": "Sprites/Satellites/station/communications.png"
+                },
+                {
+                    "orbit": 8148,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "ship_builders",
+                    "speed": 0.39,
+                    "texture": "Sprites/Satellites/station/ship_builders.png"
+                }
+            ],
+            "map_symbol": {
+                "orbit_pos": -1,
+                "orbit": 1,
+                "speed": 0.56
+            },
+            "tex": 0
+        },
+        "sol II": {
+            "name": "sol II",
+            "type": "desert",
+            "subset": "exo",
+            "colonised": true,
+            "weight": 1.487175284061738e+25,
+            "x_pos": 6699,
+            "y_pos": 5701,
+            "texture": "Sprites/Planets/exo/desert.png",
+            "radius": 14941479.75,
+            "satellites": [
+                {
+                    "orbit": 2000,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "logistics",
+                    "speed": 0.09,
+                    "texture": "Sprites/Satellites/station/logistics.png"
+                },
+                {
+                    "orbit": 3559,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "government",
+                    "speed": 0.28,
+                    "texture": "Sprites/Satellites/station/government.png"
+                },
+                {
+                    "orbit": 5469,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "communications",
+                    "speed": 0.26,
+                    "texture": "Sprites/Satellites/station/communications.png"
+                }
+            ],
+            "map_symbol": {
+                "orbit_pos": -1,
+                "orbit": 2,
+                "speed": 1.16
+            },
+            "tex": 3
+        },
+        "sol III": {
+            "name": "sol III",
+            "type": "helium",
+            "subset": "gas",
+            "colonised": false,
+            "weight": 7.943561646937772e+26,
+            "x_pos": 5517,
+            "y_pos": 4760,
+            "texture": "Sprites/Planets/gas/helium.png",
+            "radius": 45213307.29,
+            "satellites": [
+                {
+                    "orbit": 2000,
+                    "gravity": true,
+                    "radius": 10387858.0,
+                    "weight": 5.8579499999999995e+23,
+                    "subset": "moon",
+                    "type": "red",
+                    "speed": 0.11,
+                    "texture": "Sprites/Satellites/moon/red.png"
+                },
+                {
+                    "orbit": 3605,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "logistics",
+                    "speed": 0.33,
+                    "texture": "Sprites/Satellites/station/logistics.png"
+                }
+            ],
+            "map_symbol": {
+                "orbit_pos": -1,
+                "orbit": 3,
+                "speed": 0.72
+            },
+            "tex": 0
+        },
+        "sol IV": {
+            "name": "sol IV",
+            "type": "ice",
+            "subset": "gas",
+            "colonised": false,
+            "weight": 1.3140955734745314e+26,
+            "x_pos": 7042,
+            "y_pos": 7922,
+            "texture": "Sprites/Planets/gas/ice.png",
+            "radius": 26543399.46,
+            "satellites": [
+                {
+                    "orbit": 2000,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "communications",
                     "speed": 0.4,
+                    "texture": "Sprites/Satellites/station/communications.png"
+                },
+                {
+                    "orbit": 3614,
+                    "gravity": true,
+                    "radius": 6305673.0,
+                    "weight": 3.4545e+23,
+                    "subset": "moon",
+                    "type": "green",
+                    "speed": 0.35,
+                    "texture": "Sprites/Satellites/moon/green.png"
+                },
+                {
+                    "orbit": 5562,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "government",
+                    "speed": 0.22,
+                    "texture": "Sprites/Satellites/station/government.png"
+                }
+            ],
+            "map_symbol": {
+                "orbit_pos": -1,
+                "orbit": 4,
+                "speed": 2.46
+            },
+            "tex": 0
+        },
+        "sol V": {
+            "name": "sol V",
+            "type": "silicate",
+            "subset": "exo",
+            "colonised": true,
+            "weight": 2.9557930516688344e+24,
+            "x_pos": 6074,
+            "y_pos": 6335,
+            "texture": "Sprites/Planets/exo/silicate.png",
+            "radius": 2969651.42,
+            "satellites": [
+                {
+                    "orbit": 2000,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "government",
+                    "speed": 0.18,
+                    "texture": "Sprites/Satellites/station/government.png"
+                },
+                {
+                    "orbit": 3639,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "ship_builders",
+                    "speed": 0.3,
                     "texture": "Sprites/Satellites/station/ship_builders.png"
                 },
                 {
-                    "orbit": 7972,
-                    "gravity": true,
-                    "radius": 2240859.0,
-                    "weight": 1.0583999999999999e+23,
-                    "subset": "moon",
-                    "type": "red",
-                    "speed": 0.08,
-                    "texture": "Sprites/Satellites/moon/red.png"
+                    "orbit": 5565,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "communications",
+                    "speed": 0.2,
+                    "texture": "Sprites/Satellites/station/communications.png"
                 },
                 {
-                    "orbit": 10876,
+                    "orbit": 8052,
                     "gravity": true,
-                    "radius": 8129627.999999999,
-                    "weight": 4.5275999999999994e+23,
-                    "subset": "moon",
-                    "type": "white",
-                    "speed": 0.05,
-                    "texture": "Sprites/Satellites/moon/white.png"
-                },
-                {
-                    "orbit": 14056,
-                    "gravity": true,
-                    "radius": 4915993.0,
-                    "weight": 2.6312999999999998e+23,
+                    "radius": 5767172.0,
+                    "weight": 3.1384499999999995e+23,
                     "subset": "moon",
                     "type": "white",
-                    "speed": 0.44,
+                    "speed": 0.24,
                     "texture": "Sprites/Satellites/moon/white.png"
+                }
+            ],
+            "map_symbol": {
+                "orbit_pos": -1,
+                "orbit": 5,
+                "speed": 0.8
+            },
+            "tex": 3
+        },
+        "sol VI": {
+            "name": "sol VI",
+            "type": "ice",
+            "subset": "exo",
+            "colonised": true,
+            "weight": 1.2534958876236293e+25,
+            "x_pos": 7290,
+            "y_pos": 7085,
+            "texture": "Sprites/Planets/exo/ice.png",
+            "radius": 13993032.9,
+            "satellites": [
+                {
+                    "orbit": 2000,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "ship_builders",
+                    "speed": 0.38,
+                    "texture": "Sprites/Satellites/station/ship_builders.png"
                 },
                 {
-                    "orbit": 17794,
+                    "orbit": 3562,
                     "gravity": true,
-                    "radius": 3022554.0,
-                    "weight": 1.52145e+23,
+                    "radius": 10335745.0,
+                    "weight": 5.8285499999999995e+23,
                     "subset": "moon",
                     "type": "green",
-                    "speed": 0.19,
+                    "speed": 0.23,
                     "texture": "Sprites/Satellites/moon/green.png"
-                },
-                {
-                    "orbit": 21899,
-                    "gravity": true,
-                    "radius": 4446976.0,
-                    "weight": 2.3519999999999998e+23,
-                    "subset": "moon",
-                    "type": "white",
-                    "speed": 0.1,
-                    "texture": "Sprites/Satellites/moon/white.png"
-                },
-                {
-                    "orbit": 26611,
-                    "gravity": true,
-                    "radius": 10231519.0,
-                    "weight": 5.762399999999999e+23,
-                    "subset": "moon",
-                    "type": "green",
-                    "speed": 0.17,
-                    "texture": "Sprites/Satellites/moon/green.png"
-                },
-                {
-                    "orbit": 31474,
-                    "gravity": true,
-                    "radius": 8546532.0,
-                    "weight": 4.7701499999999995e+23,
-                    "subset": "moon",
-                    "type": "red",
-                    "speed": 0.17,
-                    "texture": "Sprites/Satellites/moon/red.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 6,
-                "speed": 1.07
+                "speed": 0.82
             },
-            "tex": 0
+            "tex": 3
         }
     },
     "companies": {
-        "scrappers": {
-            "bonus": "scrap_upgrade",
-            "upgrade": "max_health",
-            "home_planet": "sol III",
-            "planets": [
-                "sol II",
-                "sol I"
-            ],
-            "missions": [
-                "salvage",
-                "destroy",
-                "secure"
-            ],
-            "type": "scrappers",
-            "name": "scrappers",
-            "reputation": 0
-        },
-        "logistics": {
-            "bonus": "max_speed",
-            "upgrade": "thruster_force",
-            "home_planet": "sol III",
-            "planets": [
-                "sol IV",
-                "sol V"
-            ],
-            "missions": [
-                "protect",
-                "escort",
-                "secure"
-            ],
-            "type": "logistics",
-            "name": "logistics",
-            "reputation": 0
-        },
         "ship_builders": {
-            "bonus": "better_overall_upgrades",
-            "upgrade": "heal_rate",
-            "home_planet": "sol III",
+            "bonus": "cheaper_upgrades",
+            "upgrade": "max_health",
+            "home_planet": "sol V",
             "planets": [
-                "sol II",
+                "sol I",
                 "sol VI"
             ],
             "missions": [
@@ -447,13 +313,47 @@
             "name": "ship_builders",
             "reputation": 0
         },
+        "communications": {
+            "bonus": "more_reputation_gained",
+            "upgrade": "cool_speed",
+            "home_planet": "sol II",
+            "planets": [
+                "sol V",
+                "sol IV"
+            ],
+            "missions": [
+                "protect",
+                "escort",
+                "salvage"
+            ],
+            "type": "communications",
+            "name": "communications",
+            "reputation": 0
+        },
+        "logistics": {
+            "bonus": "more_available_upgrades",
+            "upgrade": "thruster_force",
+            "home_planet": "sol II",
+            "planets": [
+                "sol III",
+                "sol I"
+            ],
+            "missions": [
+                "protect",
+                "escort",
+                "secure"
+            ],
+            "type": "logistics",
+            "name": "logistics",
+            "reputation": 0
+        },
         "government": {
             "bonus": "more_available_missions",
-            "upgrade": "damage",
-            "home_planet": "sol III",
+            "upgrade": "heal_rate",
+            "home_planet": "sol II",
             "planets": [
-                "sol VI",
-                "sol II"
+                "sol IV",
+                "sol V"
             ],
             "missions": [
                 "protect",

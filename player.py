@@ -11,8 +11,11 @@ import vector
 
 class Player(arcade.Sprite):
 
-    def __init__(self, holder):
+    def __init__(self, ship_type, holder, m_speed, g_damp):
         super().__init__()
+
+        self.ship_type = ship_type
+        self.thruster_array = ship_type['thruster array']
 
         self.bullet_type = {
              "type": "Standard",
@@ -27,7 +30,7 @@ class Player(arcade.Sprite):
                          [-10.0, 50.0]]}
         # Debug / switches
         self.show_hit_box = False
-        self.alt = False
+        self.alt = True
 
         # audio
         file_name = "Music/shot.wav"
@@ -73,7 +76,7 @@ class Player(arcade.Sprite):
 
         self.base_damage = 4
 
-        self.base_thruster_force = 750000
+        self.base_thruster_force = ship_type['thruster force']
 
         self.base_delay = 0.125
 
@@ -92,7 +95,7 @@ class Player(arcade.Sprite):
         self.gravity_handler = None
         self.gravity_influences = []
         self.gravity_acceleration = [0.0, 0.0]
-        self.gravity_weakener = 1
+        self.gravity_weakener = g_damp
 
         # Ui
         self.holder = holder
@@ -112,13 +115,16 @@ class Player(arcade.Sprite):
 
         # Variables for movement
         self.speed_limit = True
-        self.thruster_force = 750000
+        self.max_speed = m_speed
+        self.thruster_force = self.base_thruster_force
         self.turning_thruster_force = 330000
-        self.thrusters_output = [0.0, 0.0]
-        self.weight = 450000
+        self.thrusters_output = {'l': 0, 'lc': 0, 'rc': 0, 'r': 0}
+        self.weight = ship_type['weight']
+        self.thruster_force_vector = [0.0, 0.0]
         self.forward_force = 0
         self.acceleration = [0.0, 0.0]
         self.velocity = [0.0, 0.0]
+        self.speed = 0
 
         # Variables for turning
         self.correcting = False
@@ -127,7 +133,7 @@ class Player(arcade.Sprite):
         self.turning_acceleration = 0
         self.angle_velocity = 0
         self.distance_to_turning = 30
-        self.angular_inertia = (1 / 12) * self.weight * (64.5 ** 2)
+        self.angular_inertia = (1 / 2) * self.weight * (ship_type['width'] ** 2)
         self.correction = 0.33
 
         self.target_angle = 0
@@ -137,7 +143,7 @@ class Player(arcade.Sprite):
         self.mouse_moved = False
 
         # Parent Variables
-        self.texture = arcade.load_texture("Sprites/Player/Ships/Saber Solo.png")
+        self.texture = arcade.load_texture(ship_type['texture'])
         self.scale = 0.1
 
         self.true_aim = arcade.Sprite("Sprites/Player/Ui/true_aim_light.png", scale=0.1,
@@ -155,19 +161,19 @@ class Player(arcade.Sprite):
 
         # hit box
         point_list = ((-145, -5), (-145, 5), (-105, 5), (-105, 15), (-75, 15), (-75, 25), (-135, 25), (-135, 35),
-                        (-125, 35), (-125, 55), (-115, 55), (-115, 75), (-85, 75), (-85, 105), (-125, 105), (-125, 135),
-                        (-135, 135), (-135, 155), (-145, 155), (-145, 185), (-125, 185), (-125, 195), (-165, 195),
-                        (-165, 205), (-135, 205), (-135, 215), (-35, 215), (-35, 205), (25, 205), (25, 195), (85, 195),
-                        (85, 185), (125, 185), (125, 175), (135, 175), (135, 165), (145, 165), (145, 155), (155, 155),
-                        (155, 135), (165, 135), (165, 55), (115, 55), (115, 45), (65, 45), (65, 35), (75, 35), (75, 15),
-                        (85, 15), (85, -15), (75, -15), (75, -35), (65, -35), (65, -45), (115, -45), (115, -55),
-                        (165, -55), (165, -135), (155, -135), (155, -155), (145, -155), (145, -165), (135, -165),
-                        (135, -175), (125, -175), (125, -185), (85, -185), (85, -195), (25, -195), (25, -205),
-                        (-35, -205), (-35, -215), (-135, -215), (-135, -205), (-165, -205), (-165, -195), (-125, -195),
-                        (-125, -185), (-145, -185), (-145, -155), (-135, -155), (-135, -135), (-125, -135),
-                        (-125, -105), (-85, -105), (-85, -75), (-115, -75), (-115, -55), (-125, -55), (-125, -35),
-                        (-135, -35), (-135, -25), (-75, -25), (-75, -15), (-105, -15), (-105, -5))
-        self.set_hit_box(point_list)
+                      (-125, 35), (-125, 55), (-115, 55), (-115, 75), (-85, 75), (-85, 105), (-125, 105), (-125, 135),
+                      (-135, 135), (-135, 155), (-145, 155), (-145, 185), (-125, 185), (-125, 195), (-165, 195),
+                      (-165, 205), (-135, 205), (-135, 215), (-35, 215), (-35, 205), (25, 205), (25, 195), (85, 195),
+                      (85, 185), (125, 185), (125, 175), (135, 175), (135, 165), (145, 165), (145, 155), (155, 155),
+                      (155, 135), (165, 135), (165, 55), (115, 55), (115, 45), (65, 45), (65, 35), (75, 35), (75, 15),
+                      (85, 15), (85, -15), (75, -15), (75, -35), (65, -35), (65, -45), (115, -45), (115, -55),
+                      (165, -55), (165, -135), (155, -135), (155, -155), (145, -155), (145, -165), (135, -165),
+                      (135, -175), (125, -175), (125, -185), (85, -185), (85, -195), (25, -195), (25, -205),
+                      (-35, -205), (-35, -215), (-135, -215), (-135, -205), (-165, -205), (-165, -195), (-125, -195),
+                      (-125, -185), (-145, -185), (-145, -155), (-135, -155), (-135, -135), (-125, -135),
+                      (-125, -105), (-85, -105), (-85, -75), (-115, -75), (-115, -55), (-125, -55), (-125, -35),
+                      (-135, -35), (-135, -25), (-75, -25), (-75, -15), (-105, -15), (-105, -5))
+        self.points = point_list
         self.scrap = 0
 
     def reset(self):
@@ -214,7 +220,7 @@ class Player(arcade.Sprite):
 
         # Variables for movement
         self.speed_limit = True
-        self.thrusters_output = [0.0, 0.0]
+        self.thrusters_output = {'l': 0, 'lc': 0, 'rc': 0, 'r': 0}
         self.forward_force = 0
         self.acceleration = [0.0, 0.0]
         self.velocity = [0.0, 0.0]
@@ -257,12 +263,10 @@ class Player(arcade.Sprite):
                 self.resolve_active()
 
         self.heal(delta_time)
-        self.apply_correction()
-        self.calculate_thruster_force()
-        self.calculate_turning_acceleration()
-        self.calculate_acceleration()
-        self.apply_acceleration()
 
+        self.apply_correction()
+        self.calculate_acceleration_vectors()
+        self.apply_acceleration()
         self.move(delta_time)
 
         if self.over_heating:
@@ -278,6 +282,7 @@ class Player(arcade.Sprite):
             if self.heat_level >= 1:
                 self.heat_level = 1
                 self.over_heating = True
+                self.health -= self.health_segment
         elif self.heat_level > self.cool_speed and not self.shooting:
             self.heat_level -= self.cool_speed
             self.heat_damage = 1
@@ -328,41 +333,75 @@ class Player(arcade.Sprite):
     Physics Movement Methods
     """
 
-    def apply_correction(self):
-        if not self.turn_key:
-            correction_acceleration = (((self.turning_thruster_force * self.correction) * self.distance_to_turning)
-                                       / self.angular_inertia)
+    def calculate_acceleration_vectors(self):
+        total_vector = [0, 0]
+        total_torque = 0
+        for thruster in self.thruster_array:
+            # Torque
+            dot = (thruster['direction_v'][0] * thruster['position'][0] +
+                   thruster['direction_v'][1] * thruster['position'][1])
 
-            if self.angle_velocity > correction_acceleration + 1:
-                self.thrusters_output[0] = -self.correction
-            elif self.angle_velocity < -correction_acceleration - 1:
-                self.thrusters_output[0] = self.correction
+            vec_angle = math.acos(dot / thruster['distance'])
+
+            # Force Vector
+            normal_force = -(self.thruster_force * math.cos(vec_angle))
+            total_vector[0] += thruster['direction_v'][0]\
+                               * self.thrusters_output[thruster['alignment']] * normal_force  * thruster['output']
+            total_vector[1] += thruster['direction_v'][1]\
+                               * self.thrusters_output[thruster['alignment']] * normal_force  * thruster['output']
+
+            tangential_force = (self.thruster_force * math.sin(vec_angle) * thruster['output'])
+            torque = (thruster['distance'] * tangential_force * self.thrusters_output[thruster['alignment']])
+
+            if 'r' in thruster['alignment']:
+                total_torque -= torque
             else:
-                self.angle_velocity = 0
-                self.thrusters_output[0] = 0
+                total_torque += torque
 
-    def calculate_thruster_force(self):
-        self.turning_force = self.turning_thruster_force * self.thrusters_output[0]
-        if self.thrusters_output[0] < -self.correction and self.angle_velocity > 0 and self.turn_key:
-            self.turning_force *= 1.5
-        elif self.thrusters_output[0] > self.correction and self.angle_velocity < 0 and self.turn_key:
-            self.turning_force *= 1.5
-        self.forward_force = self.thrusters_output[1] * self.thruster_force * 4
+        prev_x = total_vector[0]
+        rad_angle = math.radians(self.angle)
+        total_vector[0] = (prev_x * math.cos(rad_angle) - total_vector[1] * math.sin(rad_angle))
+        total_vector[1] = (prev_x * math.sin(rad_angle) + total_vector[1] * math.sin(rad_angle))
 
-    def calculate_acceleration(self):
-        angle_rad = math.radians(self.angle)
-        acceleration = self.forward_force / self.weight
-        dx = round(math.cos(angle_rad) * acceleration, 2)
-        dy = round(math.sin(angle_rad) * acceleration, 2)
-        self.acceleration = [dx, dy]
+        self.thruster_force_vector = total_vector
 
-    def calculate_turning_acceleration(self):
-        turning_torque = self.distance_to_turning * self.turning_force
-        if turning_torque != 0:
-            acceleration = math.degrees(turning_torque / self.angular_inertia)
+        self.acceleration = [total_vector[0] / self.weight, total_vector[1] / self.weight]
+
+        if total_torque != 0:
+            acceleration = math.degrees(total_torque / self.angular_inertia)
         else:
             acceleration = 0
+
         self.turning_acceleration = acceleration
+
+    def apply_correction(self):
+        if not self.turn_key:
+
+            correction_acceleration = 0
+            total_vector = [0, 0]
+            for thruster in self.thruster_array:
+                dot = (thruster['direction_v'][0] * thruster['position'][0] +
+                       thruster['direction_v'][1] * thruster['position'][1])
+
+                vec_angle = math.acos(dot / thruster['distance'])
+
+                torque = (thruster['distance'] * self.thruster_force * self.thrusters_output[thruster['alignment']]
+                          * thruster['output'] * math.sin(vec_angle))
+                if 'r' in thruster['alignment']:
+                    correction_acceleration -= torque
+                else:
+                    correction_acceleration += torque
+
+            correction_acceleration = math.degrees(correction_acceleration/self.angular_inertia)
+
+            if self.angle_velocity > correction_acceleration + 1:
+                self.thrusters_output['r'] = self.correction
+            elif self.angle_velocity < -correction_acceleration - 1:
+                self.thrusters_output['l'] = self.correction
+            else:
+                self.angle_velocity = 0
+                self.thrusters_output['r'] = 0
+                self.thrusters_output['l'] = 0
 
     def apply_acceleration(self):
         if not self.alt:
@@ -380,12 +419,13 @@ class Player(arcade.Sprite):
             self.angle -= 360
         elif self.angle < 0:
             self.angle += 360
+
         if self.speed_limit:
-            speed_limit = 2500
-            speed = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
-            if speed > speed_limit:
-                self.velocity[0] = (self.velocity[0]/speed) * speed_limit
-                self.velocity[1] = (self.velocity[1]/speed) * speed_limit
+            self.speed = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
+            if self.speed > self.max_speed:
+                self.velocity[0] = (self.velocity[0]/self.speed) * self.max_speed
+                self.velocity[1] = (self.velocity[1]/self.speed) * self.max_speed
+                self.speed = self.max_speed
 
         self.center_x += self.velocity[0] * delta_time
         self.center_y += self.velocity[1] * delta_time
@@ -469,7 +509,7 @@ class Player(arcade.Sprite):
             self.clear_upgrades()
 
     def shoot(self):
-        self.shot_audio.play(volume=0.1)
+        self.shot_audio.play(volume=0.2)
         self.bullet_type['damage'] = self.total_damage
         shot = bullet.Bullet([self.center_x, self.center_y], self.angle, self.velocity, self.bullet_type)
         self.bullets.append(shot)
@@ -518,13 +558,16 @@ class Player(arcade.Sprite):
     def key_down(self, key):
         if not self.dead:
             if key == arcade.key.W:
-                self.thrusters_output[1] = 1.0
+                self.thrusters_output['lc'] = 1.0
+                self.thrusters_output['rc'] = 1.0
             elif key == arcade.key.A:
-                self.thrusters_output[0] = 1.0
+                self.thrusters_output['l'] = 1.0
+                self.thrusters_output['r'] = 0.0
                 self.turn_key = True
                 self.correcting = False
             elif key == arcade.key.D:
-                self.thrusters_output[0] = -1.0
+                self.thrusters_output['r'] = 1.0
+                self.thrusters_output['l'] = 0.0
                 self.turn_key = True
                 self.correcting = False
 
@@ -547,12 +590,15 @@ class Player(arcade.Sprite):
     def key_up(self, key):
         if not self.dead:
             if key == arcade.key.W:
-                self.thrusters_output[1] = 0.0
-            elif key == arcade.key.A and self.thrusters_output[0] != -1.0:
-                self.thrusters_output[0] = 0.0
+                self.thrusters_output['lc'] = 0.0
+                self.thrusters_output['rc'] = 0.0
+            elif key == arcade.key.A and self.thrusters_output['r'] != 1.0:
+                self.thrusters_output['l'] = 0.0
+                self.thrusters_output['r'] = 0.0
                 self.turn_key = False
-            elif key == arcade.key.D and self.thrusters_output[0] != 1.0:
-                self.thrusters_output[0] = 0.0
+            elif key == arcade.key.D and self.thrusters_output['l'] != 1.0:
+                self.thrusters_output['r'] = 0.0
+                self.thrusters_output['l'] = 0.0
                 self.turn_key = False
             elif key == arcade.key.SPACE:
                 self.shooting = False

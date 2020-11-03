@@ -3,6 +3,7 @@ from PIL import Image
 
 import arcade
 
+VOLUME = 0  # .05
 
 """
 While called vector.py due to its mathematical functions 

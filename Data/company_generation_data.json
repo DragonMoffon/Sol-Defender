@@ -2,7 +2,7 @@
     "companies":
     {
         "communications": {
-            "planets": ["colonised", "gas"],
+            "planets": ["all"],
             "missions": ["protect", "escort", "salvage"]
         },
         "logistics": {
@@ -10,7 +10,7 @@
             "missions": ["protect", "escort", "secure"]
         },
         "scrappers": {
-            "planets": ["colonised", "mineral"],
+            "planets": ["all"],
             "missions": ["salvage", "destroy", "secure"]
         },
         "scientists": {
@@ -18,7 +18,7 @@
             "missions": ["protect", "salvage", "secure"]
         },
         "weapons": {
-            "planets": ["colonised", "gas"],
+            "planets": ["all"],
             "missions": ["escort", "destroy", "secure"]
         },
         "ship_builders": {
@@ -34,7 +34,7 @@
     {
         "communications": ["more_available_missions", "more_reputation_gained"],
         "logistics": ["more_available_missions", "more_available_upgrades", "max_speed"],
-        "scrappers": ["better_overall_negatives", "more_scrap_value", "scrap_upgrade"],
+        "scrappers": ["better_overall_negatives", "more_scrap_value", "cheaper_upgrades"],
         "government": ["better_overall_negatives", "better_overall_upgrades", "more_available_missions", "more_available_upgrades"],
         "ship_builders":  ["better_overall_negatives", "better_overall_upgrades", "cheaper_upgrades", "more_available_upgrades", "max_speed"],
         "scientists": ["cheaper_upgrades", "less_gravity", "more_available_upgrades", "max_speed"],
@@ -49,6 +49,19 @@
         "weapons": ["max_health", "damage","thruster_force"],
         "ship_builders": ["max_health", "heal_rate", "thruster_force"],
         "government": ["max_health", "heal_rate", "cool_speed", "damage", "thruster_force"]
+    },
+    "bonus_details":
+    {
+        "more_available_missions": {},
+        "more_reputation_gained": "" ,
+        "more_available_upgrades": "",
+        "max_speed": "",
+        "better_overall_negatives": "",
+        "better_overall_upgrades": "",
+        "cheaper_upgrades": "",
+        "more_scrap_value": "",
+        "scrap_upgrade": "",
+        "less_gravity": ""
     }
 }
 

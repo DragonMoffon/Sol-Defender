@@ -56,7 +56,6 @@ LETTER_CODE = {
     "%": 41
 }
 
-
 class LetterList(arcade.SpriteList):
 
     def __init__(self, string: str = None,
