@@ -458,7 +458,7 @@ class GameWindow(arcade.View):
         self.gravity_handler = space.GravityHandler()
 
         # player
-        self.player = player.Player(self.player_ships['Bomber'], self,
+        self.player = player.Player(self.player_ships[random.choice(list(self.player_ships.keys()))], self,
                                     self.player_max_speed, self.player_gravity_dampening)
         self.player.read_upgrades()
 

@@ -264,7 +264,8 @@ class Player(arcade.Sprite):
 
         self.heal(delta_time)
 
-        self.apply_correction()
+        if not self.alt:
+            self.apply_correction()
         self.calculate_acceleration_vectors()
         self.apply_acceleration()
         self.move(delta_time)
@@ -337,26 +338,27 @@ class Player(arcade.Sprite):
         total_vector = [0, 0]
         total_torque = 0
         for thruster in self.thruster_array:
-            # Torque
-            dot = (thruster['direction_v'][0] * thruster['position'][0] +
-                   thruster['direction_v'][1] * thruster['position'][1])
+            if not self.alt or 'c' in thruster['alignment']:
+                # Torque
+                dot = (thruster['direction_v'][0] * thruster['position'][0] +
+                       thruster['direction_v'][1] * thruster['position'][1])
 
-            vec_angle = math.acos(dot / thruster['distance'])
+                vec_angle = math.acos(dot / thruster['distance'])
 
-            # Force Vector
-            normal_force = -(self.thruster_force * math.cos(vec_angle))
-            total_vector[0] += thruster['direction_v'][0]\
-                               * self.thrusters_output[thruster['alignment']] * normal_force  * thruster['output']
-            total_vector[1] += thruster['direction_v'][1]\
-                               * self.thrusters_output[thruster['alignment']] * normal_force  * thruster['output']
+                # Force Vector
+                normal_force = -(self.thruster_force * math.cos(vec_angle))
+                total_vector[0] += thruster['direction_v'][0]\
+                                   * self.thrusters_output[thruster['alignment']] * normal_force  * thruster['output']
+                total_vector[1] += thruster['direction_v'][1]\
+                                   * self.thrusters_output[thruster['alignment']] * normal_force  * thruster['output']
 
-            tangential_force = (self.thruster_force * math.sin(vec_angle) * thruster['output'])
-            torque = (thruster['distance'] * tangential_force * self.thrusters_output[thruster['alignment']])
+                tangential_force = (self.thruster_force * math.sin(vec_angle) * thruster['output'])
+                torque = (thruster['distance'] * tangential_force * self.thrusters_output[thruster['alignment']])
 
-            if 'r' in thruster['alignment']:
-                total_torque -= torque
-            else:
-                total_torque += torque
+                if 'r' in thruster['alignment']:
+                    total_torque -= torque
+                else:
+                    total_torque += torque
 
         prev_x = total_vector[0]
         rad_angle = math.radians(self.angle)
@@ -546,7 +548,7 @@ class Player(arcade.Sprite):
         angle_diff = vector.calc_small_difference(self.target_angle, self.angle)
         direction = vector.calc_direction(self.target_angle, self.angle)
         difference = self.target_distance - self.previous_mouse_pos[2]
-        self.angle_velocity = direction * angle_diff * 10
+        self.angle_velocity = (direction * angle_diff * 400000) / self.weight
         self.previous_mouse_pos[2] += difference / 30
         self.true_aim.center_x = self.center_x + (math.cos(math.radians(self.angle)) * self.previous_mouse_pos[2])
         self.true_aim.center_y = self.center_y + (math.sin(math.radians(self.angle)) * self.previous_mouse_pos[2])
@@ -614,11 +616,13 @@ class Player(arcade.Sprite):
             if button == arcade.MOUSE_BUTTON_LEFT and not self.over_heating:
                 self.shooting = True
             elif button == arcade.MOUSE_BUTTON_RIGHT:
-                self.thrusters_output[1] = 1.0
+                for output in self.thrusters_output:
+                    self.thrusters_output[output] = 1.0
 
     def on_mouse_release(self, button):
         if not self.dead:
             if button == arcade.MOUSE_BUTTON_LEFT:
                 self.shooting = False
             elif button == arcade.MOUSE_BUTTON_RIGHT:
-                self.thrusters_output[1] = 0.0
+                for output in self.thrusters_output:
+                    self.thrusters_output[output] = 0.0

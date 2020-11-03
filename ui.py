@@ -141,8 +141,12 @@ class PlayerUi:
         self.overheating_sound.play(self.overheat_volume)
 
         self.station = game_screen.mission.target_object
-        self.station_health = arcade.Sprite()
         self.station_health_segments = arcade.SpriteList()
+
+        for health in range(1, 6):
+            segment = arcade.Sprite(f"Sprites/Player/Ui/station{health}.png")
+            self.station_health_segments.append(segment)
+            self.ui_list.append(segment)
 
     def draw(self):
         if self.mini_map is None:
@@ -208,9 +212,25 @@ class PlayerUi:
             if self.health_segments.index(segment) > segment_num:
                 segment.alpha = 0
 
-        top_right_corner = (SCREEN_WIDTH - 105, SCREEN_HEIGHT - 105)
+        top_right_corner = (SCREEN_WIDTH - 67, SCREEN_HEIGHT - 66)
         self.top_right_sprite.center_x = self.game_screen.left_view + top_right_corner[0]
         self.top_right_sprite.center_y = self.game_screen.bottom_view + top_right_corner[1]
+        if self.station is None:
+            self.station = self.game_screen.mission.target_object
+
+        for index, segment in enumerate(self.station_health_segments):
+            segment.center_x = self.game_screen.left_view + top_right_corner[0]
+            segment.center_y = self.game_screen.bottom_view + top_right_corner[1]
+
+            if self.station is not None:
+                current_segment = math.floor(self.station.health / 110)
+                if current_segment < index:
+                    segment.alpha = 0
+                elif current_segment == index:
+                    portion = (self.station.health / 110) - current_segment
+                    segment.alpha = portion * 255
+                else:
+                    segment.alpha = 255
 
         velocity_circle = self.game_screen.left_view + SCREEN_WIDTH - 35, \
                           self.game_screen.bottom_view + SCREEN_HEIGHT - 35
