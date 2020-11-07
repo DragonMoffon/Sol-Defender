@@ -1,0 +1,285 @@
+{
+    "planet_x": {
+        "name": "",
+        "company": "",
+        "stages": 0,
+        "reward": 0,
+        "possible_enemies": [],
+        "possible_bosses": [],
+        "planet_data": {},
+        "asteroids": []
+    },
+    "missions": {
+        "sol VI": {
+            "name": "protect sol VI",
+            "company": "communications",
+            "stages": 1,
+            "reward": 60,
+            "possible_enemies": [
+                "blitz"
+            ],
+            "possible_bosses": [
+                "predator"
+            ],
+            "planet_data": {
+                "name": "sol VI",
+                "type": "giant",
+                "subset": "gas",
+                "colonised": false,
+                "weight": 1.7532917587376117e+27,
+                "x_pos": 7444,
+                "y_pos": 8691,
+                "texture": "game_data/Sprites/Planets/gas/giant.png",
+                "radius": 84131101.16,
+                "satellites": [
+                    {
+                        "orbit": 2000,
+                        "gravity": true,
+                        "radius": 4290637.0,
+                        "weight": 2.2637999999999997e+23,
+                        "subset": "moon",
+                        "type": "green",
+                        "speed": 0.11,
+                        "texture": "game_data/Sprites/Satellites/moon/green.png"
+                    },
+                    {
+                        "orbit": 3636,
+                        "gravity": true,
+                        "radius": 5159187.0,
+                        "weight": 2.7782999999999994e+23,
+                        "subset": "moon",
+                        "type": "red",
+                        "speed": 0.43,
+                        "texture": "game_data/Sprites/Satellites/moon/red.png"
+                    },
+                    {
+                        "orbit": 5630,
+                        "gravity": true,
+                        "radius": 4585944.0,
+                        "weight": 2.4328499999999996e+23,
+                        "subset": "moon",
+                        "type": "white",
+                        "speed": 0.42,
+                        "texture": "game_data/Sprites/Satellites/moon/white.png"
+                    },
+                    {
+                        "orbit": 8006,
+                        "gravity": false,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "logistics",
+                        "speed": 0.27,
+                        "texture": "game_data/Sprites/Satellites/station/logistics.png"
+                    },
+                    {
+                        "orbit": 10690,
+                        "gravity": true,
+                        "radius": 5680317.0,
+                        "weight": 3.07965e+23,
+                        "subset": "moon",
+                        "type": "white",
+                        "speed": 0.28,
+                        "texture": "game_data/Sprites/Satellites/moon/white.png"
+                    },
+                    {
+                        "orbit": 13755,
+                        "gravity": true,
+                        "radius": 5246042.0,
+                        "weight": 2.8223999999999997e+23,
+                        "subset": "moon",
+                        "type": "white",
+                        "speed": 0.1,
+                        "texture": "game_data/Sprites/Satellites/moon/white.png"
+                    },
+                    {
+                        "orbit": 17475,
+                        "gravity": false,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "communications",
+                        "speed": 0.25,
+                        "texture": "game_data/Sprites/Satellites/station/communications.png"
+                    },
+                    {
+                        "orbit": 21265,
+                        "gravity": true,
+                        "radius": 8807097.0,
+                        "weight": 4.9245e+23,
+                        "subset": "moon",
+                        "type": "red",
+                        "speed": 0.06,
+                        "texture": "game_data/Sprites/Satellites/moon/red.png"
+                    }
+                ],
+                "map_symbol": {
+                    "orbit_pos": -1,
+                    "orbit": 6,
+                    "speed": 2.36
+                },
+                "tex": 0
+            },
+            "asteroids": [],
+            "types": "protect"
+        },
+        "sol III": {
+            "name": "protect sol III",
+            "company": "logistics",
+            "stages": 1,
+            "reward": 67,
+            "possible_enemies": [
+                "blitz"
+            ],
+            "possible_bosses": [
+                "predator",
+                "matriarch"
+            ],
+            "planet_data": {
+                "name": "sol III",
+                "type": "desert",
+                "subset": "exo",
+                "colonised": true,
+                "weight": 2.2427213309180623e+25,
+                "x_pos": 6685,
+                "y_pos": 5158,
+                "texture": "game_data/Sprites/Planets/exo/desert.png",
+                "radius": 22532364.34,
+                "satellites": [
+                    {
+                        "orbit": 2000,
+                        "gravity": false,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "communications",
+                        "speed": 0.13,
+                        "texture": "game_data/Sprites/Satellites/station/communications.png"
+                    },
+                    {
+                        "orbit": 3619,
+                        "gravity": false,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "logistics",
+                        "speed": 0.32,
+                        "texture": "game_data/Sprites/Satellites/station/logistics.png"
+                    },
+                    {
+                        "orbit": 5629,
+                        "gravity": false,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "government",
+                        "speed": 0.24,
+                        "texture": "game_data/Sprites/Satellites/station/government.png"
+                    },
+                    {
+                        "orbit": 7993,
+                        "gravity": true,
+                        "radius": 2414569.0,
+                        "weight": 1.15395e+23,
+                        "subset": "moon",
+                        "type": "white",
+                        "speed": 0.45,
+                        "texture": "game_data/Sprites/Satellites/moon/white.png"
+                    },
+                    {
+                        "orbit": 10805,
+                        "gravity": false,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "ship_builders",
+                        "speed": 0.17,
+                        "texture": "game_data/Sprites/Satellites/station/ship_builders.png"
+                    }
+                ],
+                "map_symbol": {
+                    "orbit_pos": -1,
+                    "orbit": 3,
+                    "speed": 0.98
+                },
+                "tex": 1
+            },
+            "asteroids": [],
+            "types": "protect"
+        },
+        "sol IV": {
+            "name": "escort sol IV",
+            "company": "ship_builders",
+            "stages": 1,
+            "reward": 55,
+            "possible_enemies": [
+                "blitz"
+            ],
+            "possible_bosses": [
+                "hunderd",
+                "matriarch"
+            ],
+            "planet_data": {
+                "name": "sol IV",
+                "type": "silicate",
+                "subset": "exo",
+                "colonised": true,
+                "weight": 8.769895086926385e+24,
+                "x_pos": 3801,
+                "y_pos": 6925,
+                "texture": "game_data/Sprites/Planets/exo/silicate.png",
+                "radius": 8811013.15,
+                "satellites": [
+                    {
+                        "orbit": 2000,
+                        "gravity": false,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "government",
+                        "speed": 0.24,
+                        "texture": "game_data/Sprites/Satellites/station/government.png"
+                    },
+                    {
+                        "orbit": 3643,
+                        "gravity": true,
+                        "radius": 6479383.0,
+                        "weight": 3.55005e+23,
+                        "subset": "moon",
+                        "type": "red",
+                        "speed": 0.26,
+                        "texture": "game_data/Sprites/Satellites/moon/red.png"
+                    },
+                    {
+                        "orbit": 5665,
+                        "gravity": true,
+                        "radius": 4064813.9999999995,
+                        "weight": 2.1241499999999997e+23,
+                        "subset": "moon",
+                        "type": "green",
+                        "speed": 0.15,
+                        "texture": "game_data/Sprites/Satellites/moon/green.png"
+                    },
+                    {
+                        "orbit": 8089,
+                        "gravity": false,
+                        "radius": 0,
+                        "weight": 0,
+                        "subset": "station",
+                        "type": "ship_builders",
+                        "speed": 0.14,
+                        "texture": "game_data/Sprites/Satellites/station/ship_builders.png"
+                    }
+                ],
+                "map_symbol": {
+                    "orbit_pos": -1,
+                    "orbit": 4,
+                    "speed": 0.61
+                },
+                "tex": 4
+            },
+            "asteroids": [],
+            "types": "escort"
+        }
+    }
+}
