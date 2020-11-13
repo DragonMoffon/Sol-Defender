@@ -2,14 +2,14 @@
     "planets": {
         "sol I": {
             "name": "sol I",
-            "type": "dwarf",
-            "subset": "gas",
+            "type": "iron",
+            "subset": "exo",
             "colonised": false,
-            "weight": 9.044121028853332e+25,
-            "x_pos": 6001,
-            "y_pos": 5489,
-            "texture": "game_data/Sprites/Planets/gas/dwarf.png",
-            "radius": 20420972.61,
+            "weight": 1.1298359893026777e+25,
+            "x_pos": 7405,
+            "y_pos": 7411,
+            "texture": "game_data/Sprites/Planets/exo/iron.png",
+            "radius": 5087833.19,
             "satellites": [
                 {
                     "orbit": 2000,
@@ -17,58 +17,58 @@
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
-                    "type": "logistics",
-                    "speed": 0.07,
-                    "texture": "game_data/Sprites/Satellites/station/logistics.png"
+                    "type": "weapons",
+                    "speed": 0.15,
+                    "texture": "game_data/Sprites/Satellites/station/weapons.png"
                 },
                 {
-                    "orbit": 3634,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "communications",
-                    "speed": 0.05,
-                    "texture": "game_data/Sprites/Satellites/station/communications.png"
-                },
-                {
-                    "orbit": 5600,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "government",
-                    "speed": 0.33,
-                    "texture": "game_data/Sprites/Satellites/station/government.png"
-                },
-                {
-                    "orbit": 8084,
+                    "orbit": 3644,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "ship_builders",
-                    "speed": 0.26,
+                    "speed": 0.1,
                     "texture": "game_data/Sprites/Satellites/station/ship_builders.png"
+                },
+                {
+                    "orbit": 5564,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "government",
+                    "speed": 0.23,
+                    "texture": "game_data/Sprites/Satellites/station/government.png"
+                },
+                {
+                    "orbit": 7934,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "communications",
+                    "speed": 0.08,
+                    "texture": "game_data/Sprites/Satellites/station/communications.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 1,
-                "speed": 2.56
+                "speed": 1.46
             },
-            "tex": 0
+            "tex": 3
         },
         "sol II": {
             "name": "sol II",
-            "type": "iron",
-            "subset": "exo",
+            "type": "helium",
+            "subset": "gas",
             "colonised": false,
-            "weight": 9.945509596697516e+24,
-            "x_pos": 6044,
-            "y_pos": 4204,
-            "texture": "game_data/Sprites/Planets/exo/iron.png",
-            "radius": 4748034.9,
+            "weight": 7.720101984998276e+26,
+            "x_pos": 4957,
+            "y_pos": 6590,
+            "texture": "game_data/Sprites/Planets/gas/helium.png",
+            "radius": 44306410.41,
             "satellites": [
                 {
                     "orbit": 2000,
@@ -76,48 +76,48 @@
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
-                    "type": "logistics",
-                    "speed": 0.34,
-                    "texture": "game_data/Sprites/Satellites/station/logistics.png"
+                    "type": "ship_builders",
+                    "speed": 0.16,
+                    "texture": "game_data/Sprites/Satellites/station/ship_builders.png"
                 },
                 {
-                    "orbit": 3590,
+                    "orbit": 3636,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "communications",
-                    "speed": 0.07,
+                    "speed": 0.3,
                     "texture": "game_data/Sprites/Satellites/station/communications.png"
                 },
                 {
-                    "orbit": 5560,
+                    "orbit": 5674,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
-                    "type": "ship_builders",
-                    "speed": 0.25,
-                    "texture": "game_data/Sprites/Satellites/station/ship_builders.png"
+                    "type": "government",
+                    "speed": 0.07,
+                    "texture": "game_data/Sprites/Satellites/station/government.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 2,
-                "speed": 0.53
+                "speed": 0.71
             },
-            "tex": 2
+            "tex": 0
         },
         "sol III": {
             "name": "sol III",
-            "type": "desert",
+            "type": "carbon",
             "subset": "exo",
-            "colonised": true,
-            "weight": 2.2427213309180623e+25,
-            "x_pos": 6685,
-            "y_pos": 5158,
-            "texture": "game_data/Sprites/Planets/exo/desert.png",
-            "radius": 22532364.34,
+            "colonised": false,
+            "weight": 2.9983965784133025e+25,
+            "x_pos": 6934,
+            "y_pos": 3422,
+            "texture": "game_data/Sprites/Planets/exo/carbon.png",
+            "radius": 17218323.22,
             "satellites": [
                 {
                     "orbit": 2000,
@@ -125,68 +125,58 @@
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
-                    "type": "communications",
-                    "speed": 0.13,
-                    "texture": "game_data/Sprites/Satellites/station/communications.png"
+                    "type": "ship_builders",
+                    "speed": 0.19,
+                    "texture": "game_data/Sprites/Satellites/station/ship_builders.png"
                 },
                 {
-                    "orbit": 3619,
+                    "orbit": 3645,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
-                    "type": "logistics",
-                    "speed": 0.32,
-                    "texture": "game_data/Sprites/Satellites/station/logistics.png"
+                    "type": "weapons",
+                    "speed": 0.17,
+                    "texture": "game_data/Sprites/Satellites/station/weapons.png"
                 },
                 {
-                    "orbit": 5629,
+                    "orbit": 5563,
+                    "gravity": true,
+                    "radius": 5054961.0,
+                    "weight": 2.7195e+23,
+                    "subset": "moon",
+                    "type": "green",
+                    "speed": 0.19,
+                    "texture": "game_data/Sprites/Satellites/moon/green.png"
+                },
+                {
+                    "orbit": 7981,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "government",
-                    "speed": 0.24,
-                    "texture": "game_data/Sprites/Satellites/station/government.png"
-                },
-                {
-                    "orbit": 7993,
-                    "gravity": true,
-                    "radius": 2414569.0,
-                    "weight": 1.15395e+23,
-                    "subset": "moon",
-                    "type": "white",
-                    "speed": 0.45,
-                    "texture": "game_data/Sprites/Satellites/moon/white.png"
-                },
-                {
-                    "orbit": 10805,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "ship_builders",
                     "speed": 0.17,
-                    "texture": "game_data/Sprites/Satellites/station/ship_builders.png"
+                    "texture": "game_data/Sprites/Satellites/station/government.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 3,
-                "speed": 0.98
+                "speed": 1.57
             },
-            "tex": 1
+            "tex": 2
         },
         "sol IV": {
             "name": "sol IV",
-            "type": "silicate",
+            "type": "ocean",
             "subset": "exo",
             "colonised": true,
-            "weight": 8.769895086926385e+24,
-            "x_pos": 3801,
-            "y_pos": 6925,
-            "texture": "game_data/Sprites/Planets/exo/silicate.png",
-            "radius": 8811013.15,
+            "weight": 2.311145823361347e+25,
+            "x_pos": 6529,
+            "y_pos": 5889,
+            "texture": "game_data/Sprites/Planets/exo/ocean.png",
+            "radius": 25799797.09,
             "satellites": [
                 {
                     "orbit": 2000,
@@ -195,240 +185,282 @@
                     "weight": 0,
                     "subset": "station",
                     "type": "government",
-                    "speed": 0.24,
+                    "speed": 0.39,
                     "texture": "game_data/Sprites/Satellites/station/government.png"
                 },
                 {
-                    "orbit": 3643,
-                    "gravity": true,
-                    "radius": 6479383.0,
-                    "weight": 3.55005e+23,
-                    "subset": "moon",
-                    "type": "red",
-                    "speed": 0.26,
-                    "texture": "game_data/Sprites/Satellites/moon/red.png"
+                    "orbit": 3585,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "weapons",
+                    "speed": 0.1,
+                    "texture": "game_data/Sprites/Satellites/station/weapons.png"
                 },
                 {
-                    "orbit": 5665,
-                    "gravity": true,
-                    "radius": 4064813.9999999995,
-                    "weight": 2.1241499999999997e+23,
-                    "subset": "moon",
-                    "type": "green",
-                    "speed": 0.15,
-                    "texture": "game_data/Sprites/Satellites/moon/green.png"
+                    "orbit": 5659,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "communications",
+                    "speed": 0.22,
+                    "texture": "game_data/Sprites/Satellites/station/communications.png"
                 },
                 {
-                    "orbit": 8089,
+                    "orbit": 7918,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "ship_builders",
-                    "speed": 0.14,
+                    "speed": 0.41,
                     "texture": "game_data/Sprites/Satellites/station/ship_builders.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
                 "orbit": 4,
-                "speed": 0.61
+                "speed": 1.61
             },
-            "tex": 4
+            "tex": 1
         },
         "sol V": {
             "name": "sol V",
-            "type": "giant",
+            "type": "ice",
+            "subset": "exo",
+            "colonised": false,
+            "weight": 1.199637095532989e+25,
+            "x_pos": 4813,
+            "y_pos": 6720,
+            "texture": "game_data/Sprites/Planets/exo/ice.png",
+            "radius": 13391796.11,
+            "satellites": [],
+            "map_symbol": {
+                "orbit_pos": -1,
+                "orbit": 5,
+                "speed": 2.39
+            },
+            "tex": 2
+        },
+        "sol VI": {
+            "name": "sol VI",
+            "type": "ice",
             "subset": "gas",
             "colonised": false,
-            "weight": 1.0649953061241731e+27,
-            "x_pos": 8524,
-            "y_pos": 8165,
-            "texture": "game_data/Sprites/Planets/gas/giant.png",
-            "radius": 56197025.47,
+            "weight": 1.1486613136131918e+26,
+            "x_pos": 8603,
+            "y_pos": 6030,
+            "texture": "game_data/Sprites/Planets/gas/ice.png",
+            "radius": 23347055.11,
             "satellites": [
                 {
                     "orbit": 2000,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "communications",
+                    "speed": 0.17,
+                    "texture": "game_data/Sprites/Satellites/station/communications.png"
+                },
+                {
+                    "orbit": 3639,
                     "gravity": true,
-                    "radius": 7782208.000000001,
-                    "weight": 4.329149999999999e+23,
+                    "radius": 4585944.0,
+                    "weight": 2.4401999999999996e+23,
                     "subset": "moon",
                     "type": "green",
-                    "speed": 0.25,
+                    "speed": 0.05,
                     "texture": "game_data/Sprites/Satellites/moon/green.png"
                 },
                 {
-                    "orbit": 3614,
+                    "orbit": 5639,
+                    "gravity": true,
+                    "radius": 4551202.0,
+                    "weight": 2.4181499999999997e+23,
+                    "subset": "moon",
+                    "type": "green",
+                    "speed": 0.4,
+                    "texture": "game_data/Sprites/Satellites/moon/green.png"
+                },
+                {
+                    "orbit": 7988,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "government",
-                    "speed": 0.06,
+                    "speed": 0.19,
                     "texture": "game_data/Sprites/Satellites/station/government.png"
                 },
                 {
-                    "orbit": 5656,
+                    "orbit": 10920,
                     "gravity": true,
-                    "radius": 2136633.0,
-                    "weight": 9.9225e+22,
+                    "radius": 2154004.0,
+                    "weight": 9.996e+22,
+                    "subset": "moon",
+                    "type": "green",
+                    "speed": 0.2,
+                    "texture": "game_data/Sprites/Satellites/moon/green.png"
+                },
+                {
+                    "orbit": 14120,
+                    "gravity": true,
+                    "radius": 4499089.0,
+                    "weight": 2.3887499999999997e+23,
+                    "subset": "moon",
+                    "type": "red",
+                    "speed": 0.41,
+                    "texture": "game_data/Sprites/Satellites/moon/red.png"
+                },
+                {
+                    "orbit": 17816,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "weapons",
+                    "speed": 0.41,
+                    "texture": "game_data/Sprites/Satellites/station/weapons.png"
+                },
+                {
+                    "orbit": 21900,
+                    "gravity": true,
+                    "radius": 4082185.0,
+                    "weight": 2.13885e+23,
+                    "subset": "moon",
+                    "type": "green",
+                    "speed": 0.16,
+                    "texture": "game_data/Sprites/Satellites/moon/green.png"
+                }
+            ],
+            "map_symbol": {
+                "orbit_pos": -1,
+                "orbit": 6,
+                "speed": 1.6
+            },
+            "tex": 0
+        },
+        "sol VII": {
+            "name": "sol VII",
+            "type": "ice",
+            "subset": "gas",
+            "colonised": false,
+            "weight": 1.1038377027827639e+26,
+            "x_pos": 5184,
+            "y_pos": 5440,
+            "texture": "game_data/Sprites/Planets/gas/ice.png",
+            "radius": 22481021.1,
+            "satellites": [
+                {
+                    "orbit": 2000,
+                    "gravity": true,
+                    "radius": 5732430.0,
+                    "weight": 3.10905e+23,
+                    "subset": "moon",
+                    "type": "red",
+                    "speed": 0.16,
+                    "texture": "game_data/Sprites/Satellites/moon/red.png"
+                },
+                {
+                    "orbit": 3625,
+                    "gravity": true,
+                    "radius": 10405229.0,
+                    "weight": 5.8726499999999994e+23,
                     "subset": "moon",
                     "type": "green",
                     "speed": 0.18,
                     "texture": "game_data/Sprites/Satellites/moon/green.png"
                 },
                 {
-                    "orbit": 8167,
+                    "orbit": 5707,
                     "gravity": true,
-                    "radius": 6705206.0,
-                    "weight": 3.6823499999999995e+23,
-                    "subset": "moon",
-                    "type": "red",
-                    "speed": 0.22,
-                    "texture": "game_data/Sprites/Satellites/moon/red.png"
-                },
-                {
-                    "orbit": 10779,
-                    "gravity": true,
-                    "radius": 7122109.999999999,
-                    "weight": 3.9322499999999996e+23,
-                    "subset": "moon",
-                    "type": "red",
-                    "speed": 0.26,
-                    "texture": "game_data/Sprites/Satellites/moon/red.png"
-                }
-            ],
-            "map_symbol": {
-                "orbit_pos": -1,
-                "orbit": 5,
-                "speed": 1.79
-            },
-            "tex": 0
-        },
-        "sol VI": {
-            "name": "sol VI",
-            "type": "giant",
-            "subset": "gas",
-            "colonised": false,
-            "weight": 1.7532917587376117e+27,
-            "x_pos": 7444,
-            "y_pos": 8691,
-            "texture": "game_data/Sprites/Planets/gas/giant.png",
-            "radius": 84131101.16,
-            "satellites": [
-                {
-                    "orbit": 2000,
-                    "gravity": true,
-                    "radius": 4290637.0,
-                    "weight": 2.2637999999999997e+23,
-                    "subset": "moon",
-                    "type": "green",
-                    "speed": 0.11,
-                    "texture": "game_data/Sprites/Satellites/moon/green.png"
-                },
-                {
-                    "orbit": 3636,
-                    "gravity": true,
-                    "radius": 5159187.0,
-                    "weight": 2.7782999999999994e+23,
-                    "subset": "moon",
-                    "type": "red",
-                    "speed": 0.43,
-                    "texture": "game_data/Sprites/Satellites/moon/red.png"
-                },
-                {
-                    "orbit": 5630,
-                    "gravity": true,
-                    "radius": 4585944.0,
-                    "weight": 2.4328499999999996e+23,
+                    "radius": 6462012.0,
+                    "weight": 3.5427e+23,
                     "subset": "moon",
                     "type": "white",
-                    "speed": 0.42,
+                    "speed": 0.18,
                     "texture": "game_data/Sprites/Satellites/moon/white.png"
                 },
                 {
-                    "orbit": 8006,
-                    "gravity": false,
-                    "radius": 0,
-                    "weight": 0,
-                    "subset": "station",
-                    "type": "logistics",
-                    "speed": 0.27,
-                    "texture": "game_data/Sprites/Satellites/station/logistics.png"
-                },
-                {
-                    "orbit": 10690,
-                    "gravity": true,
-                    "radius": 5680317.0,
-                    "weight": 3.07965e+23,
-                    "subset": "moon",
-                    "type": "white",
-                    "speed": 0.28,
-                    "texture": "game_data/Sprites/Satellites/moon/white.png"
-                },
-                {
-                    "orbit": 13755,
-                    "gravity": true,
-                    "radius": 5246042.0,
-                    "weight": 2.8223999999999997e+23,
-                    "subset": "moon",
-                    "type": "white",
-                    "speed": 0.1,
-                    "texture": "game_data/Sprites/Satellites/moon/white.png"
-                },
-                {
-                    "orbit": 17475,
+                    "orbit": 8155,
                     "gravity": false,
                     "radius": 0,
                     "weight": 0,
                     "subset": "station",
                     "type": "communications",
-                    "speed": 0.25,
+                    "speed": 0.42,
                     "texture": "game_data/Sprites/Satellites/station/communications.png"
                 },
                 {
-                    "orbit": 21265,
+                    "orbit": 10935,
+                    "gravity": false,
+                    "radius": 0,
+                    "weight": 0,
+                    "subset": "station",
+                    "type": "ship_builders",
+                    "speed": 0.34,
+                    "texture": "game_data/Sprites/Satellites/station/ship_builders.png"
+                },
+                {
+                    "orbit": 14040,
                     "gravity": true,
-                    "radius": 8807097.0,
-                    "weight": 4.9245e+23,
+                    "radius": 10266261.0,
+                    "weight": 5.7917999999999996e+23,
                     "subset": "moon",
-                    "type": "red",
-                    "speed": 0.06,
-                    "texture": "game_data/Sprites/Satellites/moon/red.png"
+                    "type": "white",
+                    "speed": 0.4,
+                    "texture": "game_data/Sprites/Satellites/moon/white.png"
+                },
+                {
+                    "orbit": 17856,
+                    "gravity": true,
+                    "radius": 7573756.000000001,
+                    "weight": 4.2041999999999996e+23,
+                    "subset": "moon",
+                    "type": "white",
+                    "speed": 0.43,
+                    "texture": "game_data/Sprites/Satellites/moon/white.png"
+                },
+                {
+                    "orbit": 21541,
+                    "gravity": true,
+                    "radius": 7955918.0,
+                    "weight": 4.424699999999999e+23,
+                    "subset": "moon",
+                    "type": "white",
+                    "speed": 0.39,
+                    "texture": "game_data/Sprites/Satellites/moon/white.png"
+                },
+                {
+                    "orbit": 25973,
+                    "gravity": true,
+                    "radius": 6757319.0,
+                    "weight": 3.7190999999999994e+23,
+                    "subset": "moon",
+                    "type": "green",
+                    "speed": 0.44,
+                    "texture": "game_data/Sprites/Satellites/moon/green.png"
                 }
             ],
             "map_symbol": {
                 "orbit_pos": -1,
-                "orbit": 6,
-                "speed": 2.36
+                "orbit": 7,
+                "speed": 0.74
             },
             "tex": 0
         }
     },
     "companies": {
-        "logistics": {
-            "bonus": "more_available_missions",
-            "upgrade": "max_health",
-            "home_planet": "sol III",
-            "planets": [
-                "sol I",
-                "sol VI"
-            ],
-            "missions": [
-                "protect",
-                "escort",
-                "secure"
-            ],
-            "type": "logistics",
-            "name": "logistics",
-            "reputation": 0
-        },
         "ship_builders": {
-            "bonus": "better_overall_upgrades",
-            "upgrade": "thruster_force",
+            "bonus": "better_overall_negatives",
+            "upgrade": "max_health",
             "home_planet": "sol IV",
             "planets": [
                 "sol III",
+                "sol VII",
                 "sol II"
             ],
             "missions": [
@@ -441,11 +473,12 @@
             "reputation": 0
         },
         "communications": {
-            "bonus": "more_reputation_gained",
+            "bonus": "more_available_missions",
             "upgrade": "cool_speed",
-            "home_planet": "sol III",
+            "home_planet": "sol IV",
             "planets": [
                 "sol VI",
+                "sol VII",
                 "sol II"
             ],
             "missions": [
@@ -457,13 +490,32 @@
             "name": "communications",
             "reputation": 0
         },
-        "government": {
-            "bonus": "better_overall_negatives",
-            "upgrade": "damage",
+        "weapons": {
+            "bonus": "better_overall_upgrades",
+            "upgrade": "thruster_force",
             "home_planet": "sol IV",
             "planets": [
-                "sol III",
-                "sol V"
+                "sol I",
+                "sol VI",
+                "sol III"
+            ],
+            "missions": [
+                "escort",
+                "destroy",
+                "secure"
+            ],
+            "type": "weapons",
+            "name": "weapons",
+            "reputation": 0
+        },
+        "government": {
+            "bonus": "more_available_upgrades",
+            "upgrade": "heal_rate",
+            "home_planet": "sol IV",
+            "planets": [
+                "sol VI",
+                "sol II",
+                "sol III"
             ],
             "missions": [
                 "protect",

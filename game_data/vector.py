@@ -3,6 +3,7 @@ from PIL import Image
 
 import arcade
 
+# Volume variable so i don't have to change it in multiple places.
 VOLUME = .05
 
 """
@@ -14,15 +15,33 @@ vector also holds utility classes that don't have anywhere else to be
 class Scrap(arcade.Sprite):
 
     def __init__(self, player, enemy_handler, x_y):
+        """
+        A Sprite class used for scrap dropped by enemies.
+
+        :param player: The player Object
+        :param enemy_handler: The EnemyHandler Object
+        :param x_y: the x and y coordinates of the sprite.
+        """
+
         super().__init__("game_data/Sprites/circles/circle_green.png", 0.2, center_x=x_y[0], center_y=x_y[1])
         self.player = player
         self.enemy_handler = enemy_handler
 
     def update(self):
+        """
+        Updates the Scrap.
+        If the player is close enough it gravitates towards them while shrinking in size.
+        """
+
+        # vector position of player and scrap
         p_vec = (self.player.center_x, self.player.center_y)
         s_vec = (self.center_x, self.center_y)
+
+        # distance from player
         distance = find_distance(p_vec, s_vec)
+
         if distance < 500:
+            # if the distance is less then 500 pixels gravitate towards player.
             direction = math.radians(find_angle(p_vec, s_vec))
             acceleration = 0.0006 * self.player.weight / distance
             move_x = math.cos(direction) * acceleration
@@ -30,8 +49,10 @@ class Scrap(arcade.Sprite):
             self.center_x += move_x
             self.center_y += move_y
             if distance <= self.width:
+                # If the the scrap is close to the player start shrinking in size.
                 self.scale = ((self.width*distance)/(self.width*self.width)) * 0.2
                 if distance < 15:
+                    # If the scrap is within 15 pixels collect the scrap.
                     self.enemy_handler.count_collect_scrap()
                     self.player.add_scrap()
                     self.remove_from_sprite_lists()
@@ -41,6 +62,15 @@ class Scrap(arcade.Sprite):
 class AnimatedTempSprite(arcade.Sprite):
 
     def __init__(self, sprite_sheet, pos, animation_speed: int = 12, loops: int = 1):
+        """
+        An animated temporary sprite that deletes itself after playing its animation for a set amount of time.
+
+        :param sprite_sheet: The Sprite sheet the animation comes from.
+        :param pos: The X and Y coordinates of the sprite.
+        :param animation_speed: the FPS of the animation
+        :param loops: the number of times the animation loops.
+        """
+
         super().__init__()
 
         self.scale = 1
@@ -52,6 +82,8 @@ class AnimatedTempSprite(arcade.Sprite):
         self.frame_timer = 0
         self.frame_step = 1 / animation_speed
         self.current_texture = 0
+
+        # find the size of the sprite, and use it to cut the sprite sheet.
         image = Image.open(sprite_sheet)
         frame_size, sprite_sheet_height = image.size
         if sprite_sheet_height % frame_size != 0:
@@ -65,6 +97,7 @@ class AnimatedTempSprite(arcade.Sprite):
             self.texture = self.frames[self.current_texture]
 
     def on_update(self, delta_time: float = 1/60):
+        # run the animation. If it has run through all its loops kill it.
         self.frame_timer += delta_time
         if self.frame_timer >= self.frame_step:
             self.frame_timer -= self.frame_step
@@ -75,6 +108,9 @@ class AnimatedTempSprite(arcade.Sprite):
                 self.loops -= 1
                 if self.loops <= 0:
                     self.kill()
+                else:
+                    self.texture = self.frames[0]
+                    self.current_texture = 0
 
     def kill(self):
         self.remove_from_sprite_lists()
@@ -136,7 +172,7 @@ def calc_direction(target_angle, start_angle):
 def find_angle(vector1, vector2):
     """
     Find the angle(a.k.a the direction) between two vectors
-     with one at each end of the hypotenuse of a right angled triangle.
+    with one at each end of the hypotenuse of a right angled triangle.
     """
     dx = vector1[0] - vector2[0]
     dy = vector1[1] - vector2[1]

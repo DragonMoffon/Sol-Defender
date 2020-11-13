@@ -226,13 +226,9 @@ class GameWindow(arcade.View):
         This method calls 60 times per second roughly and is what is used to update things such as positions,
         view ports, and scores. It also updates all features of the game, such as enemy calculations and player actions
         """
-        # FPS for debugging
-        # print("FPS:", 1/delta_time, "\n")
 
         # If the main game should be processing, run the main game.
         if self.process and not self.player_dead:
-
-            # print("position:", self.playback_audio.get_stream_position(), "Length:", self.playback_audio.get_length())
 
             if self.music.get_stream_position() == 0 and not self.wormhole:
                 self.music.play(vector.VOLUME * 0.25)
@@ -327,7 +323,7 @@ class GameWindow(arcade.View):
         self.player.draw()
 
         # Draw the cursor.
-        if self.player.alt or self.window.current_view != self:
+        if self.player.alt and self.window.current_view == self and not self.player.dead:
             self.cursor.draw()
 
         # If the player is dead but their death animation has not started.
@@ -521,7 +517,6 @@ class GameWindow(arcade.View):
         point.texture = arcade.load_texture("game_data/Sprites/Player/Ui/wormhole direction.png")
         self.player.enemy_pointers.append(point)
 
-        print(self.left_view)
         self.star_field = stars.StarField(self)
 
         # dead
@@ -542,13 +537,11 @@ class GameWindow(arcade.View):
             # Run the player class's key press method.
             self.player.key_down(key)
 
-            if key == arcade.key.R:
-                # Reset.
-                self.reset()
-
-            elif key == arcade.key.F and self.wormhole:
+            if key == arcade.key.F and self.wormhole:
                 # Finish Level
                 self.open_end_card(self.mission.current_mission_data)
+                self.prev_difficulty = self.mission.enemy_handler.difficulty
+                self.mission.add_mission_data()
 
             elif key == arcade.key.ESCAPE:
                 # Open the map

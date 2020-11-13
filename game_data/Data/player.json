@@ -42,8 +42,8 @@
         "texture": "game_data/Sprites/Player/Ships/fighter.png"},
     "Bomber": {
         "health": 200,
-        "damage":  10,
-        "delay": 0.5,
+        "damage":  16,
+        "delay": 0.75,
         "thruster array": [
                             {"alignment": "l", "direction_v": [1, 0], "distance": 19.85,
                             "output": 1, "position": [-15, -13]},
@@ -75,30 +75,9 @@
                             {"alignment": "r", "direction_v": [1, 0], "distance": 15.56,
                             "output": 3, "position": [-11, 11]}],
         "thruster force": 750000,
-        "weight": 250000,
+        "weight": 350000,
         "width": 33,
         "texture": "game_data/Sprites/Player/Ships/tesla.png"},
-    "Ice Breaker": {
-        "health": 135,
-        "damage":  6,
-        "delay": 0.25,
-        "thruster array": [
-                            {"alignment": "l", "direction_v": [0, 0], "distance": 17.70,
-                            "output": 0.75, "position": [-13, -12]},
-                            {"alignment": "l", "direction_v": [0, 0], "distance": 16.13,
-                            "output": 1, "position": [-14, -8]},
-                            {"alignment": "rc", "direction_v": [1, 0], "distance": 12,
-                            "output": 3, "position": [-12, 0]},
-                            {"alignment": "r", "direction_v": [0, 0], "distance": 16.13,
-                            "output": 1, "position": [-14, 8]},
-                            {"alignment": "r", "direction_v": [0, 0], "distance": 17.70,
-                            "output": 0.75, "position": [-13, 12]}
-
-        ],
-        "thruster force": 750000,
-        "weight": 450000,
-        "width": 33,
-        "texture": "game_data/Sprites/Player/Ships/ice breaker.png"},
     "Raptor": {
         "health": 220,
         "damage":  10,
